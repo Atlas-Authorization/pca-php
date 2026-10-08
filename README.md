@@ -1,44 +1,86 @@
-# pca-php
+# pca-php — Proof-Carrying Authority verifier for PHP
 
-Proof-Carrying Authority (PCA) verifier for PHP. **Preview.**
+An **offline verifier for Proof-Carrying Actions (PCActns)** in PHP. A PCActn is the credential an
+autonomous agent presents with *every* action it takes: a self-contained, cryptographically-checkable
+object proving the action is a faithful execution of authority its principal actually granted. Your
+resource server verifies it locally — no token introspection, no network call on the hot path.
 
-PCA is authF: instead of verifying a token, you verify a proof-carrying action (a PCActn) - the capability chain, Merkle plan inclusion, Ed25519 leaf signature and counter. This is a reference verifier that passes the shared conformance vectors.
-
-> Preview: the wire format and API may change before 1.0.
+This library is the PHP member of the PCA verifier family. It is a faithful port of the TypeScript
+reference implementation and passes the **same shared conformance corpus** as every other language
+verifier, so a PCActn that verifies here verifies identically everywhere.
 
 ## Install
 
-Preview: `composer require atlas-authorization/pca-php` once listed on Packagist; until then add this repo as a VCS repository in `composer.json`, or copy `src/` (namespace `Atlas\Pca`).
-
-## Verify
+The verifier is a small source package under `src/` (namespace `Atlas\Pca`). Vendor it into your project
+or clone the repo and autoload it. It relies on PHP's built-in `sodium` extension for Ed25519.
 
 ```php
 use Atlas\Pca\Pca;
+```
 
-$v = Pca::verifyPcactnCore($pcactn, $grant); // decoded JSON (see Atlas\Pca\Json)
-if ($v['allow']) {
-    // chain, plan_inclusion, leaf_signature, counter all passed
+## Verify a PCActn
+
+A verifier is stateless. Give it the received PCActn (raw JSON via `verifyJson`, or a parsed value via
+`verifyPcactnCore`), the Root Intent Grant it claims to derive from, the current time (epoch
+**milliseconds**), and *your own* audience id. It returns an allow/deny verdict plus the per-check
+results.
+
+```php
+<?php
+use Atlas\Pca\Pca;
+
+// `$raw` is the PCActn as received (strict canonical JSON, wire version 2).
+// `$grant` is the Root Intent Grant the action's capability chain roots in.
+$verdict = Pca::verifyJson(
+    $raw,
+    $grant,
+    (int) (microtime(true) * 1000),
+    'https://api.example.com'
+);
+
+if ($verdict['allow']) {
+    // every core check passed — execute the action
 } else {
-    echo $v['reason'];
+    error_log('denied: ' . json_encode($verdict['checks']));
 }
 ```
 
-## Conformance tests
+The verdict reports each core check (`wire`, `version`, `audience`, `validity`, `chain`,
+`plan_inclusion`, `leaf_signature`, `counter`). Every check is **fail-closed** — the action is allowed
+only if none reports failure — and a `wire` failure is terminal (nothing else is evaluated).
 
-The shared golden vectors are vendored in `conformance/` (synced from the hub). Run:
+## Conformance
 
-```
-php conformance.php
-```
+The repo ships a vendored copy of the shared **conformance corpus** (`conformance/vectors.json` +
+`conformance/keys.json`): over a hundred golden and adversarial PCActns with their expected verdicts,
+plus canonical-JSON, strict-base64url, and Merkle primitive vectors. `php conformance.php` runs the
+verifier against every vector; it must reproduce `allow` and every listed check exactly.
 
-The reference verifier must produce the same `allow` and the same pass/fail for each of the four checks on every vector.
+## Supported signature suites
 
-## Links
+- `ed25519` (default)
+- `ml-dsa-65` (FIPS-204, post-quantum)
+- `hybrid-ed25519-ml-dsa-65` (classical + post-quantum)
 
-- Hub (spec, other languages): https://github.com/Atlas-Authorization/pca
-- Live docs: https://atlasauth.net/pca
-- TypeScript reference: npm `@atlasauth/pca`
+The suite id and post-quantum public key are part of the signed body, so a suite downgrade or key swap
+invalidates the action.
+
+## Capability maturity
+
+The PCActn wire format and the eight core offline checks are stable and conformance-covered. The broader
+framework surface is implemented and tested in the reference implementation: threshold/step-up co-signing
+(a real FROST threshold signature over a DKG-established group key, released only on a Policy-VM allow),
+TEE/hardware and model-weights attestation, zero-knowledge proof-of-compliance (a real Groth16 proof),
+optimistic bonds and the contestable dispute game, and the malicious-secure MPC Policy VM (SPDZ-style MACs
+with abort). A few rungs carry a remaining production requirement, stated plainly rather than hidden
+behind a label: a live TEE/hardware attestation needs real SEV-SNP/TDX silicon (the verifier is tested
+against real-crypto mock reports); unforgeable FROST guardian custody needs each share in a separate trust
+domain / HSM with a network signing protocol (the reference runs the signing round in-process); the MPC
+Policy VM's offline triple generation is trusted-dealer today (a no-dealer OT/HE phase is designed); and
+the zero-knowledge circuit proves a decision subset (plan-membership + risk ≤ budget), with fuller
+policy coverage ongoing. See the [PCA framework repo](https://github.com/Atlas-Authorization/pca) for the
+full model.
 
 ## License
 
-MIT
+See `LICENSE`.
