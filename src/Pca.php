@@ -696,7 +696,7 @@ final class Pca
             return ['allow' => false, 'checks' => ['wire' => false], 'reason' => 'wire: ' . $wire];
         }
         $checks = ['wire' => true, 'version' => false, 'audience' => false, 'validity' => false, 'chain' => false,
-            'plan_inclusion' => false, 'leaf_signature' => false, 'counter' => false];
+            'grant_ref_bound' => false, 'plan_inclusion' => false, 'leaf_signature' => false, 'counter' => false];
         $reason = '';
         $fail = function (string $name, string $why) use (&$reason): void {
             if ($reason === '') {
@@ -749,6 +749,18 @@ final class Pca
             }
         } catch (\Throwable $e) {
             $fail('chain', 'malformed: ' . $e->getMessage());
+        }
+
+        // grant_ref_bound (normative): the signed grant_ref MUST be a non-empty string byte-equal to the id of the
+        // ROOT capability of the presented chain (cap_chain[0].id). Independent of the chain verdict; fail-closed
+        // on an empty / malformed chain. Replay state is keyed on grant_ref, so it must not be attacker-chosen.
+        $gref = $p->get('grant_ref');
+        $rootCap = (is_array($chain) && count($chain) > 0 && $chain[0] instanceof Obj) ? $chain[0] : null;
+        $rootId = $rootCap !== null ? $rootCap->get('id') : null;
+        if (is_string($gref) && $gref !== '' && is_string($rootId) && $gref === $rootId) {
+            $checks['grant_ref_bound'] = true;
+        } else {
+            $fail('grant_ref_bound', 'grant_ref is not the id of the root capability in cap_chain');
         }
 
         try {

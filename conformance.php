@@ -219,7 +219,7 @@ foreach ($prim->get('pq_artifact') as $a) {
 // ---------------------------------------------------------------------------------------
 // Report
 // ---------------------------------------------------------------------------------------
-echo "\n== PCA PHP conformance (wire format v2, 154-vector corpus) ==\n";
+echo "\n== PCA PHP conformance (wire format v2, 172-vector corpus) ==\n";
 echo "CORE PCActn vectors: $total passed, $skipped skipped\n";
 echo "  ran:     core={$ranByBucket['core']}  pq(leaf)={$ranByBucket['pq']}  pq-nonleaf(hops)={$ranByBucket['pq-nonleaf']}\n";
 if ($skipped > 0) {
