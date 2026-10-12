@@ -1,0 +1,59 @@
+name: CI
+
+# The shared conformance corpus (conformance.php over conformance/vectors.json) + the PHPUnit suites. ML-DSA comes from
+# OpenSSL >= 3.5 libcrypto through FFI: ubuntu-26.04 and macOS have it; ubuntu-24.04 (OpenSSL 3.0) exercises the
+# fail-closed path where the ML-DSA vectors must be skipped, never passed. The PHPUnit corpus suites locate the full
+# adversarial set and the mutation-oracle inputs by the source layout, rebuilt from the flagship at the same ref.
+on:
+  push:
+    branches: [main, 'ci/**']
+    tags: ['*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.os }} / PHP ${{ matrix.php }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-26.04]
+        php: ['8.1', '8.2', '8.3', '8.4']
+        include:
+          - { os: ubuntu-24.04, php: '8.3' }
+          - { os: windows-latest, php: '8.3' }
+          - { os: macos-latest, php: '8.3' }
+    steps:
+      - run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: sodium, json, mbstring, ffi
+          ini-values: ffi.enable=true
+          coverage: none
+          tools: composer
+      - name: Conformance corpus
+        run: php conformance.php
+      - name: Source layout (full adversarial corpus + mutation-oracle inputs from the flagship)
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: .github/scripts/fetch-flagship-corpus.sh --mono php-pca
+      - name: Install
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: composer install --no-interaction --no-progress --prefer-dist
+      - name: PHPUnit
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: vendor/bin/phpunit

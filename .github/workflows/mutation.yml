@@ -1,0 +1,107 @@
+name: Mutation
+
+# Mutation testing of src/ with Infection (infection.json5: @default mutators, PHPUnit oracle incl. the full adversarial
+# corpus and the mutation-oracle inputs), split into shards by source file. Survivors (escaped + uncovered) are converted
+# with the flagship's tools/pca-audit/native-mutation/php-survivors.py and the merge job checks them against the
+# equivalent-mutant ledger: it passes when every survivor is a ledgered equivalent and no ledger entry is stale. Runs on
+# demand and on ci/** branches (the release-candidate check), never on main pushes. Runs on macOS: the PHPUnit oracle's
+# ML-DSA library-discovery tests (MldsaDiscoveryTest, InjectionKillTest) assume the libcrypto set of the machines they were
+# written on and fail on the Linux runner images, while the whole suite is green on macOS; a mutant run needs a green baseline.
+on:
+  workflow_dispatch:
+  push:
+    branches: ['ci/**']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CRATE: php-pca
+  SHARDS: '3'
+
+jobs:
+  shard:
+    name: shard ${{ matrix.shard }}/3 (${{ matrix.files }})
+    runs-on: macos-latest
+    timeout-minutes: 340
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { shard: 1, files: 'src/Pca.php' }
+          - { shard: 2, files: 'src/Json.php,src/Mldsa.php' }
+          - { shard: 3, files: 'src/PcaMiddleware.php' }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: sodium, json, mbstring, ffi
+          ini-values: ffi.enable=true
+          coverage: pcov
+          tools: composer
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Flagship tooling + source layout
+        run: .github/scripts/mutation-layout.sh "$CRATE"
+      - name: Mutate
+        working-directory: ${{ env.MONO }}/sdks/php-pca
+        env:
+          FILES: ${{ matrix.files }}
+        run: |
+          # every file of src/ belongs to exactly one shard
+          diff <(ls src/*.php | sort) <(tr ',' '\n' <<<"src/Pca.php,src/Json.php,src/Mldsa.php,src/PcaMiddleware.php" | sort)
+          composer install --no-interaction --no-progress -q
+          # Infection is not a dev dependency of the package: added to this CI copy only
+          composer config --no-interaction allow-plugins.infection/extension-installer true
+          composer require --dev --no-interaction --no-progress -q -W "infection/infection:^0.29"
+          vendor/bin/phpunit > "$RUNNER_TEMP/baseline.log" || { tail -60 "$RUNNER_TEMP/baseline.log"; echo "::error::the PHPUnit oracle fails on the unmutated source"; exit 1; }
+          vendor/bin/infection --threads=3 --no-progress --min-msi=0 --min-covered-msi=0 --filter="$FILES" | tail -25
+          php -r '$d=json_decode(file_get_contents("infection-out/log.json"),true); $o=["stats"=>$d["stats"]]; foreach(["escaped","uncovered","timeouted","errored"] as $k){$o[$k]=array_map(fn($m)=>["file"=>basename($m["mutator"]["originalFilePath"]),"line"=>$m["mutator"]["originalStartLine"],"mutator"=>$m["mutator"]["mutatorName"],"diff"=>$m["diff"]],$d[$k]??[]);} file_put_contents("infection-out/summary.json", json_encode($o, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));'
+      - name: Report
+        run: |
+          S="$MONO/sdks/php-pca/infection-out/summary.json"
+          python3 "$MONO/tools/pca-audit/native-mutation/php-survivors.py" "$S" "$MONO/sdks/php-pca/src" survivors.json
+          node -e '
+            const st = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).stats;
+            const pick = ["killedCount", "escapedCount", "errorCount", "syntaxErrorCount", "skippedCount", "ignoredCount", "timeOutCount", "notCoveredCount"];
+            const c = {}; for (const k of pick) if (st[k] !== undefined) c[k.replace(/Count$/, "")] = st[k];
+            require("fs").writeFileSync("counts.json", JSON.stringify(c));
+          ' "$S"
+          node .github/scripts/mutation-shard-report.mjs --crate="$CRATE" --shard=${{ matrix.shard }} --of="$SHARDS" --tool=infection \
+            --counts=counts.json --survivors=survivors.json --out=shard-${{ matrix.shard }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shard-${{ matrix.shard }}
+          path: shard-${{ matrix.shard }}.json
+
+  merge:
+    needs: shard
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Flagship checker + ledger
+        run: .github/scripts/mutation-layout.sh "$CRATE"
+      - uses: actions/download-artifact@v4
+        with:
+          path: reports
+      - name: Merge shards and check the ledger
+        run: >
+          node .github/scripts/mutation-merge.mjs --crate="$CRATE" --shards="$SHARDS" --reports=reports
+          --checker="$MONO/tools/pca-audit" --src="$GITHUB_WORKSPACE"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: survivors-merged
+          path: reports/survivors-merged.json
+          if-no-files-found: ignore
