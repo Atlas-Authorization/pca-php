@@ -49,6 +49,15 @@ The verdict reports each core check (`wire`, `version`, `audience`, `validity`, 
 `plan_inclusion`, `leaf_signature`, `counter`). Every check is **fail-closed** — the action is allowed
 only if none reports failure — and a `wire` failure is terminal (nothing else is evaluated).
 
+## Caveats (policy layer)
+
+The verifier above checks that the PCActn is well formed and authentic; like every PCA core verifier it does not decide
+whether the action satisfies the grant's caveats. A resource server that enforces caveats evaluates them with its own action
+parameters: `Pca::evaluateCaveats(Pca::policyCaveats($grant, $chain), $ctx)`. `policy_caveats` is every caveat on the root grant except its first `envelope` caveat (0.4.1: root caveats
+are enforced exactly like delegated ones) followed by the caveats the delegation hops appended. Supported types: `expires`,
+`not_before`, `rate`, `max_blast_radius`, `reversibility_max`, `delegation_depth`, `budget_alloc` and `max_spend`; any other
+type is unsatisfied (fail closed). The `PCA-Action` header must be strict unpadded base64url of UTF-8 text (`Pca::decodePcaHeader($value)` (null when invalid)).
+
 ## Conformance
 
 The repo ships a vendored copy of the shared **conformance corpus** (`conformance/vectors.json` +

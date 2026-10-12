@@ -74,6 +74,10 @@ $unsupportedSuite = function (Obj $v) use ($algOf, $supported): ?string {
         }
         return null;
     }
+    // 0.4.1: a vector that names one concrete suite (`requires: "ml-dsa-87"`, `"slh-dsa-sha2-128f"`) this verifier lacks.
+    if (is_string($req) && $req !== '' && !in_array($req, $supported, true)) {
+        return $req;
+    }
     return null;
 };
 
@@ -342,6 +346,44 @@ foreach ($depthCases as $d) {
     }
 }
 echo 'depth: ' . count($depthCases) . " cases\n";
+
+// ---------------------------------------------------------------------------------------
+// 0.4.1 (gen-conformance-041.mjs). primitives.caveat_eval: the policy-layer helpers, evaluateCaveats(policyCaveats(grant,
+// chain), context) == expect {allow, failed} (root caveats outside the envelope are evaluated like delegated ones).
+// primitives.pca_header: the PCA-Action header is strict unpadded base64url of strict UTF-8 (decodePcaHeader).
+// ---------------------------------------------------------------------------------------
+$caveatEval = $prim->has('caveat_eval') ? $prim->get('caveat_eval') : [];
+$check(count($caveatEval) >= 40, 'primitives.caveat_eval: expected at least 40 cases, got ' . count($caveatEval));
+$ceFails = 0;
+foreach ($caveatEval as $c) {
+    $exp = $c->get('expect');
+    try {
+        $r = Pca::evaluateCaveats(Pca::policyCaveats($c->get('grant'), $c->get('chain')), $c->get('context'));
+        $ok = $r['ok'] === $exp->get('allow') && $r['failed'] === $exp->get('failed');
+        $check($ok, 'caveat_eval ' . $c->get('name') . ': got ' . json_encode($r) . ', want allow=' . $str($exp->get('allow'))
+            . ' failed=' . json_encode($exp->get('failed')));
+    } catch (\Throwable $t) {
+        $ok = false;
+        $check(false, 'caveat_eval ' . $c->get('name') . ': THREW ' . get_class($t) . ': ' . $t->getMessage());
+    }
+    $ceFails += $ok ? 0 : 1;
+}
+$pcaHeader = $prim->has('pca_header') ? $prim->get('pca_header') : [];
+$check(count($pcaHeader) >= 27, 'primitives.pca_header: expected at least 27 cases, got ' . count($pcaHeader));
+$phFails = 0;
+foreach ($pcaHeader as $c) {
+    try {
+        $got = Pca::decodePcaHeader($c->get('input'));
+        $ok = ($got !== null) === $c->get('valid') && ($got === null || $got === $c->get('text'));
+        $check($ok, 'pca_header ' . $c->get('name') . ': got ' . $str($got) . ', want valid=' . $str($c->get('valid')));
+    } catch (\Throwable $t) {
+        $ok = false;
+        $check(false, 'pca_header ' . $c->get('name') . ': THREW ' . get_class($t) . ': ' . $t->getMessage());
+    }
+    $phFails += $ok ? 0 : 1;
+}
+echo 'caveat_eval: ' . (count($caveatEval) - $ceFails) . '/' . count($caveatEval) . ' pass; pca_header: '
+    . (count($pcaHeader) - $phFails) . '/' . count($pcaHeader) . " pass\n";
 
 echo "primitives: $n canonical/json_parse/b64u cases + merkle + params_digest pass\n";
 echo "threshold shares (v2.1 binding): $shareAccepted valid accepted, $shareRejected invalid rejected"

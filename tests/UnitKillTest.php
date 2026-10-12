@@ -437,11 +437,15 @@ final class UnitKillTest extends TestCase
         $h2 = $this->handler();
         $this->mw()->process($req, $h2);
         $this->assertSame('{"pcactn":' . $json . '}', (string)$h2->got->getBody());
-        // padded base64url header is accepted too
+        // 0.4.1: the header is STRICT unpadded base64url; a padded spelling is the 401 base64url refusal (it was accepted)
         $padded = rtrim(strtr(base64_encode($json), '+/', '-_'), '=');
         $padded .= str_repeat('=', (4 - strlen($padded) % 4) % 4);
+        $this->assertNotSame(Pca::b64u($json), $padded);
         $h3 = $this->handler();
-        $this->assertSame(200, $this->mw()->process(new ServerRequest('POST', '/', [PcaMiddleware::HEADER => $padded]), $h3)->getStatusCode());
+        $r = $this->mw()->process(new ServerRequest('POST', '/', [PcaMiddleware::HEADER => $padded]), $h3);
+        $this->assertSame(401, $r->getStatusCode());
+        $this->assertSame('PCA-Action header is not valid base64url', json_decode((string)$r->getBody(), true)['error_description']);
+        $this->assertSame(200, $this->mw()->process(new ServerRequest('POST', '/', [PcaMiddleware::HEADER => Pca::b64u($json)]), $this->handler())->getStatusCode());
     }
 
     public function testMiddlewareErrorBodies(): void

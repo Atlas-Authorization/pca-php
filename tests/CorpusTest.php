@@ -50,6 +50,11 @@ final class CorpusTest extends TestCase
                     return $a;
                 }
             }
+            return null;
+        }
+        // 0.4.1: a vector that names one concrete suite (`requires: "ml-dsa-87"`) this verifier lacks.
+        if (is_string($req) && $req !== '' && !$suiteOk($req)) {
+            return $req;
         }
         return null;
     }

@@ -19,7 +19,8 @@ use Psr\Http\Server\RequestHandlerInterface;
  * chain logic here: this file only reads the PCActn off the PSR-7 message, hands it to the verifier, and
  * branches on the verdict.
  *
- * The PCActn is read from the `PCA-Action` request header (base64url(JSON)) or, failing a header, from a
+ * The PCActn is read from the `PCA-Action` request header (strict unpadded base64url of the UTF-8 JSON text, see
+ * {@see Pca::decodePcaHeader}; padding, the standard alphabet or whitespace are a 401) or, failing a header, from a
  * strict-JSON request body of the shape `{"pcactn": {...}}`. The `grant_ref` is pulled from the PCActn and
  * resolved to its root grant capability through a caller-supplied resolver; the verifier then runs the eight
  * offline checks (wire, version, audience vs signed `aud`, validity, chain rooted at the grant, plan
@@ -32,6 +33,10 @@ use Psr\Http\Server\RequestHandlerInterface;
  *
  *   - 401 when no PCActn is presented, it cannot be decoded, or its `grant_ref` is unknown;
  *   - 403 when a well-formed PCActn resolves a grant but the verdict denies.
+ *
+ * Caveats are NOT evaluated here (nor by the core verifier). A resource server that enforces the grant's caveats calls
+ * {@see Pca::evaluateCaveats}(Pca::policyCaveats($grant, $pcactn->get('cap_chain')), $ctx) with its own action params
+ * (the root grant's caveats outside the envelope included: the 0.4.1 policy-layer security fix).
  */
 final class PcaMiddleware implements MiddlewareInterface
 {
@@ -142,7 +147,7 @@ final class PcaMiddleware implements MiddlewareInterface
     {
         $header = $request->getHeaderLine(self::HEADER);
         if ($header !== '') {
-            $raw = self::decodeB64u($header);
+            $raw = Pca::decodePcaHeader($header); // 0.4.1: strict unpadded base64url of strict UTF-8
             if ($raw === null) {
                 return [null, null, 'PCA-Action header is not valid base64url'];
             }
@@ -194,19 +199,6 @@ final class PcaMiddleware implements MiddlewareInterface
         } catch (\Throwable) {
             return '';
         }
-    }
-
-    /** Accepts the unpadded or padded base64url alphabet; null when neither decodes. */
-    private static function decodeB64u(string $s): ?string
-    {
-        foreach ([SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING, SODIUM_BASE64_VARIANT_URLSAFE] as $variant) {
-            try {
-                return sodium_base642bin($s, $variant);
-            } catch (\Throwable) {
-                // try the next variant
-            }
-        }
-        return null;
     }
 
     // ---- responses ----------------------------------------------------------------------

@@ -293,6 +293,21 @@ final class Pca
     /** Validate `alg`/`sig`/`pq_pk`/`pq_sig` per suite. null when well-formed, else a short reason. */
     private static function validateSignatureWire(Obj $p): ?string
     {
+        return self::validateSuiteFields($p, true);
+    }
+
+    /**
+     * 0.4.1: a threshold share's `alg`/`sig`/`pq_sig` per suite, exactly like the leaf (absent `alg` == ed25519, a 64-byte
+     * `sig` and no `pq_sig`), EXCEPT `pq_pk`: on a share it is an optional echo judged by verifyThresholdShare against the
+     * signer set, so the wire does not look at it. Mirrors validateShareSignatureWire in packages/pca/src/pq.ts.
+     */
+    private static function validateShareSignatureWire(Obj $s): ?string
+    {
+        return self::validateSuiteFields($s, false);
+    }
+
+    private static function validateSuiteFields(Obj $p, bool $checkPqPk): ?string
+    {
         [$suite, $err] = self::resolveSuite($p);
         if ($suite === null) {
             return $err;
@@ -301,7 +316,9 @@ final class Pca
         if (!self::b($p->get('sig'), $sigBytes)) {
             return "'sig' is not canonical base64url ($sigBytes bytes) for alg '$suite'";
         }
-        if ($needsPk) {
+        if (!$checkPqPk) {
+            // share: `pq_pk` is an optional echo, judged by verifyThresholdShare against the signer set
+        } elseif ($needsPk) {
             if (!self::b($p->get('pq_pk'), Mldsa::PUBLIC_KEY_BYTES)) {
                 return "'pq_pk' is not canonical base64url (" . Mldsa::PUBLIC_KEY_BYTES . ' bytes)';
             }
@@ -879,8 +896,14 @@ final class Pca
                     if (!($s instanceof Obj) || !is_string($s->get('role'))) {
                         return "threshold.shares[$i] is malformed";
                     }
-                    if (!self::b($s->get('publicKey'), 32) || !self::b($s->get('sig'), 64)) {
+                    if (!self::b($s->get('publicKey'), 32)) {
                         return "threshold.shares[$i] has a non-canonical key/signature";
+                    }
+                    // 0.4.1: the share signature is validated PER SUITE (it used to be a fixed 64 bytes, so a pure
+                    // post-quantum share could never be carried).
+                    $shareErr = self::validateShareSignatureWire($s);
+                    if ($shareErr !== null) {
+                        return "threshold.shares[$i]: $shareErr";
                     }
                 }
             }
@@ -1249,6 +1272,204 @@ final class Pca
             return self::verifyLeafSuite($share, $share->get('publicKey'), $message);
         } catch (\Throwable) {
             return false;
+        }
+    }
+
+    // ---- PCA-Action header (0.4.1) ---------------------------------------------------------
+
+    /**
+     * Decode a `PCA-Action` header value to the PCActn JSON text, or null. STRICT (0.4.1), like decodePcaHeader in
+     * packages/pca/src/adapters.ts: non-empty; unpadded base64url alphabet only (`A-Z a-z 0-9 - _`), no `=`, no `+`/`/`,
+     * no whitespace anywhere (nothing is trimmed), length % 4 != 1, zero unused trailing bits; and the bytes must be valid
+     * UTF-8 (no overlong forms, surrogates or truncated sequences). A leading BOM is kept (the strict JSON parser refuses
+     * it). Nothing is normalized, so one PCActn has exactly one header spelling.
+     */
+    public static function decodePcaHeader(mixed $value): ?string
+    {
+        if (!is_string($value) || $value === '') {
+            return null;
+        }
+        $raw = self::unb64u($value);
+        if ($raw === null || preg_match('//u', $raw) !== 1) {
+            return null;
+        }
+        return $raw;
+    }
+
+    // ---- policy-layer caveat helpers (0.4.1) ----------------------------------------------
+
+    public const ENVELOPE_CAVEAT = 'envelope';
+    private const REVERSIBILITY_ORDER = ['reversible', 'rate_limited', 'irreversible'];
+
+    /**
+     * Every caveat the policy layer evaluates as a caveat for an action under `$grant` delegated along `$chain` (root
+     * first), like policyCaveats in packages/pca/src/policy-vm.ts: the grant's caveats without its FIRST `envelope`
+     * caveat (order kept), then the caveats the hops appended (`leaf.caveats` beyond the grant's, leaf = the last chain
+     * element). A grant whose `caveats` is not a JSON array hands that value through (evaluateCaveats refuses it).
+     *
+     * The core verifier (verifyJson / verifyPcactnCore) and PcaMiddleware do NOT evaluate caveats. A resource server that
+     * enforces a grant's caveats calls evaluateCaveats(policyCaveats($grant, $chain), $ctx) with its own action params.
+     * 0.4.1 security fix (TypeScript policy layer): caveats on the ROOT grant outside the envelope are enforced exactly
+     * like delegated ones; this helper pair includes them.
+     */
+    public static function policyCaveats(mixed $grant, mixed $chain = null): mixed
+    {
+        $cs = $grant instanceof Obj ? $grant->get('caveats') : null;
+        if (!is_array($cs) || !array_is_list($cs)) {
+            return $cs;
+        }
+        $root = [];
+        $skipped = false;
+        foreach ($cs as $c) {
+            if (!$skipped && $c instanceof Obj && $c->get('type') === self::ENVELOPE_CAVEAT) {
+                $skipped = true;
+                continue;
+            }
+            $root[] = $c;
+        }
+        $leaf = is_array($chain) && array_is_list($chain) && count($chain) > 0 ? $chain[count($chain) - 1] : null;
+        $lc = $leaf instanceof Obj ? $leaf->get('caveats') : null;
+        if (is_array($lc) && array_is_list($lc)) {
+            foreach (array_slice($lc, count($cs)) as $c) {
+                $root[] = $c;
+            }
+        }
+        return $root;
+    }
+
+    /**
+     * Evaluate a caveat list against an action context: ['ok' => every caveat satisfied, 'failed' => the unsatisfied
+     * caveats' `type` strings in order ('<malformed>' when `type` is not a string)]. A value that is not a JSON array
+     * gives ['ok' => false, 'failed' => ['<malformed caveats>']]. Total: never throws. Fail closed: a caveat type this
+     * evaluator does not implement (note, envelope, resource_prefix, predicates, tool_schema, ...) is unsatisfied.
+     *
+     * `$ctx` is a JSON object (Obj): now (epoch ms), delegation_depth?, blast_radius?, reversibility_class?,
+     * recent_action_times?, action {verb, resource, reversibility_class, params}. Numbers are Num / int / float (never
+     * bool). Semantics mirror agentNativeCaveatEvaluator + envelopeCaveatEvaluator (packages/pca/src):
+     *  - max_spend {usd}: usd finite >= 0; ctx.action.params (an object) has an own finite `amount` with 0 <= amount <= usd,
+     *    and an own `currency`, when present, is exactly "usd" or "USD". Does not need `now`.
+     *  - everything below needs a finite ctx.now: expires {at} now < at; not_before {at} now >= at; rate {max, per_secs}
+     *    fewer than max entries t of ctx.recent_action_times with now - per_secs*1000 < t <= now; max_blast_radius {max}
+     *    ctx.blast_radius <= max; reversibility_max {class} ctx.reversibility_class no more severe than class;
+     *    delegation_depth {max} ctx.delegation_depth <= max; budget_alloc {limit} limit finite >= 0.
+     *
+     * @return array{ok: bool, failed: list<string>}
+     */
+    public static function evaluateCaveats(mixed $caveats, mixed $ctx): array
+    {
+        if (!is_array($caveats) || !array_is_list($caveats)) {
+            return ['ok' => false, 'failed' => ['<malformed caveats>']];
+        }
+        $failed = [];
+        foreach ($caveats as $cv) {
+            try {
+                $ok = self::caveatSatisfied($cv, $ctx);
+            } catch (\Throwable) {
+                $ok = false;
+            }
+            if (!$ok) {
+                $t = $cv instanceof Obj ? $cv->get('type') : null;
+                $failed[] = is_string($t) ? $t : '<malformed>';
+            }
+        }
+        return ['ok' => $failed === [], 'failed' => $failed];
+    }
+
+    /** A finite JSON number as a float (Num lexeme, or a native int / float), else null. Booleans are not numbers. */
+    private static function finite(mixed $x): ?float
+    {
+        $f = match (true) {
+            $x instanceof Num => $x->float(),
+            is_int($x) => (float)$x,
+            is_float($x) => $x,
+            default => null,
+        };
+        return $f !== null && is_finite($f) ? $f : null;
+    }
+
+    /** The action's spend in USD as max_spend reads it (own params.amount, finite >= 0, currency absent / "usd" / "USD"). */
+    private static function actionSpendUsd(mixed $action): ?float
+    {
+        if (!($action instanceof Obj)) {
+            return null;
+        }
+        $params = $action->get('params');
+        if (!($params instanceof Obj) || !$params->has('amount')) {
+            return null;
+        }
+        $amount = self::finite($params->get('amount'));
+        if ($amount === null || $amount < 0) {
+            return null;
+        }
+        if ($params->has('currency') && $params->get('currency') !== 'usd' && $params->get('currency') !== 'USD') {
+            return null;
+        }
+        return $amount;
+    }
+
+    private static function caveatSatisfied(mixed $cv, mixed $ctx): bool
+    {
+        if (!($cv instanceof Obj) || !($ctx instanceof Obj)) {
+            return false;
+        }
+        $type = $cv->get('type');
+        if ($type === 'max_spend') {
+            $lim = self::finite($cv->get('usd'));
+            if ($lim === null || $lim < 0) {
+                return false;
+            }
+            $spend = self::actionSpendUsd($ctx->get('action'));
+            return $spend !== null && $spend <= $lim;
+        }
+        $now = self::finite($ctx->get('now'));
+        if ($now === null) {
+            return false;
+        }
+        switch ($type) {
+            case 'expires':
+                $at = self::finite($cv->get('at'));
+                return $at !== null && $now < $at;
+            case 'not_before':
+                $at = self::finite($cv->get('at'));
+                return $at !== null && $now >= $at;
+            case 'rate':
+                $max = self::finite($cv->get('max'));
+                $per = self::finite($cv->get('per_secs'));
+                $times = $ctx->get('recent_action_times');
+                if ($max === null || $per === null || $per <= 0 || !is_array($times) || !array_is_list($times)) {
+                    return false;
+                }
+                $lo = $now - $per * 1000;
+                $n = 0;
+                foreach ($times as $t) {
+                    $tf = self::finite($t);
+                    if ($tf !== null && $tf > $lo && $tf <= $now) {
+                        $n++;
+                    }
+                }
+                return $n < $max;
+            case 'max_blast_radius':
+                $max = self::finite($cv->get('max'));
+                $br = self::finite($ctx->get('blast_radius'));
+                return $max !== null && $br !== null && $br <= $max;
+            case 'reversibility_max':
+                $class = $cv->get('class');
+                $cur = $ctx->get('reversibility_class');
+                if (!is_string($class) || !is_string($cur)) {
+                    return false;
+                }
+                $li = array_search($class, self::REVERSIBILITY_ORDER, true);
+                $ci = array_search($cur, self::REVERSIBILITY_ORDER, true);
+                return $li !== false && $ci !== false && $ci <= $li;
+            case 'delegation_depth':
+                $max = self::finite($cv->get('max'));
+                $d = self::finite($ctx->get('delegation_depth'));
+                return $max !== null && $d !== null && $d <= $max;
+            case 'budget_alloc':
+                $lim = self::finite($cv->get('limit'));
+                return $lim !== null && $lim >= 0;
+            default:
+                return false;
         }
     }
 
