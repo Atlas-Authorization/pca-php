@@ -103,10 +103,11 @@ foreach ($vectors as $v) {
     $ctx = $v->get('context');
     $now = $ctx->get('now')->int();
     $aud = $ctx->get('aud');
+    $allowed = $ctx->has('allowed_suites') ? $ctx->get('allowed_suites') : null;
     if ($v->has('pcactn_json')) {
-        $got = Pca::verifyJson($v->get('pcactn_json'), $v->get('grant'), $now, $aud);
+        $got = Pca::verifyJson($v->get('pcactn_json'), $v->get('grant'), $now, $aud, $allowed);
     } else {
-        $got = Pca::verifyPcactnCore($v->get('pcactn'), $v->get('grant'), $now, $aud);
+        $got = Pca::verifyPcactnCore($v->get('pcactn'), $v->get('grant'), $now, $aud, $allowed);
     }
     $expect = $v->get('expect');
     $check($got['allow'] === $expect->get('allow'), "$name: allow = " . $str($got['allow'])
@@ -219,7 +220,7 @@ foreach ($prim->get('pq_artifact') as $a) {
 // ---------------------------------------------------------------------------------------
 // Report
 // ---------------------------------------------------------------------------------------
-echo "\n== PCA PHP conformance (wire format v2, 172-vector corpus) ==\n";
+echo "\n== PCA PHP conformance (wire format v2, golden + adversarial corpus) ==\n";
 echo "CORE PCActn vectors: $total passed, $skipped skipped\n";
 echo "  ran:     core={$ranByBucket['core']}  pq(leaf)={$ranByBucket['pq']}  pq-nonleaf(hops)={$ranByBucket['pq-nonleaf']}\n";
 if ($skipped > 0) {
@@ -231,6 +232,117 @@ if ($skipped > 0) {
     echo "  skipped (unsupported suites needing a real crypto verdict): " . implode('  ', $parts) . "\n";
     echo "  NOTE: terminal {wire:false} negatives under these suites STILL RAN (unknown-alg => wire fail is the correct verdict).\n";
 }
+// ---------------------------------------------------------------------------------------
+// Standalone chain API: root PQ authority (R4-01). primitives.chain_pin[]: Pca::verifyChain(chain, expected_root_issuer, true,
+// allowed_suites, pq_pins, trusted_root). A non-ed25519 ROOT needs a verifier-side pin or the stored grant. Vectors that need a genuine
+// ML-DSA-65 verdict are skipped (counted) when OpenSSL lacks it; the hop-0 pin refusals need no crypto and always run.
+// ---------------------------------------------------------------------------------------
+$chainPins = $prim->has('chain_pin') ? $prim->get('chain_pin') : [];
+$check(count($chainPins) >= 25, 'primitives.chain_pin: expected at least 25 vectors, got ' . count($chainPins));
+$cpRan = 0;
+$cpSkipped = 0;
+foreach ($chainPins as $v) {
+    $exp = $v->get('expect');
+    $reason = $exp->has('reason') ? $exp->get('reason') : '';
+    $pinRefusal = str_starts_with($reason, 'hop 0: root suite');
+    $needsPq = false;
+    foreach ($v->get('chain') as $hop) {
+        if ($algOf($hop) !== 'ed25519') {
+            $needsPq = true;
+        }
+    }
+    if ($needsPq && !$pinRefusal && !$mldsa) {
+        $cpSkipped++;
+        continue;
+    }
+    $cpRan++;
+    $eri = $v->get('expected_root_issuer');
+    [$why, $ok] = Pca::verifyChain(
+        $v->get('chain'), $eri, is_string($eri),
+        $v->has('allowed_suites') ? $v->get('allowed_suites') : null,
+        $v->has('pq_pins') ? $v->get('pq_pins') : null,
+        $v->has('trusted_root') ? $v->get('trusted_root') : null,
+    );
+    $check($ok === $exp->get('ok'), $v->get('name') . ': ok = ' . $str($ok) . ", want " . $str($exp->get('ok')) . " ($why)");
+    if ($pinRefusal) {
+        $check($why === $reason, $v->get('name') . ': reason ' . $str($why) . ', want ' . $str($reason));
+    }
+}
+$check($cpRan + $cpSkipped === count($chainPins), 'chain_pin accounting');
+echo "chain_pin: $cpRan ran, $cpSkipped skipped of " . count($chainPins) . "\n";
+
+// ---------------------------------------------------------------------------------------
+// Round 6 (gen-conformance-r6.mjs): whole signer-set validation (threshold_set), the signer-set hash in UTF-8 byte
+// order (signer_set_hash), and malformed input that must be a clean deny, never an exception (malformed).
+// ---------------------------------------------------------------------------------------
+$r6Supported = $mldsa ? ['ed25519', 'ml-dsa-65', 'hybrid-ed25519-ml-dsa-65'] : ['ed25519'];
+$tsRan = 0;
+$tsSkipped = 0;
+foreach ($prim->get('threshold_set') as $e) {
+    $req = $e->has('requires') ? $e->get('requires') : null;
+    if (is_string($req) && !in_array($req, $r6Supported, true)) {
+        $tsSkipped++;
+        continue;
+    }
+    $tsRan++;
+    try {
+        $got = Pca::verifyThresholdShare($e);
+    } catch (\Throwable $t) {
+        $check(false, 'threshold_set ' . $e->get('name') . ': THREW ' . get_class($t));
+        continue;
+    }
+    $check($got === $e->get('valid'), 'threshold_set ' . $e->get('name') . ': verified = ' . $str($got) . ', want ' . $str($e->get('valid')));
+}
+$check($tsRan + $tsSkipped >= 55, 'threshold_set shrank');
+foreach ($prim->get('signer_set_hash') as $e) {
+    $h = Pca::signerSetHashRaw($e->get('signer_set'));
+    $got = $h === null ? null : Pca::b64u($h);
+    $check($got === $e->get('hash'), 'signer_set_hash ' . $e->get('name') . ': got ' . $str($got));
+}
+$malformed = $prim->get('malformed');
+$check(count($malformed) >= 80, 'malformed shrank');
+foreach ($malformed as $m) {
+    $nm = $m->get('name');
+    $in = $m->get('input');
+    try {
+        switch ($m->get('api')) {
+            case 'chain':
+                [$why, $ok] = Pca::verifyChain($in->get('chain'), $in->get('expected_root_issuer'), true);
+                $check($ok === false, "malformed $nm: accepted");
+                break;
+            case 'threshold_share':
+                $check(Pca::verifyThresholdShare($in) === false, "malformed $nm: accepted");
+                break;
+            case 'pcactn_json':
+                $v = Pca::verifyJson($in->get('text'), $in->get('grant'), $in->get('now')->int(), $in->get('aud'));
+                $check($v['allow'] === false, "malformed $nm: allowed");
+                break;
+            default:
+                $check(false, "malformed $nm: unknown api");
+        }
+    } catch (\Throwable $t) {
+        $check(false, "malformed $nm: THREW " . get_class($t) . ': ' . $t->getMessage());
+    }
+}
+echo "round 6: threshold_set $tsRan ran, $tsSkipped skipped; signer_set_hash " . count($prim->get('signer_set_hash')) . '; malformed ' . count($malformed) . "\n";
+
+// ---------------------------------------------------------------------------------------
+// Nesting depth (gen-conformance-depth.mjs): every untrusted entry point at MAX_JSON_DEPTH-1 / limit / limit+1 and
+// ~100000 deep (`expand` cases, expanded iteratively by tests/DepthCases.php). Verdict == `valid`; nothing may throw.
+// ---------------------------------------------------------------------------------------
+require_once __DIR__ . '/tests/DepthCases.php';
+$depthCases = $prim->has('depth') ? $prim->get('depth') : [];
+$check(count($depthCases) >= 29, 'primitives.depth: expected at least 29 vectors, got ' . count($depthCases));
+foreach ($depthCases as $d) {
+    try {
+        [$got, $why] = \Atlas\Pca\Tests\DepthCases::run($d);
+        $check($got === $d->get('valid'), 'depth ' . $d->get('name') . ': ' . $str($got) . ', want ' . $str($d->get('valid')) . " ($why)");
+    } catch (\Throwable $t) {
+        $check(false, 'depth ' . $d->get('name') . ': THREW ' . get_class($t) . ': ' . $t->getMessage());
+    }
+}
+echo 'depth: ' . count($depthCases) . " cases\n";
+
 echo "primitives: $n canonical/json_parse/b64u cases + merkle + params_digest pass\n";
 echo "threshold shares (v2.1 binding): $shareAccepted valid accepted, $shareRejected invalid rejected"
     . " (incl. bare-agent-share + cross-signer-set replay rejection)\n";

@@ -20,11 +20,17 @@ final class Mldsa
     private static ?\FFI $ffi = null;
     private static bool $tried = false;
 
-    /** Candidate libcrypto paths: an explicit override first, then common OpenSSL >= 3.5 locations. */
-    private static function candidates(): array
+    /**
+     * Candidate libcrypto paths, tried in order: the explicit override first (ATLAS_PCA_LIBCRYPTO: one path, or several
+     * separated by PATH_SEPARATOR; empty entries are ignored), then common OpenSSL >= 3.5 locations. The first one whose
+     * provider can build an ML-DSA-65 key wins.
+     * @internal public for tests only
+     * @return list<string>
+     */
+    public static function candidates(): array
     {
         $env = getenv('ATLAS_PCA_LIBCRYPTO');
-        $paths = $env !== false && $env !== '' ? [$env] : [];
+        $paths = is_string($env) ? array_values(array_filter(explode(PATH_SEPARATOR, $env), fn($p) => $p !== '')) : [];
         foreach ([
             '/opt/homebrew/opt/openssl@3/lib/libcrypto*.dylib',
             '/opt/homebrew/lib/libcrypto*.dylib',
@@ -60,13 +66,37 @@ final class Mldsa
             CDEF;
         foreach (self::candidates() as $path) {
             try {
-                self::$ffi = \FFI::cdef($cdef, $path);
+                $f = \FFI::cdef($cdef, $path);
+                if (!self::worksMlDsa($f)) {
+                    continue; // libcrypto < 3.5 (no ML-DSA): never report available
+                }
+                self::$ffi = $f;
                 return self::$ffi;
             } catch (\Throwable) {
                 // try the next candidate
             }
         }
         return null;
+    }
+
+    /**
+     * Real capability probe: the provider can actually construct an ML-DSA-65 public key (OpenSSL < 3.5 cannot, and
+     * returns NULL; a library without the _ex symbols fails FFI::cdef). This is the whole test: no version-number gate.
+     */
+    private static function worksMlDsa(\FFI $f): bool
+    {
+        try {
+            $buf = $f->new('unsigned char[' . self::PUBLIC_KEY_BYTES . ']');
+            \FFI::memset($buf, 0, self::PUBLIC_KEY_BYTES);
+            $k = $f->EVP_PKEY_new_raw_public_key_ex(null, 'ML-DSA-65', null, $buf, self::PUBLIC_KEY_BYTES);
+            if ($k === null || \FFI::isNull($k)) {
+                return false;
+            }
+            $f->EVP_PKEY_free($k);
+            return true;
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     public static function available(): bool

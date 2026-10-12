@@ -7,6 +7,28 @@ require_once __DIR__ . '/Json.php';
 require_once __DIR__ . '/Mldsa.php';
 
 /**
+ * An opaque PQ verification key (R3-01 choke point). Minted ONLY by Pca::resolvePqKey, so the low-level PQ verification
+ * (Pca::verifySuite) cannot be reached with a `pq_pk` read straight off the artifact being verified.
+ * @internal
+ */
+final class PinnedPq
+{
+    private function __construct(public readonly string $key, public readonly string $source)
+    {
+    }
+
+    /** @internal callable from Pca only (anything else is a programming error and throws). */
+    public static function mint(string $key, string $source): self
+    {
+        $caller = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['class'] ?? null;
+        if ($caller !== Pca::class) {
+            throw new \LogicException('PinnedPq is minted only by Pca::resolvePqKey');
+        }
+        return new self($key, $source);
+    }
+}
+
+/**
  * Verifier for the CORE PCActn checks, wire format v2 (strict): wire, version, audience, validity, chain,
  * plan_inclusion, leaf_signature, counter. Values are Json::parse* trees (Obj / list / string / Num / bool / null).
  */
@@ -16,6 +38,13 @@ final class Pca
     public const CAP_DOMAIN = "atlas-pca/cap/v1\0";
     public const DEFAULT_REV = 'reversible';
     public const MAX_CHAIN = 16;
+    /** Shared hard caveat caps (all PCA verifiers): per-hop cumulative list, and the sum over every hop of a chain. */
+    public const MAX_CAVEATS_PER_HOP = 256;
+    public const MAX_CAVEATS_PER_CHAIN = 1024;
+    public const CAVEAT_LIMIT_REASON = 'chain exceeds caveat limit (max 256 per hop, 1024 per chain)';
+    /** Shared raw wire-size cap of a PCActn JSON document (UTF-8 bytes), checked before any parsing. */
+    public const MAX_ARTIFACT_BYTES = 524288;
+    public const ARTIFACT_SIZE_REASON = 'artifact exceeds size limit (max 524288 bytes)';
     public const MAX_LIFETIME_MS = 3600000;
     public const MAX_SKEW_MS = 60000;
     public const MAX_AUD_LEN = 256;
@@ -79,11 +108,6 @@ final class Pca
     private static function get(mixed $o, string $k): mixed
     {
         return $o instanceof Obj ? $o->get($k) : null;
-    }
-
-    private static function has(mixed $o, string $k): bool
-    {
-        return $o instanceof Obj && $o->has($k);
     }
 
     private static function isInt(mixed $v): bool
@@ -304,8 +328,49 @@ final class Pca
         return Mldsa::verify($pkRaw, $msg, $sgRaw);
     }
 
-    /** Verify the leaf signature under the PCActn's suite. FAIL-CLOSED. */
-    private static function verifyLeafSuite(Obj $p, mixed $holder, string $msg): bool
+    /**
+     * THE choke point (R3-01), mirroring resolvePqVerifyKey in packages/pca/src/pq.ts. Returns the key to verify under, or
+     * null (REFUSE) when no verifier-side authority vouches for the artifact's `pq_pk`:
+     *   1. $trustedPk: a key the verifier itself holds (the stored grant). Used as is.
+     *   2. $pqPins[$identity] (own entry only; an Obj or a string=>string array): the artifact key MUST equal the pin; a differing pin is a refusal.
+     *   3. $holderPq: the artifact key must hash to the signer's committed `holder_pq` (F-2).
+     * Natives have no allowUnboundPq: an artifact's own key is never enough.
+     */
+    private static function resolvePqKey(mixed $identity, mixed $artifactPk, mixed $holderPq = null, mixed $pqPins = null, mixed $trustedPk = null): ?PinnedPq
+    {
+        if (is_string($trustedPk) && $trustedPk !== '') {
+            return PinnedPq::mint($trustedPk, 'trusted');
+        }
+        if (!is_string($artifactPk) || $artifactPk === '') {
+            return null;
+        }
+        if (is_string($identity)) {
+            $has = false;
+            $pin = null;
+            if ($pqPins instanceof Obj) {
+                $has = $pqPins->has($identity);
+                $pin = $has ? $pqPins->get($identity) : null;
+            } elseif (is_array($pqPins) && array_key_exists($identity, $pqPins)) {
+                $has = true;
+                $pin = $pqPins[$identity];
+            }
+            if ($has) {
+                return $pin === $artifactPk ? PinnedPq::mint($artifactPk, 'pin') : null;
+            }
+        }
+        if (is_string($holderPq) && self::holderPqCommitment($artifactPk) === $holderPq) {
+            return PinnedPq::mint($artifactPk, 'holder-commitment');
+        }
+        return null;
+    }
+
+    private static function mldsaVerifyPinned(?PinnedPq $pq, string $msg, mixed $sig): bool
+    {
+        return $pq !== null && self::mldsaVerifyB64u($pq->key, $msg, $sig);
+    }
+
+    /** Verify `$p`'s signature(s) under its suite. FAIL-CLOSED. The PQ half verifies ONLY under `$pq` (a PinnedPq), never under `pq_pk` read from `$p`. */
+    private static function verifySuite(Obj $p, mixed $holder, string $msg, ?PinnedPq $pq): bool
     {
         [$suite] = self::resolveSuite($p);
         if ($suite === null) {
@@ -314,11 +379,21 @@ final class Pca
         $sig = $p->get('sig');
         return match ($suite) {
             'ed25519' => self::verifyB64u($holder, $msg, $sig),
-            'ml-dsa-65' => self::mldsaVerifyB64u($p->get('pq_pk'), $msg, $sig),
+            'ml-dsa-65' => self::mldsaVerifyPinned($pq, $msg, $sig),
             'hybrid-ed25519-ml-dsa-65' =>
-                self::verifyB64u($holder, $msg, $sig) && self::mldsaVerifyB64u($p->get('pq_pk'), $msg, $p->get('pq_sig')),
+                self::verifyB64u($holder, $msg, $sig) && self::mldsaVerifyPinned($pq, $msg, $p->get('pq_sig')),
             default => false,
         };
+    }
+
+    /**
+     * Verify a signature under the ARTIFACT'S OWN `pq_pk`. Only for surfaces whose key is authorised elsewhere (threshold shares,
+     * the pq_artifact conformance primitives): it proves nothing about who issued `$p`. The chain and the PCActn leaf never call
+     * it; they resolve their key through resolvePqKey.
+     */
+    private static function verifyLeafSuite(Obj $p, mixed $holder, string $msg): bool
+    {
+        return self::verifySuite($p, $holder, $msg, self::resolvePqKey(null, $p->get('pq_pk'), null, null, $p->get('pq_pk')));
     }
 
     // ---- capability chain ---------------------------------------------------------------
@@ -330,10 +405,49 @@ final class Pca
 
     private static function bodyOf(Obj $c): Obj
     {
-        return Obj::of([
+        $b = Obj::of([
             'issuer' => $c->get('issuer'), 'holder' => $c->get('holder'),
             'caveats' => $c->get('caveats'), 'parent' => $c->get('parent'),
         ]);
+        if ($c->has('holder_pq')) {
+            $b->set('holder_pq', $c->get('holder_pq'));
+        }
+        return $b;
+    }
+
+    /** F-2 commitment to a holder's PQ key: b64u(sha256("atlas-pca/holder-pq/v1\0" || utf8(pq_pk))). */
+    public static function holderPqCommitment(string $pqPk): string
+    {
+        return self::b64u(hash('sha256', "atlas-pca/holder-pq/v1\0" . $pqPk, true));
+    }
+
+    /** allowedSuites policy (absent alg == ed25519). null == no policy; [] refuses everything. */
+    private static function suitePolicyError(mixed $alg, string $label, ?array $allowed): ?string
+    {
+        if ($allowed === null) {
+            return null;
+        }
+        $a = $alg ?? 'ed25519';
+        if (is_string($a) && in_array($a, $allowed, true)) {
+            return null;
+        }
+        return $label . ": signature suite '" . (is_string($a) ? $a : 'invalid') . "' is not allowed by this verifier's suite policy";
+    }
+
+    /** F-2: a PQ-carrying suite is accepted only under a pq_pk the signer's holder committed to (holder_pq). */
+    private static function pqBindingError(mixed $alg, mixed $pqPk, mixed $committed, string $label): ?string
+    {
+        $a = $alg ?? 'ed25519';
+        if (!is_string($a) || !isset(self::SIG_SUITES[$a]) || !self::SIG_SUITES[$a][1]) {
+            return null;
+        }
+        if (!is_string($committed)) {
+            return "$label: suite '$a' needs a PQ key bound to the signer, but the signer's holder carries no holder_pq commitment (unbound PQ keys are rejected; F-2)";
+        }
+        if (!is_string($pqPk) || !hash_equals($committed, self::holderPqCommitment($pqPk))) {
+            return "$label: pq_pk does not match the signer's committed holder_pq (F-2)";
+        }
+        return null;
     }
 
     /**
@@ -359,14 +473,18 @@ final class Pca
         return [$body, null];
     }
 
-    private static function checkSig(Obj $c, mixed $signer, string $label): string
+    private static function checkSig(Obj $c, mixed $signer, string $label, ?PinnedPq $pq = null): string
     {
         // Unknown suite => fail-closed (before any hashing), mirroring capability.ts checkSig.
         [$body, $err] = self::signableHopBody($c);
         if ($body === null) {
             return "$label: $err";
         }
-        $digest = self::hashCanonical($body);
+        try {
+            $digest = self::hashCanonical($body);
+        } catch (JsonError) {
+            return $label . ': malformed body'; // e.g. a caveat number outside the strict profile, as in the reference
+        }
         $bd = $c->get('body_digest');
         $id = $c->get('id');
         if (!is_string($bd) || $digest !== $bd || $id !== $bd) {
@@ -375,15 +493,107 @@ final class Pca
         $d = self::unb64u($bd, 32);
         // Suite-agile hop verification: ed25519 == verifyB64u(signer, msg, sig); hybrid requires BOTH the
         // Ed25519 `sig` (under `signer`) AND the ML-DSA `pq_sig` (under `pq_pk`); pure ml-dsa-65 verifies
-        // `sig` under `pq_pk`. verifyLeafSuite dispatches on the hop's `alg` (signer = expected Ed25519 key).
-        if ($d === null || !self::verifyLeafSuite($c, $signer, self::CAP_DOMAIN . $d)) {
+        // `sig` under the resolved `$pq` key (never the hop's own pq_pk); signer = expected Ed25519 key.
+        if ($d === null || !self::verifySuite($c, $signer, self::CAP_DOMAIN . $d, $pq)) {
             return $label . ': bad signature (not signed by expected key)';
         }
         return '';
     }
 
-    /** @return array{0:string,1:bool} [reason, ok] */
-    public static function verifyChain(array $chain, mixed $expectedRootIssuer, bool $haveIssuer): array
+    /** True when the chain breaks the caveat caps; reads raw list sizes only, so it runs before any hashing/signature work. */
+    public static function caveatLimitExceeded(mixed $chain): bool
+    {
+        if (!is_array($chain)) {
+            return false; // like the reference: a non-list chain has no caveats to count (verifyChain refuses it as empty)
+        }
+        $total = 0;
+        foreach ($chain as $c) {
+            $cv = $c instanceof Obj ? $c->get('caveats') : null;
+            $n = is_array($cv) ? count($cv) : 0;
+            if ($n > self::MAX_CAVEATS_PER_HOP) {
+                return true;
+            }
+            $total += $n;
+            if ($total > self::MAX_CAVEATS_PER_CHAIN) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public const ROOT_PQ_PIN_REASON = "hop 0: root suite '%s' needs a PQ key pinned for the root issuer (policy.pqPins) or the verifier's stored grant "
+        . "(policy.trustedRoot); the root's own pq_pk proves nothing about who issued it (R3-01)";
+
+    /**
+     * The root hop has no parent holding a holder_pq commitment, so a non-ed25519 root's PQ key must come from a verifier-side
+     * authority: the verifier's stored copy of this very grant ($trustedRoot, same content hash) or a pin for root.issuer.
+     * Mirrors rootPq in capability.ts. @return array{0:?PinnedPq,1:?string} [key, refusal reason]
+     */
+    private static function resolveRootPq(Obj $root, mixed $pqPins, ?Obj $trustedRoot): array
+    {
+        [$suite] = self::resolveSuite($root);
+        if ($suite === null || !self::SIG_SUITES[$suite][1]) {
+            return [null, null];
+        }
+        $pk = $root->get('pq_pk');
+        $trusted = null;
+        if ($trustedRoot !== null && is_string($pk)) {
+            try {
+                $trusted = self::capHash($trustedRoot) === self::capHash($root) ? $pk : null;
+            } catch (\Throwable) {
+                $trusted = null;
+            }
+        }
+        $key = self::resolvePqKey($root->get('issuer'), $pk, null, $pqPins, $trusted);
+        return $key === null ? [null, sprintf(self::ROOT_PQ_PIN_REASON, $suite)] : [$key, null];
+    }
+
+    /**
+     * A non-ed25519 (pure-PQ or hybrid) ROOT is accepted only if `$pqPins[root.issuer]` equals the root's `pq_pk`, or `$trustedRoot` is
+     * the root itself (the verifier's own stored grant); otherwise it is refused (R4-01).
+     * @param Obj|array<string,string>|null $pqPins root issuer (Ed25519 b64u) => PQ public key
+     * @return array{0:string,1:bool} [reason, ok]
+     */
+    public static function verifyChain(mixed $chain, mixed $expectedRootIssuer, bool $haveIssuer, ?array $allowedSuites = null, mixed $pqPins = null, ?Obj $trustedRoot = null): array
+    {
+        // TOTAL (R6-05): a hostile chain is a verdict, never an exception. ANY JSON value is accepted: a chain that is not
+        // a JSON array is the empty chain, as in the reference (Array.isArray(chain) ? chain : []).
+        try {
+            return self::verifyChainUnchecked(is_array($chain) && array_is_list($chain) ? $chain : [], $expectedRootIssuer, $haveIssuer, $allowedSuites, $pqPins, $trustedRoot);
+        } catch (\Throwable $e) {
+            return ['malformed capability chain: ' . get_class($e), false];
+        }
+    }
+
+    /** Mirrors wellTyped in capability.ts (a correctly SIGNED but ill-typed hop is refused like in the reference). */
+    private static function hopWellTyped(mixed $c): bool
+    {
+        if (!($c instanceof Obj)) {
+            return false;
+        }
+        foreach (['id', 'issuer', 'holder', 'body_digest', 'sig'] as $k) {
+            if (!is_string($c->get($k))) {
+                return false;
+            }
+        }
+        foreach (['alg', 'pq_pk', 'pq_sig', 'holder_pq', 'parent'] as $k) {
+            if ($c->has($k) && !is_string($c->get($k))) {
+                return false;
+            }
+        }
+        $cv = $c->get('caveats');
+        if (!is_array($cv) || !array_is_list($cv)) {
+            return false;
+        }
+        foreach ($cv as $x) {
+            if (!($x instanceof Obj) || !is_string($x->get('type'))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static function verifyChainUnchecked(array $chain, mixed $expectedRootIssuer, bool $haveIssuer, ?array $allowedSuites, mixed $pqPins, ?Obj $trustedRoot): array
     {
         if (count($chain) === 0) {
             return ['empty chain', false];
@@ -391,8 +601,11 @@ final class Pca
         if (count($chain) > self::MAX_CHAIN) { // before any signature work
             return ['chain too long', false];
         }
+        if (self::caveatLimitExceeded($chain)) {
+            return [self::CAVEAT_LIMIT_REASON, false];
+        }
         foreach ($chain as $i => $c) {
-            if (!($c instanceof Obj) || !is_array($c->get('caveats'))) {
+            if (!self::hopWellTyped($c)) {
                 return ["hop $i: malformed capability", false];
             }
         }
@@ -403,7 +616,14 @@ final class Pca
         if ($haveIssuer && $root->get('issuer') !== $expectedRootIssuer) {
             return ['hop 0: root issuer is not the expected principal', false];
         }
-        if (($e = self::checkSig($root, $root->get('issuer'), 'hop 0')) !== '') {
+        if (($pe = self::suitePolicyError($root->get('alg'), 'hop 0', $allowedSuites)) !== null) {
+            return [$pe, false];
+        }
+        [$rootPq, $rootErr] = self::resolveRootPq($root, $pqPins, $trustedRoot);
+        if ($rootErr !== null) {
+            return [$rootErr, false];
+        }
+        if (($e = self::checkSig($root, $root->get('issuer'), 'hop 0', $rootPq)) !== '') {
             return [$e, false];
         }
         for ($i = 1; $i < count($chain); $i++) {
@@ -416,7 +636,12 @@ final class Pca
             if ($c->get('issuer') !== $parent->get('holder')) {
                 return [$label . ': issuer is not the parent\'s bound holder', false];
             }
-            if (($e = self::checkSig($c, $parent->get('holder'), $label)) !== '') {
+            $pe = self::suitePolicyError($c->get('alg'), $label, $allowedSuites)
+                ?? self::pqBindingError($c->get('alg'), $c->get('pq_pk'), $parent->get('holder_pq'), $label);
+            if ($pe !== null) {
+                return [$pe, false];
+            }
+            if (($e = self::checkSig($c, $parent->get('holder'), $label, self::resolvePqKey($parent->get('holder'), $c->get('pq_pk'), $parent->get('holder_pq')))) !== '') {
                 return [$e, false];
             }
             $pc = $parent->get('caveats');
@@ -565,7 +790,7 @@ final class Pca
                 if (!($c instanceof Obj)) {
                     return "cap_chain[$i] must be an object";
                 }
-                if (!self::closed($c, ['id', 'issuer', 'holder', 'body_digest', 'caveats', 'sig', 'parent', 'alg', 'pq_pk', 'pq_sig'])) {
+                if (!self::closed($c, ['id', 'issuer', 'holder', 'body_digest', 'caveats', 'sig', 'parent', 'alg', 'pq_pk', 'pq_sig', 'holder_pq'])) {
                     return "unknown field in cap_chain[$i]";
                 }
                 foreach (['id', 'issuer', 'holder', 'body_digest'] as $k) {
@@ -578,6 +803,9 @@ final class Pca
                 $hopSigErr = self::validateSignatureWire($c);
                 if ($hopSigErr !== null) {
                     return "cap_chain[$i]: $hopSigErr";
+                }
+                if ($c->has('holder_pq') && !self::b($c->get('holder_pq'), 32)) {
+                    return "cap_chain[$i].holder_pq is not canonical base64url (32 bytes)";
                 }
                 if ($c->has('parent') && !self::b($c->get('parent'), 32)) {
                     return "cap_chain[$i].parent is not canonical base64url (32 bytes)";
@@ -675,21 +903,42 @@ final class Pca
      * Verify a signed PCActn supplied as RAW JSON text (strict profile first; a parse failure is a wire failure).
      * @return array{allow:bool, checks:array<string,bool>, reason:string}
      */
-    public static function verifyJson(string $text, mixed $grant, int $now, string $audience): array
+    public static function verifyJson(string $text, mixed $grant, int $now, string $audience, ?array $allowedSuites = null): array
     {
+        try { // TOTAL (R6-05)
+            return self::verifyJsonUnchecked($text, $grant, $now, $audience, $allowedSuites);
+        } catch (\Throwable $e) {
+            return ['allow' => false, 'checks' => ['wire' => false], 'reason' => 'wire: malformed input (' . get_class($e) . ')'];
+        }
+    }
+
+    private static function verifyJsonUnchecked(string $text, mixed $grant, int $now, string $audience, ?array $allowedSuites): array
+    {
+        if (strlen($text) > self::MAX_ARTIFACT_BYTES) { // FIRST: before any parsing (strlen = UTF-8 bytes)
+            return ['allow' => false, 'checks' => ['wire' => false], 'reason' => 'wire: ' . self::ARTIFACT_SIZE_REASON];
+        }
         try {
             $p = Json::parseStrict($text, true);
         } catch (JsonError $e) {
             return ['allow' => false, 'checks' => ['wire' => false], 'reason' => 'wire: ' . $e->getMessage()];
         }
-        return self::verifyPcactnCore($p, $grant, $now, $audience);
+        return self::verifyPcactnCore($p, $grant, $now, $audience, $allowedSuites);
     }
 
     /**
      * @return array{allow:bool, checks:array<string,bool>, reason:string}
      * A wire failure is terminal: checks == ['wire' => false].
      */
-    public static function verifyPcactnCore(mixed $p, mixed $grant, int $now, string $audience): array
+    public static function verifyPcactnCore(mixed $p, mixed $grant, int $now, string $audience, ?array $allowedSuites = null): array
+    {
+        try { // TOTAL (R6-05): a malformed input is a verdict, never an exception
+            return self::verifyPcactnCoreUnchecked($p, $grant, $now, $audience, $allowedSuites);
+        } catch (\Throwable $e) {
+            return ['allow' => false, 'checks' => ['wire' => false], 'reason' => 'wire: malformed input (' . get_class($e) . ')'];
+        }
+    }
+
+    private static function verifyPcactnCoreUnchecked(mixed $p, mixed $grant, int $now, string $audience, ?array $allowedSuites): array
     {
         $wire = self::validateWire($p);
         if ($wire !== null) {
@@ -736,11 +985,13 @@ final class Pca
                 $fail('chain', 'empty chain');
             } elseif (count($chain) > self::MAX_CHAIN) {
                 $fail('chain', 'chain too long');
+            } elseif (self::caveatLimitExceeded($chain)) {
+                $fail('chain', self::CAVEAT_LIMIT_REASON); // before any hashing or signature work
             } elseif (self::capHash($chain[0]) !== self::capHash($grant)) {
                 $fail('chain', 'chain root is not the grant');
             } else {
                 $gi = self::get($grant, 'issuer');
-                [$why, $ok] = self::verifyChain($chain, $gi, is_string($gi));
+                [$why, $ok] = self::verifyChain($chain, $gi, is_string($gi), $allowedSuites, null, $grant); // chain[0] == grant was checked above
                 if ($ok) {
                     $checks['chain'] = true;
                 } else {
@@ -777,8 +1028,15 @@ final class Pca
         }
 
         try {
-            if (count($chain) > 0
-                && self::verifyLeafSuite($p, $chain[count($chain) - 1]->get('holder'), self::thresholdMessage($p))) {
+            $leafErr = count($chain) > 0
+                ? (self::suitePolicyError($p->get('alg'), 'leaf', $allowedSuites)
+                    ?? self::pqBindingError($p->get('alg'), $p->get('pq_pk'), $chain[count($chain) - 1]->get('holder_pq'), 'leaf'))
+                : null;
+            if ($leafErr !== null) {
+                $fail('leaf_signature', $leafErr);
+            } elseif (count($chain) > 0
+                && self::verifySuite($p, $chain[count($chain) - 1]->get('holder'), self::thresholdMessage($p),
+                    self::resolvePqKey($chain[count($chain) - 1]->get('holder'), $p->get('pq_pk'), $chain[count($chain) - 1]->get('holder_pq')))) {
                 $checks['leaf_signature'] = true;
             } else {
                 $fail('leaf_signature', 'signature does not verify under the leaf holder key');
@@ -800,6 +1058,7 @@ final class Pca
 
     public const SIGNERSET_DOMAIN = "atlas-pca/signerset/v1\0";
     public const SHARE_DOMAIN_PREFIX = 'atlas-pca/share/';
+    public const SHARE_SUITE_TAG = "\0atlas-pca/share-suite/v1\0";
 
     /** The signature suites wired into this verifier (ed25519 + the ML-DSA cross-impl suites via OpenSSL FFI). */
     public static function supportedSuites(): array
@@ -835,14 +1094,19 @@ final class Pca
             }
             $role = $e->get('role');
             $pk = $e->get('publicKey');
-            if (!is_string($role) || self::unb64u($pk, 32) === null) {
-                return null;
+            if (!is_string($role) || !is_string($pk)) {
+                return null; // key / role validity is signerRegistry's job; the hash covers any string set like the reference
             }
-            $entries[] = [$role, $pk];
+            $entries[] = [$role, $pk, $e->get('pq_pk')];
         }
         usort($entries, fn($a, $b) => $a[0] !== $b[0] ? strcmp($a[0], $b[0]) : strcmp($a[1], $b[1]));
-        $list = array_map(fn($x) => Obj::of(['publicKey' => $x[1], 'role' => $x[0]]), $entries);
-        return self::sha(self::SIGNERSET_DOMAIN . Json::canonicalizeStrict($list));
+        // additive: a registered pq_pk is part of the bound set (ed25519-only sets hash as before)
+        $list = array_map(fn($x) => Obj::of(['publicKey' => $x[1], 'role' => $x[0]] + (is_string($x[2]) ? ['pq_pk' => $x[2]] : [])), $entries);
+        try {
+            return self::sha(self::SIGNERSET_DOMAIN . Json::canonicalizeStrict($list));
+        } catch (JsonError) {
+            return null; // e.g. a lone surrogate in a role / key: fail-closed like every other malformed set (R6-05)
+        }
     }
 
     /**
@@ -853,6 +1117,68 @@ final class Pca
      * FAIL-CLOSED: any missing/malformed field returns false. Corpus shares are Ed25519 (64-byte `sig`,
      * 32-byte `publicKey`); a share carrying a PQ `alg` routes through the same suite seam as the leaf.
      */
+    /** Registered PQ public-key lengths of every suite (ml-dsa-65/87, slh-dsa-128f/256s, fn-dsa-512/1024, less-cat1). */
+    private const PQ_PK_LENGTHS = [1952, 2592, 32, 64, 897, 1793, 97484];
+    private const SIGNER_ROLES = ['agent', 'guardian', 'principal'];
+
+    /**
+     * R6-03: validate the WHOLE signer set like the reference (decideThreshold BuildReg): every entry an object with a
+     * known role (case-sensitive) and a canonical 32-byte publicKey; a PRESENT pq_pk (JSON null is present) canonical
+     * base64url of a registered PQ key length; one key per role; one role per key; a duplicate (role, key) only with the
+     * same pq_pk. Returns role => [publicKey, pq_pk|null], or null when the set is malformed.
+     * @return array<string, array{0:string, 1:?string}>|null
+     */
+    private static function signerRegistry(mixed $signerSet): ?array
+    {
+        if (!is_array($signerSet) || !array_is_list($signerSet)) {
+            return null;
+        }
+        $reg = [];
+        foreach ($signerSet as $e) {
+            if (!($e instanceof Obj)) {
+                return null;
+            }
+            $role = $e->get('role');
+            $pk = $e->get('publicKey');
+            if (!is_string($role) || !in_array($role, self::SIGNER_ROLES, true) || self::unb64u($pk, 32) === null) {
+                return null;
+            }
+            $pq = null;
+            if ($e->has('pq_pk')) {
+                $pq = $e->get('pq_pk');
+                $raw = self::unb64u($pq);
+                if ($raw === null || !in_array(strlen($raw), self::PQ_PK_LENGTHS, true)) {
+                    return null;
+                }
+            }
+            if (isset($reg[$role])) {
+                if ($reg[$role][0] !== $pk || $reg[$role][1] !== $pq) {
+                    return null; // two keys for one role, or a duplicate (role, key) with a conflicting pq_pk
+                }
+                continue;
+            }
+            foreach ($reg as $r) {
+                if ($r[0] === $pk) {
+                    return null; // one key under two roles
+                }
+            }
+            $reg[$role] = [$pk, $pq];
+        }
+        return $reg;
+    }
+
+    /** t is exactly 1, 2 or 3 (R6-04); an integral JSON number such as 1.0 counts, like the reference's Number. */
+    private static function thresholdT(mixed $t): ?int
+    {
+        if (!($t instanceof Num)) {
+            return null;
+        }
+        if (preg_match('/\A[123](?:\.0+)?\z/D', $t->lexeme) !== 1) {
+            return null;
+        }
+        return (int)$t->lexeme[0];
+    }
+
     public static function verifyThresholdShare(mixed $s): bool
     {
         try {
@@ -863,12 +1189,13 @@ final class Pca
             if (!is_string($role) || $role === '') {
                 return false;
             }
-            $t = $s->get('t');
-            if (!self::isInt($t)) {
+            $tv = self::thresholdT($s->get('t'));
+            if ($tv === null) {
                 return false;
             }
-            $tv = $t->int();
-            if ($tv < 1 || $tv > 3) {
+            // R6-03: the WHOLE set is validated before the share is looked at.
+            $reg = self::signerRegistry($s->get('signer_set'));
+            if ($reg === null) {
                 return false;
             }
             $ssh = self::signerSetHashRaw($s->get('signer_set'));
@@ -883,12 +1210,42 @@ final class Pca
             if (!($share instanceof Obj)) {
                 return false;
             }
-            $message = self::SHARE_DOMAIN_PREFIX . $role . "\0" . self::sha($tmsg) . $ssh . chr($tv);
+            if ($share->get('role') !== $role) {
+                return false; // share.role is required and must name the verified role
+            }
+            // R5-A1: the share must be for the ONE key the verifier's signer set registers for `role`; the
+            // share's own publicKey / pq_pk never vouch for themselves.
+            if (!isset($reg[$role]) || $share->get('publicKey') !== $reg[$role][0]) {
+                return false;
+            }
+            $regPq = $reg[$role][1];
             $alg = $share->has('alg') ? $share->get('alg') : 'ed25519';
+            // A share that NAMES a pq_pk must name exactly its role's registered one (any suite; a role registering
+            // none has nothing it could equal). The key used is always the registered one.
+            if ($share->has('pq_pk') && (!is_string($regPq) || $share->get('pq_pk') !== $regPq)) {
+                return false;
+            }
+            // R6-02: a role that registers a pq_pk REQUIRES a PQ (pure or hybrid) share; an ed25519-only share
+            // for it is refused (otherwise an Ed25519 break would still forge the role).
+            if ($regPq !== null && $alg === 'ed25519') {
+                return false;
+            }
+            $tag = '';
+            if ($alg !== 'ed25519') {
+                if (!is_string($regPq)) {
+                    return false;
+                }
+                $pinned = $share->without('pq_pk');
+                $pinned->set('pq_pk', $regPq); // verify ONLY under the registered PQ key
+                $share = $pinned;
+                if (is_string($alg) && isset(self::SIG_SUITES[$alg])) {
+                    $tag = self::SHARE_SUITE_TAG . $alg;
+                }
+            }
+            $message = self::SHARE_DOMAIN_PREFIX . $role . "\0" . self::sha($tmsg) . $ssh . chr($tv) . $tag;
             if ($alg === 'ed25519') {
                 return self::verifyB64u($share->get('publicKey'), $message, $share->get('sig'));
             }
-            // PQ-suite share (not exercised by the current corpus): reuse the leaf seam, fail-closed on unknown.
             return self::verifyLeafSuite($share, $share->get('publicKey'), $message);
         } catch (\Throwable) {
             return false;

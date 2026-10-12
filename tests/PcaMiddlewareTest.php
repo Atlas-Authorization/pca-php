@@ -123,6 +123,34 @@ final class PcaMiddlewareTest extends TestCase
         $this->assertTrue($handler->received?->getAttribute('pca')['allow']);
     }
 
+    /**
+     * R6-01 parity: body mode strict-parses the WHOLE {"pcactn":...} envelope like the reference defaultExtract, so the
+     * envelope counts toward MAX_JSON_DEPTH (32) and a duplicate key anywhere is refused before verification.
+     */
+    public function testBodyEnvelopeIsStrictWithTheDepthCapOverTheWholeEnvelope(): void
+    {
+        $body = fn (int $n): string => '{"x":' . str_repeat('[', $n) . str_repeat(']', $n) . ',"pcactn":' . $this->pcactnJson . '}';
+        $run = function (string $text): array {
+            $handler = $this->recordingHandler();
+            $response = $this->middleware()->process((new ServerRequest('POST', '/r'))->withBody(Utils::streamFor($text)), $handler);
+            return [$handler->called, $response->getStatusCode(), json_decode((string)$response->getBody(), true)];
+        };
+        [$called, $status] = $run($body(31)); // envelope depth 32
+        $this->assertTrue($called);
+        $this->assertSame(200, $status);
+        foreach ([
+            $body(32), // envelope depth 33
+            $body(100000),
+            '{"pcactn":' . $this->pcactnJson . ',"pcactn":' . $this->pcactnJson . '}',
+            '{"pcactn":' . substr($this->pcactnJson, 0, -1) . ',"aud":"evil"}}',
+        ] as $i => $text) {
+            [$called, $status, $err] = $run($text);
+            $this->assertFalse($called, "case $i");
+            $this->assertSame(401, $status, "case $i");
+            $this->assertSame('request body is not valid strict JSON', $err['error_description'], "case $i");
+        }
+    }
+
     public function testMissingPcactnIsUnauthorizedWithChallenge(): void
     {
         $handler = $this->recordingHandler();

@@ -146,6 +146,9 @@ final class PcaMiddleware implements MiddlewareInterface
             if ($raw === null) {
                 return [null, null, 'PCA-Action header is not valid base64url'];
             }
+            if (strlen($raw) > Pca::MAX_ARTIFACT_BYTES) {
+                return [null, null, 'PCA-Action header is not a valid PCActn JSON object'];
+            }
             try {
                 $p = Json::parseLax($raw);
             } catch (\Throwable) {
