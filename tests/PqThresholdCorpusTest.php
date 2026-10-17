@@ -19,7 +19,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class PqThresholdCorpusTest extends TestCase
 {
-    private const CROSS = ['ed25519', 'ml-dsa-65', 'hybrid-ed25519-ml-dsa-65'];
+    private const CROSS = Pca::REGISTERED_SUITES; // filtered by Pca::suiteAvailable (the runtime capability manifest)
 
     private function mldsa(): bool
     {
@@ -182,6 +182,7 @@ final class PqThresholdCorpusTest extends TestCase
                 $this->assertSame($reason, $why, (string)$v->get('name'));
             }
         }
-        $this->assertGreaterThanOrEqual(25, $ran);
+        // without ML-DSA only the ed25519 chains and the hop-0 pin refusals (which need no crypto) run
+        $this->assertGreaterThanOrEqual($have ? 25 : 14, $ran);
     }
 }

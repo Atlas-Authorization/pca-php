@@ -10,7 +10,7 @@ use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 
 /**
- * ML-DSA-65 library discovery (Mldsa::ffi caches its handle per process, so every case runs in a fresh process) and the
+ * ML-DSA-65 library discovery (OpensslPq::ffi caches its handle per process, so every case runs in a fresh process) and the
  * verify() edges, against a REAL ML-DSA-65 signature from the TS reference (primitives.pq_artifact, alg ml-dsa-65).
  * The box layout this pins: an OpenSSL >= 3.5 libcrypto named by ATLAS_PCA_LIBCRYPTO, and the distro OpenSSL 3.0
  * libcrypto (no ML-DSA) under /usr/lib/x86_64-linux-gnu. Cases whose library is absent are skipped unless
@@ -43,13 +43,45 @@ final class MldsaDiscoveryTest extends TestCase
         return $p;
     }
 
+    /**
+     * True iff `$lib` loads and reports an OpenSSL version below 3.5 (no ML-DSA). A distro libcrypto.so.3 is NOT always 3.0:
+     * ubuntu-26.04 ships OpenSSL 3.5+, whose ML-DSA makes every "no ML-DSA on the box" premise below false.
+     */
+    public static function isPre35(string $lib): bool
+    {
+        try {
+            $v = \FFI::cdef('unsigned long OpenSSL_version_num(void);', $lib)->OpenSSL_version_num();
+        } catch (\Throwable) {
+            return false;
+        }
+        return is_int($v) && $v < 0x30500000;
+    }
+
+    /** The box layout these cases pin: the distro OpenSSL 3.0 libcrypto exists AND no default candidate has ML-DSA. */
     private function need30(): void
     {
+        $why = null;
         if (!is_file(self::DISTRO_30)) {
-            if (getenv('PCA_REQUIRE_MLDSA') === '1') {
-                $this->fail('PCA_REQUIRE_MLDSA=1 but the distro OpenSSL 3.0 libcrypto is missing');
+            $why = 'no distro OpenSSL 3.0 libcrypto';
+        } else {
+            $env = getenv('ATLAS_PCA_LIBCRYPTO');
+            putenv('ATLAS_PCA_LIBCRYPTO');
+            $defaults = Mldsa::candidates();
+            if (is_string($env)) {
+                putenv('ATLAS_PCA_LIBCRYPTO=' . $env);
             }
-            $this->markTestSkipped('no distro OpenSSL 3.0 libcrypto');
+            foreach ($defaults as $lib) {
+                if (!self::isPre35($lib)) {
+                    $why = "default libcrypto candidate $lib is OpenSSL >= 3.5 (or unloadable), not a no-ML-DSA box";
+                    break;
+                }
+            }
+        }
+        if ($why !== null) {
+            if (getenv('PCA_REQUIRE_MLDSA') === '1') {
+                $this->fail("PCA_REQUIRE_MLDSA=1 but $why");
+            }
+            $this->markTestSkipped($why);
         }
     }
 

@@ -3,12 +3,14 @@ declare(strict_types=1);
 
 // Plain conformance runner (no PHPUnit, no Composer): php conformance.php
 require_once __DIR__ . '/src/Pca.php';
+require_once __DIR__ . '/tests/Corpus.php';
 
 use Atlas\Pca\Json;
 use Atlas\Pca\JsonError;
 use Atlas\Pca\Mldsa;
 use Atlas\Pca\Obj;
 use Atlas\Pca\Pca;
+use Atlas\Pca\Tests\Corpus;
 
 $dir = __DIR__ . '/conformance/';
 $doc = Json::parseLax(file_get_contents($dir . 'vectors.json'));
@@ -31,16 +33,13 @@ if ($doc->get('format')->int() !== 2) {
 $order = array_map(fn($x) => $x, $doc->get('check_order'));
 
 // ---------------------------------------------------------------------------------------
-// Suite support. This verifier implements the THREE cross-impl suites every conformant PCA
-// impl must agree on: classical Ed25519, the pure lattice ML-DSA-65 (FIPS-204) and the hybrid
-// Ed25519+ML-DSA-65 — the ML-DSA ones via OpenSSL >= 3.5 libcrypto (FFI). The other seven
-// registered suites (ml-dsa-87, slh-dsa-sha2-128f/256s, their hybrids, and the SUF-CMA nested
-// hybrid) are NOT wired here, so a vector whose expected verdict needs a GENUINE signature
-// outcome under one of them is skipped explicitly (never silently passed). If the running
-// OpenSSL/PHP lacks ML-DSA, the ML-DSA suites drop out of the supported set too and are skipped.
+// Suite support: this verifier's capability manifest (Pca::supportedSuites(): ed25519 + every ML-DSA / SLH-DSA suite whose
+// key type the loaded OpenSSL >= 3.5 libcrypto builds; packages/pca/conformance/SUITES.md). A vector whose expected verdict
+// needs a suite outside it is NOT skipped silently: the verifier must deny it with the distinct reason unsupported_suite
+// (asserted below, counted).
 // ---------------------------------------------------------------------------------------
 $mldsa = Mldsa::available();
-$supported = array_values(array_filter(Pca::supportedSuites(), fn($a) => Pca::suiteAvailable($a)));
+$supported = Pca::supportedSuites();
 fwrite(STDERR, 'ML-DSA (OpenSSL >= 3.5 FFI): ' . ($mldsa ? 'AVAILABLE' : 'NOT available') . "\n");
 fwrite(STDERR, 'supported signature suites: ' . implode(', ', $supported) . "\n");
 
@@ -78,10 +77,21 @@ $unsupportedSuite = function (Obj $v) use ($algOf, $supported): ?string {
     if (is_string($req) && $req !== '' && !in_array($req, $supported, true)) {
         return $req;
     }
+    // 0.4.1 PQ threshold shares: a `threshold.shares[].alg` outside the manifest needs a real signature verdict too. The
+    // r041 ML-DSA-65 share vectors carry no `requires` (only the ML-DSA-87 / SLH-DSA ones do), so read the shares.
+    $th = $p->has('threshold') ? $p->get('threshold') : null;
+    $shares = ($th instanceof Obj && $th->has('shares')) ? $th->get('shares') : null;
+    foreach (is_array($shares) ? $shares : [] as $s) {
+        $a = $algOf($s);
+        if (!in_array($a, $supported, true)) {
+            return $a;
+        }
+    }
     return null;
 };
 
 $skipped = 0;
+$v2Unsupported = 0;    // requires_suite: a suite this verifier does not implement (must deny with unsupported_suite)
 $skippedSuites = [];                      // suite => skipped count
 $ranByBucket = ['core' => 0, 'pq' => 0, 'pq-nonleaf' => 0];
 $vectors = $doc->get('vectors');
@@ -98,8 +108,17 @@ foreach ($vectors as $v) {
     if ($us !== null && !$terminalWireFalse) {
         $skipped++;
         $skippedSuites[$us] = ($skippedSuites[$us] ?? 0) + 1;
+        if ($v->has('pcactn')) {
+            $ctx = $v->get('context');
+            $got = Pca::verifyPcactnCore($v->get('pcactn'), $v->get('grant'), $ctx->get('now')->int(), $ctx->get('aud'));
+            $check($got['allow'] === false && str_contains((string)$got['reason'], Pca::UNSUPPORTED_SUITE),
+                $v->get('name') . ": suite $us is not supported here: want a deny with unsupported_suite ({$got['reason']})");
+        }
         continue;
     }
+
+    // Intent Layer v2: `requires_suite` (README "suite capability").
+    $rs = Corpus::requiresSuite($v);
 
     $total++;
     $ranByBucket[$bucket] = ($ranByBucket[$bucket] ?? 0) + 1;
@@ -108,12 +127,33 @@ foreach ($vectors as $v) {
     $now = $ctx->get('now')->int();
     $aud = $ctx->get('aud');
     $allowed = $ctx->has('allowed_suites') ? $ctx->get('allowed_suites') : null;
+    // Intent Layer M2: an `intent-*` vector may carry `context.intent_policy` (passed through as the parsed Obj) or
+    // `context.intent_policy_json` (raw JSON TEXT, which wins; parsed by Json::parseLax, which keeps every number lexeme,
+    // so 950000.0 / 1e6 stay integral values and a bare -0 stays negative zero, exactly like JSON.parse in the reference).
+    $intentPolicy = $ctx->has('intent_policy_json') ? Json::parseLax($ctx->get('intent_policy_json'))
+        : ($ctx->has('intent_policy') ? $ctx->get('intent_policy') : null);
+    // Intent Layer v2: `context.intent_v2` (the verifier state, an Obj with number lexemes kept) is passed through.
+    $intentV2 = Corpus::intentV2OfObj($ctx);
     if ($v->has('pcactn_json')) {
-        $got = Pca::verifyJson($v->get('pcactn_json'), $v->get('grant'), $now, $aud, $allowed);
+        $got = Pca::verifyJson($v->get('pcactn_json'), $v->get('grant'), $now, $aud, $allowed, $intentPolicy, $intentV2);
     } else {
-        $got = Pca::verifyPcactnCore($v->get('pcactn'), $v->get('grant'), $now, $aud, $allowed);
+        $got = Pca::verifyPcactnCore($v->get('pcactn'), $v->get('grant'), $now, $aud, $allowed, $intentPolicy, $intentV2);
     }
     $expect = $v->get('expect');
+    if ($expect->has('reason_contains')) {
+        $check(str_contains($got['reason'], (string)$expect->get('reason_contains')), "$name: reason must contain "
+            . $str($expect->get('reason_contains')) . " ({$got['reason']})");
+    }
+    if ($rs === 'unsupported') {
+        // a suite this verifier does not implement: deny; `unsupported_suite` is required when a v2 check fails first,
+        // unless the vector names its refusal (reason_contains, asserted above): that refusal precedes the suite work
+        $v2Unsupported++;
+        $check($got['allow'] === false, "$name: requires_suite " . $str($v->get('requires_suite')) . ' not implemented, must deny');
+        if (Corpus::firstFailureIsV2($got) && !$expect->has('reason_contains')) {
+            $check(str_contains($got['reason'], 'unsupported_suite'), "$name: reason must contain unsupported_suite ({$got['reason']})");
+        }
+        continue;
+    }
     $check($got['allow'] === $expect->get('allow'), "$name: allow = " . $str($got['allow'])
         . ", want " . $str($expect->get('allow')) . " ({$got['reason']})");
     foreach ($wantChecks->keys() as $k) {
@@ -123,7 +163,9 @@ foreach ($vectors as $v) {
     if ($wantChecks->get('wire') === false) {
         $check(array_keys($got['checks']) === ['wire'], "$name: wire failure must be the only check");
     } else {
-        $check(array_keys($got['checks']) === $order, "$name: checks not in normative order");
+        // `intent` (rule 12) and the v2 checks (rules 13-18, pipeline order) are reported exactly when the vector expects them.
+        $wantOrder = Corpus::expectedOrder($order, $wantChecks);
+        $check(array_keys($got['checks']) === $wantOrder, "$name: checks not in normative order");
     }
 }
 
@@ -169,16 +211,25 @@ $check(Pca::paramsDigest() === $prim->get('params_digest_empty'), 'empty params 
 // ---------------------------------------------------------------------------------------
 // v2.1 agent-leaf threshold-share binding. Every primitives.threshold_share[] entry must verify over the
 // signerSetHash|t-bound share message iff `valid`. In particular the pre-v2.1 BARE agent share and a
-// cross-signer-set replay MUST be rejected. All corpus shares are Ed25519, so no PQ suite is needed here.
+// cross-signer-set replay MUST be rejected. Valid shares under a suite outside the manifest are skipped (counted).
 // ---------------------------------------------------------------------------------------
 $shareAccepted = 0;
 $shareRejected = 0;
+$shareSkipped = 0;
 $bareRejected = false;
 $wrongSetRejected = false;
 foreach ($prim->get('threshold_share') as $sh) {
     $nm = $sh->has('name') ? $sh->get('name') : $sh->get('role');
     $want = $sh->has('valid') ? $sh->get('valid') : true;
     $got = Pca::verifyThresholdShare($sh);
+    // a VALID share under a suite outside the manifest (e.g. hybrid-ed25519-ml-dsa-65 without OpenSSL >= 3.5) needs a real
+    // signature verdict: skipped (counted), but it must still be refused (fail closed). Invalid entries always run.
+    $shAlg = $sh->get('share') instanceof Obj ? $algOf($sh->get('share')) : 'ed25519';
+    if ($want === true && !in_array($shAlg, $supported, true)) {
+        $check($got === false, "threshold_share $nm: suite $shAlg is not supported here, yet the share verified");
+        $shareSkipped++;
+        continue;
+    }
     $check($got === $want, "threshold_share $nm: verified = " . var_export($got, true)
         . ", want valid = " . var_export($want, true));
     if ($want) {
@@ -307,7 +358,7 @@ $malformed = $prim->get('malformed');
 $check(count($malformed) >= 80, 'malformed shrank');
 foreach ($malformed as $m) {
     $nm = $m->get('name');
-    $in = $m->get('input');
+    $in = $m->has('input_json') && is_string($m->get('input_json')) ? Json::parseLax($m->get('input_json')) : $m->get('input'); // README *_json
     try {
         switch ($m->get('api')) {
             case 'chain':
@@ -385,8 +436,21 @@ foreach ($pcaHeader as $c) {
 echo 'caveat_eval: ' . (count($caveatEval) - $ceFails) . '/' . count($caveatEval) . ' pass; pca_header: '
     . (count($pcaHeader) - $phFails) . '/' . count($pcaHeader) . " pass\n";
 
+// ---------------------------------------------------------------------------------------
+// Intent Layer v2 primitives (rules 13-19 on their own; Corpus::INTENT_PRIMITIVES through IntentV2::primitive). Compared as
+// canonical JSON; reasons never compared (expect.reason_contains is asserted); requires_suite outside the manifest must refuse
+// with unsupported_suite; absent tables are reported.
+// ---------------------------------------------------------------------------------------
+$intentPrims = Corpus::runIntentPrimitives($prim, $check);
+$parts = [];
+foreach ($intentPrims as $table => $c) {
+    $parts[] = !empty($c['absent']) ? "$table=absent" : "$table={$c['ran']}" . ($c['unsupported'] > 0 ? " ({$c['unsupported']} unsupported_suite)" : '');
+}
+echo 'intent primitives: ' . implode('  ', $parts) . "\n";
+echo "intent v2 requires_suite: $v2Unsupported vectors outside the suite manifest denied with unsupported_suite\n";
+
 echo "primitives: $n canonical/json_parse/b64u cases + merkle + params_digest pass\n";
-echo "threshold shares (v2.1 binding): $shareAccepted valid accepted, $shareRejected invalid rejected"
+echo "threshold shares (v2.1 binding): $shareAccepted valid accepted, $shareRejected invalid rejected, $shareSkipped valid skipped (unsupported suite)"
     . " (incl. bare-agent-share + cross-signer-set replay rejection)\n";
 echo "pq_artifacts: $artRan verified, $artSkipped skipped";
 if ($artSkipped > 0) {

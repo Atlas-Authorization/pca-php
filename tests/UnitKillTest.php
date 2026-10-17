@@ -368,7 +368,11 @@ final class UnitKillTest extends TestCase
         $this->assertFalse(Pca::suiteAvailable('bogus'));
         $this->assertSame(Pca::suiteAvailable('ml-dsa-65'), \Atlas\Pca\Mldsa::available());
         $this->assertSame(Pca::suiteAvailable('hybrid-ed25519-ml-dsa-65'), \Atlas\Pca\Mldsa::available());
-        $this->assertSame(Pca::suiteAvailable('ml-dsa-87'), false);
+        $this->assertSame(Pca::suiteAvailable('ml-dsa-87'), \Atlas\Pca\OpensslPq::available('ML-DSA-87'));
+        $this->assertSame(Pca::suiteAvailable('slh-dsa-sha2-256s'), \Atlas\Pca\OpensslPq::available('SLH-DSA-SHA2-256s'));
+        $this->assertFalse(Pca::suiteAvailable('fn-dsa-512')); // registered, no OpenSSL primitive: unsupported_suite
+        $this->assertNotContains('fn-dsa-512', Pca::supportedSuites());
+        $this->assertSame(Pca::supportedSuites(), array_values(array_filter(Pca::REGISTERED_SUITES, fn($a) => Pca::suiteAvailable($a))));
     }
 
     // ------------------------------------------------------------------ middleware
@@ -460,14 +464,18 @@ final class UnitKillTest extends TestCase
         $this->assertStringStartsWith('audience: ', $body['reason']);
         $this->assertArrayHasKey('checks', $body);
         $this->assertFalse($body['checks']['audience']);
-        $this->assertStringContainsString('error_description="' . $body['error_description'] . '"', $r->getHeaderLine('WWW-Authenticate'));
-        // quoting of backslash and double quote in the challenge, and an unescaped slash in the JSON body
+        // 0.4.2 audit: the deny reason never reaches the challenge header (only realm + code)
+        $this->assertSame('PCA realm="pca", error="insufficient_authority"', $r->getHeaderLine('WWW-Authenticate'));
+        // request-derived text (quotes, backslash, CR/LF) stays out of the header; the JSON body keeps it (unescaped slash)
         $f = new HttpFactory();
         $mw = new PcaMiddleware('a', fn() => null, fn() => 0, $f, $f);
         $q = new \ReflectionMethod($mw, 'error');
         $q->setAccessible(true);
         $resp = $q->invoke($mw, 401, 'invalid_request', 'say "hi" \\ a/b');
-        $this->assertSame('PCA realm="pca", error="invalid_request", error_description="say \\"hi\\" \\\\ a/b"', $resp->getHeaderLine('WWW-Authenticate'));
+        $this->assertSame('PCA realm="pca", error="invalid_request"', $resp->getHeaderLine('WWW-Authenticate'));
+        $crlf = $q->invoke($mw, 403, 'insufficient_authority', "x\r\nSet-Cookie: pwned=1");
+        $this->assertSame('PCA realm="pca", error="insufficient_authority"', $crlf->getHeaderLine('WWW-Authenticate'));
+        $this->assertSame("x\r\nSet-Cookie: pwned=1", json_decode((string)$crlf->getBody(), true)['error_description']);
         $this->assertSame('{"error":"invalid_request","error_description":"say \"hi\" \\\\ a/b"}', (string)$resp->getBody());
         $resp = $q->invoke($mw, 401, 'invalid_request', '');
         $this->assertSame('PCA realm="pca", error="invalid_request"', $resp->getHeaderLine('WWW-Authenticate'));

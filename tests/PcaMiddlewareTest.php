@@ -191,6 +191,21 @@ final class PcaMiddlewareTest extends TestCase
         $this->assertSame('unknown_grant', $body['error']);
     }
 
+    public function testThrowingResolverFailsClosed(): void
+    {
+        $handler = $this->recordingHandler();
+        $request = new ServerRequest('POST', '/resource', [PcaMiddleware::HEADER => $this->header()]);
+
+        // 0.4.2 audit: a resolver that throws must fail closed (403), never escape as an uncaught 500.
+        $response = $this->middleware(null, fn (string $ref): mixed => throw new \RuntimeException('db down'))->process($request, $handler);
+
+        $this->assertFalse($handler->called);
+        $this->assertSame(403, $response->getStatusCode());
+        $this->assertSame('PCA realm="pca", error="insufficient_authority"', $response->getHeaderLine('WWW-Authenticate'));
+        $body = json_decode((string)$response->getBody(), true);
+        $this->assertSame('grant resolution failed (fail closed)', $body['error_description']);
+    }
+
     public function testWrongAudienceIsForbidden(): void
     {
         $handler = $this->recordingHandler();
