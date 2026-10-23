@@ -14,7 +14,7 @@ use PHPUnit\Framework\TestCase;
 final class CorpusTest extends TestCase
 {
     private const CHUNKS = 16;
-    private const SUPPORTED = ['ed25519', 'ml-dsa-65', 'hybrid-ed25519-ml-dsa-65'];
+    private const SUPPORTED = Pca::REGISTERED_SUITES; // filtered by Pca::suiteAvailable (the runtime capability manifest)
 
     public static function chunks(): array
     {
@@ -56,6 +56,15 @@ final class CorpusTest extends TestCase
         if (is_string($req) && $req !== '' && !$suiteOk($req)) {
             return $req;
         }
+        // the r041 ML-DSA-65 threshold-share vectors carry no `requires`: read the share suites
+        $th = $p->has('threshold') ? $p->get('threshold') : null;
+        $shares = ($th instanceof Obj && $th->has('shares')) ? $th->get('shares') : null;
+        foreach (is_array($shares) ? $shares : [] as $sh) {
+            $a = self::algOf($sh);
+            if (!$suiteOk($a)) {
+                return $a;
+            }
+        }
         return null;
     }
 
@@ -65,6 +74,16 @@ final class CorpusTest extends TestCase
         foreach ($computed as $k => $v) {
             $key = Corpus::esc($k);
             if (isset($exp[$key])) {
+                // The snapshot was recorded with every OpenSSL PQ suite available. On a host without one (ubuntu-24.04's
+                // OpenSSL 3.0, Windows) the verifier refuses that suite instead: tolerated only as a DENY whose reason
+                // names a suite this host really lacks, never as a different allow.
+                if ($exp[$key] !== $v && is_string($v) && str_starts_with($v, 'false|') && str_contains($v, 'unsupported_suite')) {
+                    // the named suite must really be missing here; an unnamed one (accumulator receipts) needs ML-DSA-65 missing
+                    $named = preg_match("/unsupported_suite: '?([a-z0-9-]+)/", $v, $m) === 1 ? $m[1] : 'ml-dsa-65';
+                    if (!Pca::suiteAvailable($named)) {
+                        continue;
+                    }
+                }
                 $this->assertSame($exp[$key], $v, $key);
             }
         }
@@ -78,13 +97,28 @@ final class CorpusTest extends TestCase
             if (self::unsupported($v, false) !== null && !$terminalWire) {
                 continue;
             }
+            $rs = Corpus::requiresSuite($v);
             $got = Corpus::verifyCore($v);
             $name = $v->get('name');
-            $this->assertSame($v->get('expect')->get('allow'), $got['allow'], $name);
+            $expect = $v->get('expect');
+            if ($expect->has('reason_contains')) {
+                $this->assertStringContainsString((string)$expect->get('reason_contains'), $got['reason'], $name);
+            }
+            if ($rs === 'unsupported') {
+                $this->assertFalse($got['allow'], $name);
+                // a named refusal (reason_contains, asserted above) precedes the suite work: no unsupported_suite needed
+                if (Corpus::firstFailureIsV2($got) && !$expect->has('reason_contains')) {
+                    $this->assertStringContainsString('unsupported_suite', $got['reason'], $name);
+                }
+                continue;
+            }
+            $this->assertSame($expect->get('allow'), $got['allow'], $name);
             foreach ($wantChecks->keys() as $k) {
                 $this->assertSame($wantChecks->get($k), $got['checks'][$k] ?? null, "$name $k");
             }
-            $this->assertSame(array_keys($got['checks']), $terminalWire ? ['wire'] : array_values(array_map(fn($x) => $x, Corpus::core()->get('check_order'))), $name);
+            // Intent Layer M2 / v2: `intent` and the v2 checks are appended after `counter` exactly when the vector expects them.
+            $order = Corpus::expectedOrder(array_map(fn($x) => $x, Corpus::core()->get('check_order')), $wantChecks);
+            $this->assertSame(array_keys($got['checks']), $terminalWire ? ['wire'] : $order, $name);
         }
         $this->checkSnapshot(Corpus::computeVectors(false, 0, 1));
     }
@@ -143,6 +177,19 @@ final class CorpusTest extends TestCase
                 $this->assertSame($j['canonical'], $out);
             }
         }
+    }
+
+    /** Intent Layer v2 primitives (rules 13-19 on their own): every comparison of Corpus::runIntentPrimitives must hold. */
+    public function testIntentPrimitives(): void
+    {
+        $fails = [];
+        $counts = Corpus::runIntentPrimitives(Corpus::core()->get('primitives'), function (bool $ok, string $msg) use (&$fails): void {
+            if (!$ok) {
+                $fails[] = $msg;
+            }
+        });
+        $this->assertSame([], $fails);
+        $this->assertArrayHasKey('intent_schema', $counts);
     }
 
     public function testThresholdSharesAndArtifacts(): void

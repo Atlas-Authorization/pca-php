@@ -26,7 +26,6 @@ use Psr\Http\Server\RequestHandlerInterface;
  */
 final class R041Test extends TestCase
 {
-    private const SUPPORTED = ['ed25519', 'ml-dsa-65', 'hybrid-ed25519-ml-dsa-65'];
 
     // ---- caveat_eval ----------------------------------------------------------------------
 
@@ -204,8 +203,20 @@ final class R041Test extends TestCase
                 continue;
             }
             $req = $v->has('requires') ? $v->get('requires') : null;
-            if (is_string($req) && !in_array($req, self::SUPPORTED, true)) {
-                continue; // a suite this verifier does not implement (ml-dsa-87, slh-dsa-sha2-128f)
+            if (is_string($req) && !Pca::suiteAvailable($req)) {
+                continue; // a suite outside this runtime's capability manifest (Pca::supportedSuites)
+            }
+            // the ML-DSA-65 share vectors carry no `requires`: a positive under a share suite this host lacks is skipped
+            // (terminal {wire:false} negatives still run: they fail at the wire either way)
+            $wantChecks = $v->get('expect')->get('checks');
+            if ($wantChecks->keys() !== ['wire'] || $wantChecks->get('wire') !== false) {
+                $lacks = false;
+                foreach ($v->get('pcactn')->get('threshold')->get('shares') as $s) {
+                    $lacks = $lacks || !Pca::suiteAvailable(($s instanceof Obj && $s->has('alg')) ? (string)$s->get('alg') : 'ed25519');
+                }
+                if ($lacks) {
+                    continue;
+                }
             }
             $ran++;
             $got = Corpus::verifyCore($v);
@@ -219,7 +230,7 @@ final class R041Test extends TestCase
                 }
             }
         }
-        $this->assertSame(18, $ran);
+        $this->assertSame(!Pca::suiteAvailable('ml-dsa-65') ? 14 : (Pca::suiteAvailable('ml-dsa-87') && Pca::suiteAvailable('slh-dsa-sha2-128f') ? 20 : 18), $ran);
         $this->assertSame([], $bad, count($bad) . " of $ran r041-share vectors failed:\n" . implode("\n", $bad));
     }
 }
