@@ -4,7 +4,14 @@ declare(strict_types=1);
 namespace Atlas\Pca;
 
 require_once __DIR__ . '/Json.php';
+require_once __DIR__ . '/OpensslPq.php';
 require_once __DIR__ . '/Mldsa.php';
+require_once __DIR__ . '/LessFfi.php'; // the LESS suites (SIG_SUITES) name LessFfi constants: runners that require only Pca.php need it
+// Intent Layer v2 (rules 13-18): W-A pipeline, W-B unit, predicate DSL + its linear-time regex subset.
+require_once __DIR__ . '/SafeRegex.php';
+require_once __DIR__ . '/IntentWb.php';
+require_once __DIR__ . '/Predicates.php';
+require_once __DIR__ . '/IntentV2.php';
 
 /**
  * An opaque PQ verification key (R3-01 choke point). Minted ONLY by Pca::resolvePqKey, so the low-level PQ verification
@@ -55,14 +62,37 @@ final class Pca
     private const OPTIONAL = ['nonce', 'caution', 'rationale_commitment', 'progress_step', 'prohibition_evidence',
         'tool_binding', 'threshold', 'zk_compliance', 'bond_ref',
         // B4 crypto-agility (additive): absent `alg` == "ed25519" and validates exactly as today.
-        'alg', 'pq_pk', 'pq_sig'];
+        'alg', 'pq_pk', 'pq_sig',
+        // Intent Layer M2 (additive, SIGNED): the `envelope.intent` binding (see validateIntentWire).
+        'intent',
+        // Intent Layer v2 (additive, SIGNED): the session member (IntentV2::validateIntentSessionWire, rule 13).
+        'intent_session'];
 
-    // B4 post-quantum suites (mirrors packages/pca/src/pq.ts). alg name => [sig bytes, needs pq_pk, needs pq_sig].
+    // B4 post-quantum suites (mirrors packages/pca/src/pq.ts), every one OpenSSL >= 3.5 provides (OpensslPq: pure mode,
+    // empty context): alg name => [sig bytes, needs pq_pk, needs pq_sig, OpenSSL key type of the PQ half (null = none),
+    // nested (the PQ half signs msg || the Ed25519 sig bytes)]. Suite capability (packages/pca/conformance/SUITES.md): a
+    // registered suite outside this table (fn-dsa-512 / fn-dsa-1024 / less-cat1 / hybrid-ed25519-less-cat1: OpenSSL has no
+    // FIPS 206 or LESS), or one whose key type the loaded libcrypto cannot build, fails closed with `unsupported_suite: <alg>`.
     public const ED25519_SIGNATURE_BYTES = 64;
+    public const UNSUPPORTED_SUITE = 'unsupported_suite';
+    /** The closed TS suite registry (SIG_SUITES in pq.ts), in registry order. */
+    public const REGISTERED_SUITES = ['ed25519', 'ml-dsa-65', 'hybrid-ed25519-ml-dsa-65', 'hybrid-nested-ed25519-ml-dsa-65',
+        'slh-dsa-sha2-128f', 'hybrid-ed25519-slh-dsa-sha2-128f', 'ml-dsa-87', 'hybrid-ed25519-ml-dsa-87', 'slh-dsa-sha2-256s',
+        'hybrid-ed25519-slh-dsa-sha2-256s', 'fn-dsa-512', 'fn-dsa-1024', 'less-cat1', 'hybrid-ed25519-less-cat1'];
     private const SIG_SUITES = [
-        'ed25519' => [self::ED25519_SIGNATURE_BYTES, false, false],
-        'ml-dsa-65' => [Mldsa::SIGNATURE_BYTES, true, false],
-        'hybrid-ed25519-ml-dsa-65' => [self::ED25519_SIGNATURE_BYTES, true, true],
+        'ed25519' => [self::ED25519_SIGNATURE_BYTES, false, false, null, false],
+        'ml-dsa-65' => [3309, true, false, 'ML-DSA-65', false],
+        'hybrid-ed25519-ml-dsa-65' => [self::ED25519_SIGNATURE_BYTES, true, true, 'ML-DSA-65', false],
+        'hybrid-nested-ed25519-ml-dsa-65' => [self::ED25519_SIGNATURE_BYTES, true, true, 'ML-DSA-65', true],
+        'slh-dsa-sha2-128f' => [17088, true, false, 'SLH-DSA-SHA2-128f', false],
+        'hybrid-ed25519-slh-dsa-sha2-128f' => [self::ED25519_SIGNATURE_BYTES, true, true, 'SLH-DSA-SHA2-128f', false],
+        'ml-dsa-87' => [4627, true, false, 'ML-DSA-87', false],
+        'hybrid-ed25519-ml-dsa-87' => [self::ED25519_SIGNATURE_BYTES, true, true, 'ML-DSA-87', false],
+        'slh-dsa-sha2-256s' => [29792, true, false, 'SLH-DSA-SHA2-256s', false],
+        'hybrid-ed25519-slh-dsa-sha2-256s' => [self::ED25519_SIGNATURE_BYTES, true, true, 'SLH-DSA-SHA2-256s', false],
+        // LESS through libatlas_less (LessFfi); the signature is variable-length (pqSigOk)
+        'less-cat1' => [LessFfi::SIGNATURE_MAX_BYTES, true, false, LessFfi::KEY_TYPE, false],
+        'hybrid-ed25519-less-cat1' => [self::ED25519_SIGNATURE_BYTES, true, true, LessFfi::KEY_TYPE, false],
     ];
 
     // ---- helpers ------------------------------------------------------------------------
@@ -284,10 +314,13 @@ final class Pca
         if (!is_string($alg)) {
             return [null, "'alg' must be a string"];
         }
-        if (!isset(self::SIG_SUITES[$alg])) {
-            return [null, "unknown signature alg '$alg'"];
+        if (self::suiteAvailable($alg)) {
+            return [$alg, null];
         }
-        return [$alg, null];
+        if (in_array($alg, self::REGISTERED_SUITES, true)) {
+            return [null, self::UNSUPPORTED_SUITE . ': ' . $alg];
+        }
+        return [null, "unknown signature alg '$alg'"];
     }
 
     /** Validate `alg`/`sig`/`pq_pk`/`pq_sig` per suite. null when well-formed, else a short reason. */
@@ -312,22 +345,25 @@ final class Pca
         if ($suite === null) {
             return $err;
         }
-        [$sigBytes, $needsPk, $needsSig] = self::SIG_SUITES[$suite];
-        if (!self::b($p->get('sig'), $sigBytes)) {
+        [$sigBytes, $needsPk, $needsSig, $keyType] = self::SIG_SUITES[$suite];
+        // the PQ signature is `sig` for a pure suite and `pq_sig` for a hybrid; its length rule is the primitive's
+        $sigOk = $keyType !== null && !$needsSig ? self::pqSigOk($p->get('sig'), $keyType) : self::b($p->get('sig'), $sigBytes);
+        if (!$sigOk) {
             return "'sig' is not canonical base64url ($sigBytes bytes) for alg '$suite'";
         }
+        [$pkLen, $pqSigLen] = $keyType === null ? [0, 0] : self::pqLens($keyType);
         if (!$checkPqPk) {
             // share: `pq_pk` is an optional echo, judged by verifyThresholdShare against the signer set
         } elseif ($needsPk) {
-            if (!self::b($p->get('pq_pk'), Mldsa::PUBLIC_KEY_BYTES)) {
-                return "'pq_pk' is not canonical base64url (" . Mldsa::PUBLIC_KEY_BYTES . ' bytes)';
+            if (!self::b($p->get('pq_pk'), $pkLen)) {
+                return "'pq_pk' is not canonical base64url ($pkLen bytes)";
             }
         } elseif ($p->has('pq_pk')) {
             return "'pq_pk' must be absent for alg '$suite'";
         }
         if ($needsSig) {
-            if (!self::b($p->get('pq_sig'), Mldsa::SIGNATURE_BYTES)) {
-                return "'pq_sig' is not canonical base64url (" . Mldsa::SIGNATURE_BYTES . ' bytes)';
+            if (!self::pqSigOk($p->get('pq_sig'), $keyType)) {
+                return "'pq_sig' is not canonical base64url ($pqSigLen bytes)";
             }
         } elseif ($p->has('pq_sig')) {
             return "'pq_sig' must be absent for alg '$suite'";
@@ -335,14 +371,30 @@ final class Pca
         return null;
     }
 
-    private static function mldsaVerifyB64u(mixed $pk, string $msg, mixed $sig): bool
+    /** [public key bytes, (maximum) signature bytes] of a PQ key type. */
+    private static function pqLens(string $keyType): array
     {
-        $pkRaw = self::unb64u($pk, Mldsa::PUBLIC_KEY_BYTES);
-        $sgRaw = self::unb64u($sig, Mldsa::SIGNATURE_BYTES);
-        if ($pkRaw === null || $sgRaw === null) {
+        return $keyType === LessFfi::KEY_TYPE ? [LessFfi::PUBLIC_KEY_BYTES, LessFfi::SIGNATURE_MAX_BYTES] : OpensslPq::KEY_TYPES[$keyType];
+    }
+
+    /** Canonical base64url whose decoded length is a signature length of `$keyType` (fixed, or LESS's range). */
+    private static function pqSigOk(mixed $v, string $keyType): bool
+    {
+        $raw = self::unb64u($v);
+        if ($raw === null) {
             return false;
         }
-        return Mldsa::verify($pkRaw, $msg, $sgRaw);
+        return $keyType === LessFfi::KEY_TYPE ? LessFfi::sigLenOk(strlen($raw)) : strlen($raw) === OpensslPq::KEY_TYPES[$keyType][1];
+    }
+
+    private static function pqVerifyB64u(string $keyType, mixed $pk, string $msg, mixed $sig): bool
+    {
+        $pkRaw = self::unb64u($pk, self::pqLens($keyType)[0]);
+        if ($pkRaw === null || !self::pqSigOk($sig, $keyType)) {
+            return false;
+        }
+        $sgRaw = (string)self::unb64u($sig);
+        return $keyType === LessFfi::KEY_TYPE ? LessFfi::verify($pkRaw, $msg, $sgRaw) : OpensslPq::verify($keyType, $pkRaw, $msg, $sgRaw);
     }
 
     /**
@@ -381,11 +433,6 @@ final class Pca
         return null;
     }
 
-    private static function mldsaVerifyPinned(?PinnedPq $pq, string $msg, mixed $sig): bool
-    {
-        return $pq !== null && self::mldsaVerifyB64u($pq->key, $msg, $sig);
-    }
-
     /** Verify `$p`'s signature(s) under its suite. FAIL-CLOSED. The PQ half verifies ONLY under `$pq` (a PinnedPq), never under `pq_pk` read from `$p`. */
     private static function verifySuite(Obj $p, mixed $holder, string $msg, ?PinnedPq $pq): bool
     {
@@ -393,14 +440,30 @@ final class Pca
         if ($suite === null) {
             return false;
         }
+        [, , $needsSig, $keyType, $nested] = self::SIG_SUITES[$suite];
         $sig = $p->get('sig');
-        return match ($suite) {
-            'ed25519' => self::verifyB64u($holder, $msg, $sig),
-            'ml-dsa-65' => self::mldsaVerifyPinned($pq, $msg, $sig),
-            'hybrid-ed25519-ml-dsa-65' =>
-                self::verifyB64u($holder, $msg, $sig) && self::mldsaVerifyPinned($pq, $msg, $p->get('pq_sig')),
-            default => false,
-        };
+        if ($keyType === null) {
+            return self::verifyB64u($holder, $msg, $sig);
+        }
+        if ($pq === null) {
+            return false;
+        }
+        if (!$needsSig) {
+            return self::pqVerifyB64u($keyType, $pq->key, $msg, $sig); // pure PQ: `sig` is the PQ signature
+        }
+        // hybrid: the cheap Ed25519 half first (R6-API-04), then the PQ `pq_sig` (nested: over msg || Ed25519 sig bytes)
+        if (!self::verifyB64u($holder, $msg, $sig)) {
+            return false;
+        }
+        $pqMsg = $msg;
+        if ($nested) {
+            $edSig = self::unb64u($sig, self::ED25519_SIGNATURE_BYTES);
+            if ($edSig === null) {
+                return false;
+            }
+            $pqMsg = $msg . $edSig;
+        }
+        return self::pqVerifyB64u($keyType, $pq->key, $pqMsg, $p->get('pq_sig'));
     }
 
     /**
@@ -411,6 +474,56 @@ final class Pca
     private static function verifyLeafSuite(Obj $p, mixed $holder, string $msg): bool
     {
         return self::verifySuite($p, $holder, $msg, self::resolvePqKey(null, $p->get('pq_pk'), null, null, $p->get('pq_pk')));
+    }
+
+    /**
+     * Strict Ed25519 (RFC 8032, prime-order points, canonical S) over `$msg` under a b64u public key. Public entry to the
+     * library's verifier for the intent artifact modules (IntentV2 / IntentWb); never throws.
+     */
+    public static function verifyEd25519B64u(string $pkB64u, string $msg, mixed $sigB64u): bool
+    {
+        return self::verifyB64u($pkB64u, $msg, $sigB64u);
+    }
+
+    /** Signature suites this verifier implements here and now (the dispatch table, ML-DSA only with OpenSSL >= 3.5). */
+    public static function suiteImplemented(mixed $alg): bool
+    {
+        return is_string($alg) && self::suiteAvailable($alg);
+    }
+
+    /**
+     * verifyPinnedSuite of pq.ts through THIS library's suite dispatch (verifySuite): `$alg` null = absent = ed25519. A suite
+     * the dispatch does not implement returns the string 'unsupported_suite' (callers refuse with that token); a non-string
+     * `$alg` returns false. ed25519 verifies `$sig` under `$identity`. Any other suite verifies only under the verifier-side
+     * pin `$pinnedPqPk` for `$identity`, which the artifact's own `$artifactPqPk` must equal (resolvePqKey): with no pin it
+     * is refused. Hybrids need BOTH halves (`$sig` Ed25519, `$pqSig` ML-DSA). Never throws.
+     */
+    public static function verifyPinnedSuite(mixed $alg, string $identity, mixed $artifactPqPk, string $msg, mixed $sig, mixed $pqSig,
+                                             ?string $pinnedPqPk): bool|string
+    {
+        try {
+            $suite = $alg ?? 'ed25519';
+            if (!is_string($suite)) {
+                return false;
+            }
+            if (!self::suiteAvailable($suite)) {
+                return 'unsupported_suite';
+            }
+            if ($suite === 'ed25519') {
+                return is_string($sig) && self::verifyB64u($identity, $msg, $sig);
+            }
+            $pq = $pinnedPqPk === null ? null : self::resolvePqKey($identity, $artifactPqPk, null, Obj::of([$identity => $pinnedPqPk]));
+            if ($pq === null) {
+                return false;
+            }
+            $o = new Obj();
+            $o->set('alg', $suite);
+            $o->set('sig', $sig);
+            $o->set('pq_sig', $pqSig);
+            return self::verifySuite($o, $identity, $msg, $pq);
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     // ---- capability chain ---------------------------------------------------------------
@@ -538,6 +651,9 @@ final class Pca
         return false;
     }
 
+    public const ROOT_PQ_PIN_MISMATCH_REASON = "hop 0: root suite '%s': the server-side PQ pin for the root issuer (policy.pqPins) does not match "
+        . "the stored grant's pq_pk (fail closed)";
+
     public const ROOT_PQ_PIN_REASON = "hop 0: root suite '%s' needs a PQ key pinned for the root issuer (policy.pqPins) or the verifier's stored grant "
         . "(policy.trustedRoot); the root's own pq_pk proves nothing about who issued it (R3-01)";
 
@@ -548,8 +664,11 @@ final class Pca
      */
     private static function resolveRootPq(Obj $root, mixed $pqPins, ?Obj $trustedRoot): array
     {
-        [$suite] = self::resolveSuite($root);
-        if ($suite === null || !self::SIG_SUITES[$suite][1]) {
+        // The pin decision is keyed on the REGISTERED suite, not on whether this host can verify it (resolveSuite is
+        // availability-gated): like resolveSigAlg in the reference, an unpinned PQ root is refused with the pin reason even
+        // without OpenSSL >= 3.5. A root that passes the pin still fails closed at checkSig with unsupported_suite.
+        $suite = $root->has('alg') ? $root->get('alg') : 'ed25519';
+        if (!is_string($suite) || !isset(self::SIG_SUITES[$suite]) || !self::SIG_SUITES[$suite][1]) {
             return [null, null];
         }
         $pk = $root->get('pq_pk');
@@ -561,7 +680,23 @@ final class Pca
                 $trusted = null;
             }
         }
-        $key = self::resolvePqKey($root->get('issuer'), $pk, null, $pqPins, $trusted);
+        // 0.4.2 fail closed: with the stored grant AND a pin for the issuer, both must agree (the grant never overrides a pin).
+        $issuer = $root->get('issuer');
+        if ($trusted !== null && is_string($issuer)) {
+            $has = false;
+            $pin = null;
+            if ($pqPins instanceof Obj) {
+                $has = $pqPins->has($issuer);
+                $pin = $has ? $pqPins->get($issuer) : null;
+            } elseif (is_array($pqPins) && array_key_exists($issuer, $pqPins)) {
+                $has = true;
+                $pin = $pqPins[$issuer];
+            }
+            if ($has && $pin !== $trusted) {
+                return [null, sprintf(self::ROOT_PQ_PIN_MISMATCH_REASON, $suite)];
+            }
+        }
+        $key = self::resolvePqKey($issuer, $pk, null, $pqPins, $trusted);
         return $key === null ? [null, sprintf(self::ROOT_PQ_PIN_REASON, $suite)] : [$key, null];
     }
 
@@ -881,6 +1016,18 @@ final class Pca
             if ($p->has('progress_step') && !($p->get('progress_step') instanceof Obj)) {
                 return "'progress_step' must be an object";
             }
+            if ($p->has('intent')) {
+                $intentErr = self::validateIntentWire($p->get('intent'));
+                if ($intentErr !== null) {
+                    return $intentErr;
+                }
+            }
+            if ($p->has('intent_session')) {
+                $sessionErr = IntentV2::validateIntentSessionWire($p->get('intent_session'));
+                if ($sessionErr !== null) {
+                    return $sessionErr;
+                }
+            }
             if ($p->has('prohibition_evidence')) {
                 $pe = $p->get('prohibition_evidence');
                 if (!($pe instanceof Obj) && !is_array($pe)) {
@@ -913,6 +1060,184 @@ final class Pca
         }
     }
 
+    // ---- Intent Layer M2: the signed `envelope.intent` binding --------------------------------
+    //
+    // Normative rules: packages/pca/src/intent-binding.ts and conformance/README.md "Intent binding". The optional
+    // top-level `intent` slot is SIGNED (part of the canonical body). The `intent` check runs after `counter` and is
+    // reported iff the PCActn carries `intent` OR the verifier's intent policy is ACTIVE; otherwise the verdict is the
+    // pre-M2 one.
+
+    public const INTENT_GOAL_PREFIX = 'pca-intent:v1:';
+    /** Intent Layer v2 session grants (G_0 and the delta grants D_k): `pca-intent:v2:<session>:<map_digest>`. */
+    public const INTENT_GOAL_V2_PREFIX = 'pca-intent:v2:';
+    /** Intent Layer v2 session grants over a COMMITTED map (rule 19): `pca-intent:v2c:<session>:<map_commit>`. */
+    public const INTENT_GOAL_V2C_PREFIX = 'pca-intent:v2c:';
+    public const INTENT_GOAL_COMMIT_DOMAIN = "atlas-pca/goal/v1\0";
+    public const PPM_ONE = 1000000;
+    public const MAX_INTENT_GOAL_SALT_LEN = 128;
+    public const ENVELOPE_INTENT_FIELDS = ['ref', 'map_digest', 'goal_salt', 'fidelity_ppm', 'residual_risk_ppm'];
+    private const MAX_SAFE = 9007199254740991;
+
+    /** Wire validation of the `intent` slot: null when well-formed, else a short reason. Never throws. */
+    public static function validateIntentWire(mixed $v): ?string
+    {
+        if (!($v instanceof Obj)) {
+            return "'intent' must be an object";
+        }
+        foreach ($v->keys() as $k) {
+            if (!in_array($k, self::ENVELOPE_INTENT_FIELDS, true)) {
+                return "unknown field 'intent.$k'";
+            }
+        }
+        foreach (self::ENVELOPE_INTENT_FIELDS as $k) {
+            if (!$v->has($k)) {
+                return "missing field 'intent.$k'";
+            }
+        }
+        if (!self::b($v->get('ref'), 32)) {
+            return "'intent.ref' is not canonical base64url (32 bytes)";
+        }
+        if (!self::b($v->get('map_digest'), 32)) {
+            return "'intent.map_digest' is not canonical base64url (32 bytes)";
+        }
+        $gs = $v->get('goal_salt');
+        if (!is_string($gs) || $gs === '' || strlen($gs) > self::MAX_INTENT_GOAL_SALT_LEN) {
+            return "'intent.goal_salt' must be a non-empty string (<= 128 UTF-8 bytes)";
+        }
+        $fp = $v->get('fidelity_ppm');
+        if (!self::isInt($fp) || $fp->int() < 0 || $fp->int() > self::PPM_ONE) {
+            return "'intent.fidelity_ppm' must be a safe integer in [0, 1000000]";
+        }
+        $rr = $v->get('residual_risk_ppm');
+        if (!self::isInt($rr) || $rr->int() < 0) {
+            return "'intent.residual_risk_ppm' must be a non-negative safe integer";
+        }
+        return null;
+    }
+
+    /** The goal string that binds a grant to an intent statement (and optionally an Intent Map). */
+    public static function intentGoal(string $ref, ?string $mapDigest = null): string
+    {
+        return self::INTENT_GOAL_PREFIX . $ref . ($mapDigest !== null && $mapDigest !== '' ? ':' . $mapDigest : '');
+    }
+
+    /**
+     * The goal commitment an `envelope.intent` claims the root grant carries. With `$session` (the PCActn carries a wire-valid
+     * `intent_session`, rule 13) the goal is the v2 session goal "pca-intent:v2:" || session || ":" || map_digest.
+     */
+    public static function intentGoalCommit(string $ref, string $mapDigest, string $goalSalt, ?string $session = null, ?string $mapForm = null): string
+    {
+        $v2 = $mapForm === 'commit' ? self::INTENT_GOAL_V2C_PREFIX : self::INTENT_GOAL_V2_PREFIX;
+        return self::hashCanonical(Obj::of([
+            'd' => self::INTENT_GOAL_COMMIT_DOMAIN,
+            'goal' => $session !== null ? $v2 . $session . ':' . $mapDigest : self::intentGoal($ref, $mapDigest),
+            'salt' => $goalSalt,
+        ]));
+    }
+
+    /**
+     * An intent policy as [key => value] (an Obj tree from the JSON parser, or a PHP assoc array), or null when it
+     * is neither.
+     * @return array<string,mixed>|null
+     */
+    private static function intentPolicyMap(mixed $policy): ?array
+    {
+        if ($policy instanceof Obj) {
+            $m = [];
+            foreach ($policy->keys() as $k) {
+                $m[$k] = $policy->get($k);
+            }
+            return $m;
+        }
+        return is_array($policy) ? $policy : null;
+    }
+
+    /** True iff the policy is active: `require` is exactly true, or either threshold key is present. */
+    public static function intentPolicyActive(mixed $policy): bool
+    {
+        $m = self::intentPolicyMap($policy);
+        return $m !== null && ((array_key_exists('require', $m) && $m['require'] === true)
+            || array_key_exists('min_fidelity_ppm', $m) || array_key_exists('max_residual_risk_ppm', $m));
+    }
+
+    /**
+     * A policy threshold as an int, or null when misconfigured. Valid iff its NUMERIC VALUE is a safe integer >= 0,
+     * whatever the form: a PHP int, an integral PHP float (950000.0, 1e6) or a JSON Num of either lexeme; not -0.0,
+     * NaN/INF, a fraction, > 2^53-1, null/bool/string.
+     */
+    private static function intentThreshold(mixed $x): ?int
+    {
+        if ($x instanceof Num) {
+            $x = $x->float(); // a safe-integer lexeme converts exactly; "-0" becomes -0.0
+        }
+        if (is_int($x)) {
+            $x = (float)$x; // > 2^53-1 rounds to >= 2^53 and is refused below
+        }
+        if (is_float($x) && floor($x) === $x && $x >= 0 && $x <= self::MAX_SAFE && (string)$x !== '-0') {
+            return (int)$x;
+        }
+        return null;
+    }
+
+    /** The root grant's goal commitment: the FIRST `envelope` caveat's string `goal_commit`, else null. */
+    public static function rootGoalCommit(mixed $grant): ?string
+    {
+        $cv = self::get($grant, 'caveats');
+        foreach (is_array($cv) ? $cv : [] as $c) {
+            if ($c instanceof Obj && $c->get('type') === 'envelope') {
+                $gc = $c->get('goal_commit');
+                return is_string($gc) ? $gc : null;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The `intent` check (rules 0-4). `$intent` is the wire-validated slot (null when absent). Returns
+     * ['status' => 'absent'|'pass'|'fail', 'reason' => string]. Never throws.
+     * @return array{status:string, reason:string}
+     */
+    public static function decideIntentBinding(mixed $intent, mixed $grant, mixed $policy = null, ?string $session = null, ?string $mapForm = null): array
+    {
+        $active = self::intentPolicyActive($policy);
+        if ($intent === null && !$active) {
+            return ['status' => 'absent', 'reason' => ''];
+        }
+        try {
+            // A threshold key is only ever present in an ACTIVE policy (presence activates it), so no `$active` guard.
+            $m = self::intentPolicyMap($policy) ?? [];
+            $minSet = array_key_exists('min_fidelity_ppm', $m);
+            $maxSet = array_key_exists('max_residual_risk_ppm', $m);
+            // Unset bounds are the non-binding extremes, so each threshold comparison below is guarded only by its `*Set`.
+            $min = $minSet ? self::intentThreshold($m['min_fidelity_ppm']) : PHP_INT_MAX;
+            $max = $maxSet ? self::intentThreshold($m['max_residual_risk_ppm']) : PHP_INT_MIN;
+            if ($min === null || $max === null) {
+                return ['status' => 'fail', 'reason' => 'intent policy misconfigured: thresholds must be non-negative safe integers (fail closed)'];
+            }
+            if (!($intent instanceof Obj)) {
+                return ['status' => 'fail', 'reason' => 'this verifier requires an intent binding but the PCActn carries none'];
+            }
+            $commit = self::rootGoalCommit($grant);
+            if ($commit === null) {
+                return ['status' => 'fail', 'reason' => 'the root grant carries no envelope goal commitment to bind the intent to'];
+            }
+            if (self::intentGoalCommit($intent->get('ref'), $intent->get('map_digest'), $intent->get('goal_salt'), $session, $mapForm) !== $commit) {
+                return ['status' => 'fail', 'reason' => "intent ref / map_digest / goal_salt do not open the root grant's goal commitment"];
+            }
+            $fid = $intent->get('fidelity_ppm')->int();
+            $risk = $intent->get('residual_risk_ppm')->int();
+            if ($minSet && $fid < $min) {
+                return ['status' => 'fail', 'reason' => "intent fidelity $fid ppm is below the policy minimum $min"];
+            }
+            if ($maxSet && $risk > $max) {
+                return ['status' => 'fail', 'reason' => "intent residual risk $risk ppm exceeds the policy maximum $max"];
+            }
+            return ['status' => 'pass', 'reason' => ''];
+        } catch (\Throwable $e) {
+            return ['status' => 'fail', 'reason' => 'intent binding error (fail closed): ' . $e->getMessage()];
+        }
+    }
+
     // ---- PCActn -------------------------------------------------------------------------
 
     /** SIG_DOMAIN || sha256(strictCanonical(pcactn without `sig` and `threshold`)). */
@@ -926,16 +1251,18 @@ final class Pca
      * Verify a signed PCActn supplied as RAW JSON text (strict profile first; a parse failure is a wire failure).
      * @return array{allow:bool, checks:array<string,bool>, reason:string}
      */
-    public static function verifyJson(string $text, mixed $grant, int $now, string $audience, ?array $allowedSuites = null): array
+    public static function verifyJson(string $text, mixed $grant, int $now, string $audience, ?array $allowedSuites = null,
+                                      mixed $intentPolicy = null, ?Obj $intentV2 = null): array
     {
         try { // TOTAL (R6-05)
-            return self::verifyJsonUnchecked($text, $grant, $now, $audience, $allowedSuites);
+            return self::verifyJsonUnchecked($text, $grant, $now, $audience, $allowedSuites, $intentPolicy, $intentV2);
         } catch (\Throwable $e) {
             return ['allow' => false, 'checks' => ['wire' => false], 'reason' => 'wire: malformed input (' . get_class($e) . ')'];
         }
     }
 
-    private static function verifyJsonUnchecked(string $text, mixed $grant, int $now, string $audience, ?array $allowedSuites): array
+    private static function verifyJsonUnchecked(string $text, mixed $grant, int $now, string $audience, ?array $allowedSuites,
+                                                mixed $intentPolicy, ?Obj $intentV2): array
     {
         if (strlen($text) > self::MAX_ARTIFACT_BYTES) { // FIRST: before any parsing (strlen = UTF-8 bytes)
             return ['allow' => false, 'checks' => ['wire' => false], 'reason' => 'wire: ' . self::ARTIFACT_SIZE_REASON];
@@ -945,23 +1272,32 @@ final class Pca
         } catch (JsonError $e) {
             return ['allow' => false, 'checks' => ['wire' => false], 'reason' => 'wire: ' . $e->getMessage()];
         }
-        return self::verifyPcactnCore($p, $grant, $now, $audience, $allowedSuites);
+        return self::verifyPcactnCore($p, $grant, $now, $audience, $allowedSuites, $intentPolicy, $intentV2);
     }
 
     /**
      * @return array{allow:bool, checks:array<string,bool>, reason:string}
      * A wire failure is terminal: checks == ['wire' => false].
+     * `$intentPolicy` (Intent Layer M2): optional ['require' => bool, 'min_fidelity_ppm' => int,
+     * 'max_residual_risk_ppm' => int] (a PHP assoc array or a parsed Obj; every key optional). The `intent` check is
+     * reported (after `counter`) iff the PCActn carries `intent` or the policy is active.
+     * `$intentV2` (Intent Layer v2): optional verifier state + policy Obj {policy?, params?, schema?: {docs, keys}, session?:
+     * {root, grants, revocation?: {epoch, proofs}}, layers?, acc?: {state?, monitors?, receipts?, last_seq?, sequencer_keys?},
+     * wb?: {artifacts?, policy?}}. The v2 checks (schema, intent_session, layers, accumulators, facts, provenance, classes)
+     * are appended after `intent` in pipeline order, each only when reported (see IntentV2::decideIntentV2); allow needs them.
      */
-    public static function verifyPcactnCore(mixed $p, mixed $grant, int $now, string $audience, ?array $allowedSuites = null): array
+    public static function verifyPcactnCore(mixed $p, mixed $grant, int $now, string $audience, ?array $allowedSuites = null,
+                                            mixed $intentPolicy = null, ?Obj $intentV2 = null): array
     {
         try { // TOTAL (R6-05): a malformed input is a verdict, never an exception
-            return self::verifyPcactnCoreUnchecked($p, $grant, $now, $audience, $allowedSuites);
+            return self::verifyPcactnCoreUnchecked($p, $grant, $now, $audience, $allowedSuites, $intentPolicy, $intentV2);
         } catch (\Throwable $e) {
             return ['allow' => false, 'checks' => ['wire' => false], 'reason' => 'wire: malformed input (' . get_class($e) . ')'];
         }
     }
 
-    private static function verifyPcactnCoreUnchecked(mixed $p, mixed $grant, int $now, string $audience, ?array $allowedSuites): array
+    private static function verifyPcactnCoreUnchecked(mixed $p, mixed $grant, int $now, string $audience, ?array $allowedSuites,
+                                                      mixed $intentPolicy = null, ?Obj $intentV2 = null): array
     {
         $wire = self::validateWire($p);
         if ($wire !== null) {
@@ -1074,6 +1410,32 @@ final class Pca
             $fail('counter', 'not a non-negative safe integer');
         }
 
+        // Intent Layer M2: `intent` check (present iff the PCActn carries `intent` or the policy is active).
+        // Rule 13 amends rule 12 step 2: with a wire-valid `intent_session` the goal is the v2 session goal.
+        // Rule 19 amends it again: with `intent_session.map_form` "commit" the goal is the v2c goal over the map commitment.
+        $is = $p->has('intent_session') ? $p->get('intent_session') : null;
+        $session = $is instanceof Obj ? $is->get('session') : null;
+        $mapForm = $is instanceof Obj && $is->has('map_form') ? $is->get('map_form') : null;
+        $intentDecision = self::decideIntentBinding($p->has('intent') ? $p->get('intent') : null, $grant, $intentPolicy,
+            is_string($session) ? $session : null, is_string($mapForm) ? $mapForm : null);
+        if ($intentDecision['status'] === 'pass') {
+            $checks['intent'] = true;
+        } elseif ($intentDecision['status'] === 'fail') {
+            $checks['intent'] = false;
+            $fail('intent', $intentDecision['reason']);
+        }
+
+        // Intent Layer v2: schema (14), intent_session (13), layers (V5), accumulators (15), facts / provenance / classes
+        // (16-18), each reported only when the PCActn carries `intent_session` or a v2 policy is active.
+        foreach (IntentV2::decideIntentV2($p, $grant, $intentV2, $now)['checks'] as $c) {
+            if ($c['ok']) {
+                $checks[$c['name']] = true;
+            } else {
+                $checks[$c['name']] = false;
+                $fail($c['name'], $c['reason'] ?? 'rejected');
+            }
+        }
+
         return ['allow' => !in_array(false, $checks, true), 'checks' => $checks, 'reason' => $reason];
     }
 
@@ -1083,10 +1445,14 @@ final class Pca
     public const SHARE_DOMAIN_PREFIX = 'atlas-pca/share/';
     public const SHARE_SUITE_TAG = "\0atlas-pca/share-suite/v1\0";
 
-    /** The signature suites wired into this verifier (ed25519 + the ML-DSA cross-impl suites via OpenSSL FFI). */
+    /**
+     * The capability manifest: the registered suites this verifier can verify in THIS runtime (ed25519 always; each PQ suite
+     * iff the loaded OpenSSL >= 3.5 builds its key type), in registry order.
+     * @return list<string>
+     */
     public static function supportedSuites(): array
     {
-        return array_keys(self::SIG_SUITES);
+        return array_values(array_filter(self::REGISTERED_SUITES, fn(string $a) => self::suiteAvailable($a)));
     }
 
     /** True iff a genuine signature verdict under `$alg` is available (ML-DSA suites need OpenSSL >= 3.5). */
@@ -1095,8 +1461,8 @@ final class Pca
         if (!isset(self::SIG_SUITES[$alg])) {
             return false;
         }
-        [, $needsPk, $needsSig] = self::SIG_SUITES[$alg];
-        return ($needsPk || $needsSig) ? Mldsa::available() : true;
+        $keyType = self::SIG_SUITES[$alg][3];
+        return $keyType === null || ($keyType === LessFfi::KEY_TYPE ? LessFfi::available() : OpensslPq::available($keyType));
     }
 
     // ---- v2.1 threshold-share binding ----------------------------------------------------
@@ -1351,7 +1717,8 @@ final class Pca
      *  - everything below needs a finite ctx.now: expires {at} now < at; not_before {at} now >= at; rate {max, per_secs}
      *    fewer than max entries t of ctx.recent_action_times with now - per_secs*1000 < t <= now; max_blast_radius {max}
      *    ctx.blast_radius <= max; reversibility_max {class} ctx.reversibility_class no more severe than class;
-     *    delegation_depth {max} ctx.delegation_depth <= max; budget_alloc {limit} limit finite >= 0.
+     *    delegation_depth {max} ctx.delegation_depth <= max; budget_alloc {limit} limit finite >= 0; intent_session
+     *    {session, seq, root, prev?} (Intent Layer v2, rule 13) satisfied iff well-formed (IntentV2::intentSessionCaveatError).
      *
      * @return array{ok: bool, failed: list<string>}
      */
@@ -1413,6 +1780,9 @@ final class Pca
             return false;
         }
         $type = $cv->get('type');
+        if (!is_string($type)) {
+            return false; // strict, like the reference: the switch below compares loosely (true == 'expires')
+        }
         if ($type === 'max_spend') {
             $lim = self::finite($cv->get('usd'));
             if ($lim === null || $lim < 0) {
@@ -1468,6 +1838,9 @@ final class Pca
             case 'budget_alloc':
                 $lim = self::finite($cv->get('limit'));
                 return $lim !== null && $lim >= 0;
+            case IntentV2::INTENT_SESSION_CAVEAT:
+                // Intent Layer v2 session binding (rule 13): no per-action constraint here; satisfied iff well-formed.
+                return IntentV2::intentSessionCaveatError($cv) === null;
             default:
                 return false;
         }

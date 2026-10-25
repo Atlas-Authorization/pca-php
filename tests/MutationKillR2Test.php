@@ -143,6 +143,28 @@ final class MutationKillR2Test extends TestCase
         return json_decode(file_get_contents(__DIR__ . '/../test-data/mldsa65-edge.json'), true);
     }
 
+    public function testStoredGrantAndPinMustAgree(): void
+    {
+        // 0.4.2 fail closed: with the stored grant (trustedRoot) AND a pin for the issuer, a disagreeing pin refuses; the
+        // stored grant never overrides it. The refusal comes before any signature work, so no PQ backend is needed for it.
+        $v = self::pinVector('chainpin-pure-pq-root-trusted-root');
+        $wrong = self::pinVector('chainpin-hybrid-root-wrong-pin')->get('pq_pins');
+        $right = self::pinVector('chainpin-pure-pq-root-pinned')->get('pq_pins');
+        $eri = $v->get('expected_root_issuer');
+        $this->assertSame(
+            ["hop 0: root suite 'ml-dsa-65': the server-side PQ pin for the root issuer (policy.pqPins) does not match the stored grant's pq_pk (fail closed)", false],
+            Pca::verifyChain($v->get('chain'), $eri, true, null, $wrong, $v->get('trusted_root'))
+        );
+        $this->assertSame(
+            ["hop 0: root suite 'ml-dsa-65': the server-side PQ pin for the root issuer (policy.pqPins) does not match the stored grant's pq_pk (fail closed)", false],
+            Pca::verifyChain($v->get('chain'), $eri, true, null, ['x' => 'y', $eri => 'not-the-key'], $v->get('trusted_root'))
+        );
+        if (Pca::suiteImplemented('ml-dsa-65')) {
+            $this->assertSame(['', true], Pca::verifyChain($v->get('chain'), $eri, true, null, $right, $v->get('trusted_root')));
+            $this->assertSame(['', true], Pca::verifyChain($v->get('chain'), $eri, true, null, ['someone-else' => 'k'], $v->get('trusted_root')));
+        }
+    }
+
     public function testHopSuitePolicyIsReportedBeforePqBinding(): void
     {
         $v = self::pinVector('chainpin-mixed-ed25519-root-bound-pq-hop');
@@ -168,7 +190,9 @@ final class MutationKillR2Test extends TestCase
             $cv = $chain[1]->get('caveats');
             $cv[] = Obj::of(['type' => 'note', 'v' => $bad]);
             $chain[1]->set('caveats', $cv);
-            $this->assertSame(['hop 1: malformed body', false], Pca::verifyChain($chain, $v->get('expected_root_issuer'), true), "case $k");
+            $got = Pca::verifyChain($chain, $v->get('expected_root_issuer'), true);
+            // without ML-DSA the hop's suite is refused (unsupported_suite) before its body is hashed: still fail closed
+            $this->assertSame(Pca::suiteAvailable('ml-dsa-65') ? ['hop 1: malformed body', false] : ['hop 1: unsupported_suite: ml-dsa-65', false], $got, "case $k");
         }
     }
 
@@ -191,6 +215,12 @@ final class MutationKillR2Test extends TestCase
             $ctx = $v->get('context');
             $r = Pca::verifyPcactnCore($p, $v->get('grant'), $ctx->get('now')->int(), $ctx->get('aud'), ['ed25519']);
             $this->assertFalse($r['allow']);
+            if (!Pca::suiteAvailable('ml-dsa-65')) {
+                // without ML-DSA the wire stage refuses the suite first (fail closed); the ordering below needs a real verifier
+                $this->assertSame('wire: unsupported_suite: ml-dsa-65', $r['reason']);
+                $this->assertFalse(Pca::verifyPcactnCore($p, $v->get('grant'), $ctx->get('now')->int(), $ctx->get('aud'))['allow']);
+                return;
+            }
             $this->assertSame("leaf_signature: leaf: signature suite 'ml-dsa-65' is not allowed by this verifier's suite policy", $r['reason']);
             $r = Pca::verifyPcactnCore($p, $v->get('grant'), $ctx->get('now')->int(), $ctx->get('aud'));
             $this->assertSame("leaf_signature: leaf: pq_pk does not match the signer's committed holder_pq (F-2)", $r['reason']);

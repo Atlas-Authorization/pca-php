@@ -1,0 +1,195 @@
+name: Mutation
+
+# Mutation testing of src/ with Infection (infection.json5: @default mutators, PHPUnit oracle incl. the full adversarial
+# corpus and the mutation-oracle inputs), split into shards by source file. Survivors (escaped + uncovered) are converted
+# with the flagship's tools/pca-audit/native-mutation/php-survivors.py and the merge job checks them against the
+# equivalent-mutant ledger: it passes when every survivor is a ledgered equivalent and no ledger entry is stale. Runs on
+# demand and on ci/** branches (the release-candidate check), never on main pushes. Runs on macOS: the PHPUnit oracle's
+# ML-DSA library-discovery tests (MldsaDiscoveryTest, InjectionKillTest) assume the libcrypto set of the machines they were
+# written on and fail on the Linux runner images, while the whole suite is green on macOS; a mutant run needs a green baseline.
+#
+# TARGETED mode (the default whenever a baseline exists): every shard uploads infection-baseline-<k> (its sources and every
+# mutant with its result) and the next run starts from it. Infection mutates ONLY the target lines: the lines changed since
+# the baseline and the lines of the baseline's survivors (escaped / not covered), selected with --git-diff-lines against a
+# throwaway git base in which exactly those lines differ (scripts/infection-targeted.py). Every other baseline mutant is
+# carried forward with its result, so each shard still reports its COMPLETE mutant set and the merge checks the ledger over
+# the full picture. Baseline = the input `baseline_run`, else the newest earlier run of this workflow on the same branch
+# that uploaded the shard's baseline; none (or `full: true`) = a full run, which seeds the baseline for the next one.
+on:
+  workflow_dispatch:
+    inputs:
+      baseline_run:
+        description: 'run id whose infection-baseline-<k> artifacts seed a targeted run (default: newest earlier run on this branch)'
+        required: false
+        default: ''
+      full:
+        description: 'ignore any baseline: mutate everything'
+        type: boolean
+        default: false
+  push:
+    branches: ['ci/**']
+
+permissions:
+  contents: read
+  actions: read   # download the baseline run's infection-baseline artifacts
+
+concurrency:
+  # a push supersedes an earlier push run; a dispatched (queue) run is never killed by a later push to the branch
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+
+env:
+  CRATE: php-pca
+  # distro OpenSSL 3.0 (the fallback) + a cached OpenSSL 3.5 (the PQ path) side by side: every PQ / probe test runs, none skips
+  PCA_REQUIRE_MLDSA: '1'
+  ATLAS_PCA_LIBCRYPTO: /opt/openssl35/lib/libcrypto.so.3
+  SHARDS: '9'
+
+jobs:
+  shard:
+    name: shard ${{ matrix.shard }}/9 (${{ matrix.files }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 340
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { shard: 1, files: 'src/Pca.php' }
+          - { shard: 2, files: 'src/IntentV2.php' }
+          - { shard: 3, files: 'src/IntentWb.php' }
+          - { shard: 4, files: 'src/SafeRegex.php,src/Predicates.php' }
+          - { shard: 5, files: 'src/Json.php,src/PcaMiddleware.php,src/OpensslPq.php,src/LessFfi.php,src/Mldsa.php' }
+          # IntentV2 is split into traits (same class, 3800 lines) so no shard runs for hours (the single-file shard was killed by a runner shutdown)
+          - { shard: 6, files: 'src/IntentV2Schema.php' }
+          - { shard: 7, files: 'src/IntentV2Session.php' }
+          - { shard: 8, files: 'src/IntentV2Acc.php' }
+          - { shard: 9, files: 'src/IntentV2Map.php' }
+    steps:
+      - uses: actions/checkout@v4
+      - name: OpenSSL 3.5 (cached)
+        id: ossl
+        uses: actions/cache@v4
+        with:
+          path: /opt/openssl35
+          key: openssl-3.5.9-ubuntu-24.04
+      - name: Build OpenSSL 3.5
+        if: steps.ossl.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL https://github.com/openssl/openssl/releases/download/openssl-3.5.9/openssl-3.5.9.tar.gz | tar xz
+          cd openssl-3.5.9 && ./Configure --prefix=/opt/openssl35 --libdir=lib shared no-tests > /dev/null
+          make -j4 > /dev/null && sudo make install_sw > /dev/null
+          LD_LIBRARY_PATH=/opt/openssl35/lib /opt/openssl35/bin/openssl version
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: sodium, json, mbstring, ffi
+          ini-values: ffi.enable=true
+          coverage: pcov
+          tools: composer
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Flagship tooling + source layout (+ libatlas_less -> ATLAS_PCA_LIBLESS, so the LESS branches are tested)
+        env:
+          LESS: '1'
+        run: .github/scripts/mutation-layout.sh "$CRATE"
+      - name: Baseline (targeted mode)
+        if: ${{ !inputs.full }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASELINE: ${{ inputs.baseline_run }}
+          SHARD: ${{ matrix.shard }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/baseline-in"
+          ids="$BASELINE"
+          if [ -z "$ids" ]; then
+            ids="$(gh run list -R "$GITHUB_REPOSITORY" --workflow mutation.yml --branch "$GITHUB_REF_NAME" --limit 20 \
+                     --json databaseId -q '.[].databaseId' | grep -vx "$GITHUB_RUN_ID" || true)"
+          fi
+          for id in $ids; do
+            if gh run download "$id" -R "$GITHUB_REPOSITORY" -n "infection-baseline-$SHARD" -D "$RUNNER_TEMP/baseline-in" 2>/dev/null \
+               && [ -s "$RUNNER_TEMP/baseline-in/infection-baseline.json" ]; then
+              echo "INFECTION_BASELINE=$RUNNER_TEMP/baseline-in/infection-baseline.json" >> "$GITHUB_ENV"
+              echo "targeted: shard $SHARD seeded from run $id"; exit 0
+            fi
+          done
+          echo "::notice::shard $SHARD: no baseline found, full run (seeds the baseline for the next run)"
+      - name: Mutate
+        working-directory: ${{ env.MONO }}/sdks/php-pca
+        env:
+          FILES: ${{ matrix.files }}
+        run: |
+          # every file of src/ belongs to exactly one shard
+          diff <(ls src/*.php | sort) <(tr ',' '\n' <<<"src/Pca.php,src/IntentV2.php,src/IntentV2Schema.php,src/IntentV2Session.php,src/IntentV2Acc.php,src/IntentV2Map.php,src/IntentWb.php,src/SafeRegex.php,src/Predicates.php,src/Json.php,src/PcaMiddleware.php,src/OpensslPq.php,src/LessFfi.php,src/Mldsa.php" | sort)
+          composer install --no-interaction --no-progress -q
+          # Infection is not a dev dependency of the package: added to this CI copy only
+          composer config --no-interaction allow-plugins.infection/extension-installer true
+          composer require --dev --no-interaction --no-progress -q -W "infection/infection:^0.29"
+          vendor/bin/phpunit > "$RUNNER_TEMP/baseline.log" || { tail -60 "$RUNNER_TEMP/baseline.log"; echo "::error::the PHPUnit oracle fails on the unmutated source"; exit 1; }
+          if [ -z "${INFECTION_BASELINE:-}" ]; then
+            vendor/bin/infection --threads=3 --no-progress --min-msi=0 --min-covered-msi=0 --filter="$FILES" | tail -25
+            exit 0
+          fi
+          T="$GITHUB_WORKSPACE/.github/scripts/infection-targeted.py"
+          n="$(python3 "$T" plan --baseline "$INFECTION_BASELINE" --src src --files "$FILES" --base-dir "$RUNNER_TEMP/git-base" \
+                 --carried "$RUNNER_TEMP/carried.json")"
+          echo "targeted: $n target line(s)"
+          [ "$n" -gt 0 ] || exit 0
+          # a throwaway git base in which exactly the target lines differ: --git-diff-lines then mutates only those
+          cp -R src "$RUNNER_TEMP/src-current"
+          cp "$RUNNER_TEMP"/git-base/*.php src/
+          git init -q . && git add src && git -c user.name=ci -c user.email=ci@localhost commit -qm "infection base"
+          cp "$RUNNER_TEMP"/src-current/*.php src/
+          git diff --stat HEAD -- src
+          vendor/bin/infection --threads=3 --no-progress --min-msi=0 --min-covered-msi=0 --git-diff-lines --git-diff-base=HEAD | tail -25
+      - name: Report
+        run: |
+          D="$MONO/sdks/php-pca"; S="$D/infection-out/summary.json"
+          A=(--src "$D/src" --files "${{ matrix.files }}" --summary "$S" --baseline infection-baseline.json --log "$D/infection-out/log.json")
+          [ -f "$RUNNER_TEMP/carried.json" ] && A+=(--carried "$RUNNER_TEMP/carried.json")
+          mkdir -p "$D/infection-out"
+          python3 "$GITHUB_WORKSPACE/.github/scripts/infection-targeted.py" finish "${A[@]}"
+          python3 "$MONO/tools/pca-audit/native-mutation/php-survivors.py" "$S" "$D/src" survivors.json
+          node -e '
+            const st = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).stats;
+            const pick = ["killedCount", "escapedCount", "errorCount", "syntaxErrorCount", "skippedCount", "ignoredCount", "timeOutCount", "notCoveredCount"];
+            const c = {}; for (const k of pick) if (st[k] !== undefined) c[k.replace(/Count$/, "")] = st[k];
+            require("fs").writeFileSync("counts.json", JSON.stringify(c));
+          ' "$S"
+          node .github/scripts/mutation-shard-report.mjs --crate="$CRATE" --shard=${{ matrix.shard }} --of="$SHARDS" --tool=infection \
+            --counts=counts.json --survivors=survivors.json --out=shard-${{ matrix.shard }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shard-${{ matrix.shard }}
+          path: shard-${{ matrix.shard }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: infection-baseline-${{ matrix.shard }}
+          path: infection-baseline.json
+          retention-days: 30
+
+  merge:
+    needs: shard
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Flagship checker + ledger
+        run: .github/scripts/mutation-layout.sh "$CRATE"
+      - uses: actions/download-artifact@v4
+        with:
+          path: reports
+      - name: Merge shards and check the ledger
+        run: >
+          node .github/scripts/mutation-merge.mjs --crate="$CRATE" --shards="$SHARDS" --reports=reports
+          --checker="$MONO/tools/pca-audit" --src="$GITHUB_WORKSPACE"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: survivors-merged
+          path: reports/survivors-merged.json
+          if-no-files-found: ignore

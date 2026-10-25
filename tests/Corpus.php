@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Atlas\Pca\Tests;
 
+use Atlas\Pca\IntentV2;
+use Atlas\Pca\IntentWb;
 use Atlas\Pca\Json;
 use Atlas\Pca\JsonError;
 use Atlas\Pca\Obj;
@@ -105,7 +107,145 @@ final class Corpus
     public static function verifyAdv(array $v): array
     {
         $ctx = $v['context'];
-        return Pca::verifyJson($v['pcactn_json'], self::toObj($v['grant']), (int)$ctx['now'], $ctx['aud'], $ctx['allowed_suites'] ?? null);
+        return Pca::verifyJson($v['pcactn_json'], self::toObj($v['grant']), (int)$ctx['now'], $ctx['aud'], $ctx['allowed_suites'] ?? null,
+            self::intentPolicyOf($ctx), self::intentV2Of($ctx));
+    }
+
+    /** Intent Layer v2 checks in pipeline order (appended after `intent`, each only when reported). */
+    public const V2_ORDER = ['schema', 'intent_session', 'layers', 'accumulators', 'map', 'facts', 'provenance', 'classes'];
+
+    /**
+     * Intent Layer v2 verifier state of an assoc-array context / fuzz line: `intent_v2` (a JSON object, or its JSON text),
+     * re-parsed by Json::parseLax so number lexemes are kept (the v2 checks judge them by value). Null when absent / not an object.
+     */
+    public static function intentV2Of(array $ctx): ?Obj
+    {
+        if (!isset($ctx['intent_v2'])) {
+            return null;
+        }
+        $v = is_string($ctx['intent_v2']) ? Json::parseLax($ctx['intent_v2'])
+            : Json::parseLax(json_encode($ctx['intent_v2'], JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION));
+        return $v instanceof Obj ? $v : null;
+    }
+
+    /** `context.intent_v2` of a core vector (an Obj), else null. */
+    public static function intentV2OfObj(Obj $ctx): ?Obj
+    {
+        $v = $ctx->has('intent_v2') ? $ctx->get('intent_v2') : null;
+        return $v instanceof Obj ? $v : null;
+    }
+
+    /** The expected check order: the core order, `intent` when expected, then the expected v2 checks in pipeline order. */
+    public static function expectedOrder(array $coreOrder, Obj $wantChecks): array
+    {
+        $order = array_values($coreOrder);
+        if ($wantChecks->has('intent')) {
+            $order[] = 'intent';
+        }
+        foreach (self::V2_ORDER as $k) {
+            if ($wantChecks->has($k)) {
+                $order[] = $k;
+            }
+        }
+        return $order;
+    }
+
+    /**
+     * How a vector's `requires_suite` applies here: 'none' (no requirement), 'implemented' (in the suite manifest: compare
+     * exactly) or 'unsupported' (outside it: not implemented, or its backend is unavailable here; the vector must deny, with
+     * `unsupported_suite` in the reason when the first failing check is a v2 check).
+     */
+    public static function requiresSuite(Obj $v): string
+    {
+        $s = $v->has('requires_suite') ? $v->get('requires_suite') : null;
+        if (!is_string($s)) {
+            return 'none';
+        }
+        // README "Suite capability": a suite outside the manifest (Pca::supportedSuites: registered AND runnable here) is
+        // not compared; the verifier must refuse it with `unsupported_suite`
+        return Pca::suiteImplemented($s) ? 'implemented' : 'unsupported';
+    }
+
+    /** True when the verdict's reason (its FIRST failing check) belongs to an Intent Layer v2 check. */
+    public static function firstFailureIsV2(array $got): bool
+    {
+        foreach ($got['checks'] as $k => $ok) {
+            if ($ok === false) {
+                return in_array((string)$k, self::V2_ORDER, true);
+            }
+        }
+        return false;
+    }
+
+    /** The Intent Layer v2 primitive tables the runners compare (IntentV2::primitive kinds). */
+    public const INTENT_PRIMITIVES = ['intent_schema', 'intent_revocation', 'intent_world', 'intent_provenance', 'intent_classifier',
+        'intent_wb_active', 'intent_read_purpose', 'intent_map_commit', 'intent_map'];
+
+    /**
+     * The intent_* primitives (rules 13-19 on their own), each through IntentV2::primitive (the same entry the diff-fuzz
+     * driver uses) and compared with its `expect` as canonical JSON (`expect.reason_contains` is asserted on the reason,
+     * never compared as a member). README "Suite capability": an entry whose `requires_suite` this verifier does not
+     * implement must refuse with `unsupported_suite` in the reason (counted as `unsupported`). An absent table is
+     * reported as absent. `$check(bool $ok, string $msg)` records each comparison.
+     * @return array<string, array{ran:int, unsupported:int, absent?:bool}>
+     */
+    public static function runIntentPrimitives(Obj $prim, callable $check): array
+    {
+        $canon = function (mixed $x): string {
+            try {
+                return IntentV2::canonicalize($x);
+            } catch (\Throwable $t) {
+                return '<no canonical form: ' . $t->getMessage() . '>';
+            }
+        };
+        $out = [];
+        foreach (self::INTENT_PRIMITIVES as $table) {
+            $entries = $prim->has($table) && is_array($prim->get($table)) ? $prim->get($table) : null;
+            $out[$table] = ['ran' => 0, 'unsupported' => 0];
+            if ($entries === null) {
+                $out[$table]['absent'] = true;
+                continue;
+            }
+            foreach ($entries as $e) {
+                $name = (string)($e->has('name') ? $e->get('name') : '?');
+                $exp = $e->get('expect');
+                $out[$table]['ran']++;
+                try {
+                    // README "Raw JSON text members": `input_json` (the whole input as raw text) wins over `input`
+                    $input = $e->has('input_json') && is_string($e->get('input_json')) ? Json::parseLax($e->get('input_json'))
+                        : ($e->has('input') ? $e->get('input') : IntentV2::undef());
+                    $res = IntentV2::primitive($table, $input);
+                } catch (\Throwable $t) {
+                    $check(false, "$table $name: THREW " . get_class($t) . ': ' . $t->getMessage());
+                    continue;
+                }
+                [$got, $why] = $res;
+                $why = (string)$why;
+                $wantReason = $exp instanceof Obj && $exp->has('reason_contains') ? (string)$exp->get('reason_contains') : null;
+                if ($wantReason !== null) {
+                    $check(str_contains($why, $wantReason), "$table $name: reason must contain $wantReason ($why)");
+                }
+                if (self::requiresSuite($e) === 'unsupported') {
+                    $out[$table]['unsupported']++;
+                    $refused = $got->has('ok') ? $got->get('ok') === false : ($got->has('outcome') ? $got->get('outcome') === 'deny' : $got->get('sig') === false);
+                    $check($refused && str_contains($why, 'unsupported_suite'), "$table $name: requires_suite "
+                        . json_encode($e->get('requires_suite')) . " is not implemented here: must refuse with unsupported_suite ($why)");
+                    continue;
+                }
+                $want = $exp instanceof Obj ? $exp->without('reason_contains') : $exp;
+                $check($canon($got) === $canon($want), "$table $name: got " . $canon($got) . ', want ' . $canon($want) . ($why !== '' ? " ($why)" : ''));
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * Intent Layer M2 policy of an assoc-array context / fuzz line: `intent_policy_json` (raw JSON TEXT, parsed by
+     * Json::parseLax so number lexemes are kept) wins over `intent_policy`.
+     */
+    public static function intentPolicyOf(array $ctx): mixed
+    {
+        return isset($ctx['intent_policy_json']) ? Json::parseLax($ctx['intent_policy_json']) : ($ctx['intent_policy'] ?? null);
     }
 
     public static function verifyCore(Obj $v): array
@@ -114,9 +254,12 @@ final class Corpus
         $now = $ctx->get('now')->int();
         $aud = $ctx->get('aud');
         $allowed = $ctx->has('allowed_suites') ? $ctx->get('allowed_suites') : null;
+        $intentPolicy = $ctx->has('intent_policy_json') ? Json::parseLax($ctx->get('intent_policy_json'))
+            : ($ctx->has('intent_policy') ? $ctx->get('intent_policy') : null);
+        $intentV2 = self::intentV2OfObj($ctx);
         return $v->has('pcactn_json')
-            ? Pca::verifyJson($v->get('pcactn_json'), $v->get('grant'), $now, $aud, $allowed)
-            : Pca::verifyPcactnCore($v->get('pcactn'), $v->get('grant'), $now, $aud, $allowed);
+            ? Pca::verifyJson($v->get('pcactn_json'), $v->get('grant'), $now, $aud, $allowed, $intentPolicy, $intentV2)
+            : Pca::verifyPcactnCore($v->get('pcactn'), $v->get('grant'), $now, $aud, $allowed, $intentPolicy, $intentV2);
     }
 
     public static function parseOutcome(string $in, bool $lax): string
@@ -141,7 +284,8 @@ final class Corpus
             }
             if ($c['kind'] === 'verify') {
                 try {
-                    $g = Pca::verifyJson($c['raw'], Json::parseLax($c['grant']), (int)$c['now'], $c['aud'], $c['allowed_suites'] ?? null);
+                    $g = Pca::verifyJson($c['raw'], Json::parseLax($c['grant']), (int)$c['now'], $c['aud'], $c['allowed_suites'] ?? null,
+                        self::intentPolicyOf($c), self::intentV2Of($c));
                     $val = self::fmt($g);
                 } catch (\Throwable $e) {
                     $val = 'THROW:' . get_class($e) . ':' . self::esc($e->getMessage());

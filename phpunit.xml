@@ -12,6 +12,11 @@
             <directory>tests</directory>
         </testsuite>
     </testsuites>
+    <php>
+        <!-- a mutant that loops while growing an array must die at the limit instead of taking the CI runner down (shard 7 was
+             killed by a runner shutdown twice); the unmutated suite peaks at about 600 MB -->
+        <ini name="memory_limit" value="1536M"/>
+    </php>
     <source>
         <include>
             <directory suffix=".php">src</directory>

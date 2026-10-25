@@ -32,7 +32,7 @@ use Psr\Http\Server\RequestHandlerInterface;
  * JSON body and an `RFC 6750`-shaped `WWW-Authenticate: PCA realm="pca", ...` challenge:
  *
  *   - 401 when no PCActn is presented, it cannot be decoded, or its `grant_ref` is unknown;
- *   - 403 when a well-formed PCActn resolves a grant but the verdict denies.
+ *   - 403 when the grant resolver throws (fail closed), or a well-formed PCActn resolves a grant but the verdict denies.
  *
  * Caveats are NOT evaluated here (nor by the core verifier). A resource server that enforces the grant's caveats calls
  * {@see Pca::evaluateCaveats}(Pca::policyCaveats($grant, $pcactn->get('cap_chain')), $ctx) with its own action params
@@ -52,6 +52,9 @@ final class PcaMiddleware implements MiddlewareInterface
     private readonly ResponseFactoryInterface $responseFactory;
     private readonly StreamFactoryInterface $streamFactory;
 
+    /** @var Obj|\Closure(Obj):?Obj|null Intent Layer v2 verifier state, or its per-request resolver */
+    private readonly Obj|\Closure|null $intentV2;
+
     /**
      * @param string                        $audience        this resource server / instance id, checked against the PCActn's signed `aud`
      * @param callable(string):mixed        $resolveGrant    maps a PCActn's `grant_ref` to its root grant capability (null = unknown grant)
@@ -59,6 +62,15 @@ final class PcaMiddleware implements MiddlewareInterface
      * @param ResponseFactoryInterface|null $responseFactory PSR-17 factory for the error response; guzzlehttp/psr7 is auto-discovered when null
      * @param StreamFactoryInterface|null   $streamFactory   PSR-17 factory for the error body; guzzlehttp/psr7 is auto-discovered when null
      * @param string                        $attribute       the request attribute the verdict is stored under on success
+     * @param array<string,mixed>|null      $intentPolicy    optional Intent Layer M2 policy (['require' => bool, 'min_fidelity_ppm' => int,
+     *                                                       'max_residual_risk_ppm' => int]) forwarded to the verifier; an active policy
+     *                                                       denies a PCActn without a bound `intent`
+     * @param Obj|callable|null             $intentV2        optional Intent Layer v2 verifier state + policy (see Pca::verifyPcactnCore):
+     *                                                       an Obj, or a callable `(Obj $pcactn): ?Obj` evaluated per request (the
+     *                                                       host's store lookup: session root, held grants, accumulator pre-state
+     *                                                       under its row lock, receipts, plaintext params). A callable that throws or
+     *                                                       returns anything but an Obj / null fails closed (403
+     *                                                       `intent_v2_context_error`, no verdict)
      */
     public function __construct(
         private readonly string $audience,
@@ -67,7 +79,13 @@ final class PcaMiddleware implements MiddlewareInterface
         ?ResponseFactoryInterface $responseFactory = null,
         ?StreamFactoryInterface $streamFactory = null,
         private readonly string $attribute = 'pca',
+        private readonly ?array $intentPolicy = null,
+        mixed $intentV2 = null,
     ) {
+        if ($intentV2 !== null && !($intentV2 instanceof Obj) && !is_callable($intentV2)) {
+            throw new \InvalidArgumentException('intentV2 must be an Obj, a callable (Obj $pcactn): ?Obj, or null');
+        }
+        $this->intentV2 = $intentV2 instanceof Obj || $intentV2 === null ? $intentV2 : \Closure::fromCallable($intentV2);
         $this->resolveGrant = \Closure::fromCallable($resolveGrant);
         $this->clock = $clock !== null
             ? \Closure::fromCallable($clock)
@@ -95,17 +113,34 @@ final class PcaMiddleware implements MiddlewareInterface
         if (!is_string($grantRef) || $grantRef === '') {
             return $this->error(401, 'invalid_request', 'PCActn has no grant_ref');
         }
-        $grant = ($this->resolveGrant)($grantRef);
+        try {
+            $grant = ($this->resolveGrant)($grantRef);
+        } catch (\Throwable) {
+            // The host's resolver failed: fail closed as TS requirePCA does (403, guard error), never an uncaught 500.
+            return $this->error(403, 'insufficient_authority', 'grant resolution failed (fail closed)');
+        }
         if ($grant === null) {
             return $this->error(401, 'unknown_grant', 'grant_ref does not resolve to a known grant');
         }
 
         // 3. Run the existing offline verifier (eight checks). Prefer the raw-bytes entrypoint for the
         //    header carrier so the signed canonical form is checked against exactly what arrived.
+        // 3a. Intent Layer v2 verifier state for THIS request (fail closed when the host's lookup fails).
+        $v2 = $this->intentV2;
+        if ($v2 instanceof \Closure) {
+            try {
+                $v2 = ($v2)($pcactn);
+            } catch (\Throwable) {
+                return $this->error(403, 'intent_v2_context_error', 'intent v2 verifier state unavailable (fail closed)');
+            }
+            if ($v2 !== null && !($v2 instanceof Obj)) {
+                return $this->error(403, 'intent_v2_context_error', 'intent v2 verifier state unavailable (fail closed)');
+            }
+        }
         $now = ($this->clock)();
         $verdict = $text !== null
-            ? Pca::verifyJson($text, $grant, $now, $this->audience)
-            : Pca::verifyPcactnCore($pcactn, $grant, $now, $this->audience);
+            ? Pca::verifyJson($text, $grant, $now, $this->audience, null, $this->intentPolicy, $v2)
+            : Pca::verifyPcactnCore($pcactn, $grant, $now, $this->audience, null, $this->intentPolicy, $v2);
 
         if ($verdict['allow'] !== true) {
             return $this->error(403, 'insufficient_authority', $verdict['reason'], $verdict);
@@ -204,16 +239,16 @@ final class PcaMiddleware implements MiddlewareInterface
     // ---- responses ----------------------------------------------------------------------
 
     /**
-     * Emit a JSON error body plus an RFC 6750-shaped `WWW-Authenticate: PCA ...` challenge.
+     * Emit a JSON error body plus an RFC 6750-shaped `WWW-Authenticate: PCA realm="pca", error="<code>"` challenge. The
+     * description is NOT put in the header: it can carry request-derived text (the verdict reason, a parse error) with CR/LF
+     * (header injection; a PSR-7 implementation then throws, i.e. a 500); TS requirePCA puts no reason in its challenge
+     * either. The description stays in the JSON body.
      *
      * @param array{allow:bool,checks:array<string,bool>,reason:string}|null $verdict
      */
     private function error(int $status, string $code, string $description, ?array $verdict = null): ResponseInterface
     {
         $challenge = sprintf('PCA realm="pca", error="%s"', $code);
-        if ($description !== '') {
-            $challenge .= sprintf(', error_description="%s"', self::quote($description));
-        }
 
         $payload = ['error' => $code];
         if ($description !== '') {
@@ -232,12 +267,6 @@ final class PcaMiddleware implements MiddlewareInterface
             ->withHeader('WWW-Authenticate', $challenge)
             ->withHeader('Content-Type', 'application/json')
             ->withBody($this->streamFactory->createStream($body));
-    }
-
-    /** Make a string safe inside a quoted WWW-Authenticate auth-param value. */
-    private static function quote(string $s): string
-    {
-        return str_replace(['\\', '"'], ['\\\\', '\\"'], $s);
     }
 
     private static function discoverFactory(): ResponseFactoryInterface&StreamFactoryInterface

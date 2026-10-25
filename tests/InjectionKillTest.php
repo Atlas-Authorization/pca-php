@@ -6,6 +6,7 @@ namespace Atlas\Pca\Tests;
 
 use Atlas\Pca\Json;
 use Atlas\Pca\Mldsa;
+use Atlas\Pca\OpensslPq;
 use Atlas\Pca\Num;
 use Atlas\Pca\Obj;
 use Atlas\Pca\Pca;
@@ -82,7 +83,8 @@ final class InjectionKillTest extends TestCase
     private function needLibs(bool $good = true): ?string
     {
         $g = getenv('ATLAS_PCA_LIBCRYPTO');
-        $ok = is_file(self::DISTRO_30) && (!$good || (is_string($g) && is_file($g)));
+        // without the good library, the distro one must lack ML-DSA (ubuntu-26.04's libcrypto.so.3 is OpenSSL >= 3.5)
+        $ok = is_file(self::DISTRO_30) && ($good ? is_string($g) && is_file($g) : MldsaDiscoveryTest::isPre35(self::DISTRO_30));
         if (!$ok) {
             if (getenv('PCA_REQUIRE_MLDSA') === '1') {
                 $this->fail('libcrypto 3.0 / 3.5 not available');
@@ -94,8 +96,9 @@ final class InjectionKillTest extends TestCase
 
     private static function inject(\FFI $f): void
     {
-        (new \ReflectionProperty(Mldsa::class, 'ffi'))->setValue(null, $f);
-        (new \ReflectionProperty(Mldsa::class, 'tried'))->setValue(null, true);
+        (new \ReflectionProperty(OpensslPq::class, 'ffi'))->setValue(null, $f);
+        (new \ReflectionProperty(OpensslPq::class, 'tried'))->setValue(null, true);
+        (new \ReflectionProperty(OpensslPq::class, 'probed'))->setValue(null, []);
     }
 
     /** @return array{0:string,1:string,2:string} a valid ML-DSA-65 (pk, msg, sig) */
@@ -134,9 +137,10 @@ final class InjectionKillTest extends TestCase
     public function testProbeIsTotalWhenTheFfiCallThrows(): void
     {
         $good = $this->needLibs();
-        $probe = new \ReflectionMethod(Mldsa::class, 'worksMlDsa');
-        $this->assertFalse($probe->invoke(null, \FFI::cdef('void EVP_PKEY_free(void* pkey);', $good)));
-        $this->assertTrue($probe->invoke(null, \FFI::cdef(self::CDEF_FULL, $good)));
+        // Mldsa delegates to OpensslPq; its probe is OpensslPq::builds(handle, type)
+        $probe = new \ReflectionMethod(OpensslPq::class, 'builds');
+        $this->assertFalse($probe->invoke(null, \FFI::cdef('void EVP_PKEY_free(void* pkey);', $good), 'ML-DSA-65'));
+        $this->assertTrue($probe->invoke(null, \FFI::cdef(self::CDEF_FULL, $good), 'ML-DSA-65'));
     }
 
     // ------------------------------------------------------------------ PSR-17 discovery without guzzle
