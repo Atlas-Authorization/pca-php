@@ -26,7 +26,7 @@ final class IntentKillTest extends TestCase
     private const OPEN = "intent ref / map_digest / goal_salt do not open the root grant's goal commitment";
     private const ERR = 'intent binding error (fail closed): ';
     private const BASE = ['wire', 'version', 'audience', 'validity', 'chain', 'grant_ref_bound', 'plan_inclusion',
-        'leaf_signature', 'counter'];
+        'leaf_signature', 'counter_format'];
 
     // ---- fixtures ---------------------------------------------------------------------------------------------------
 
