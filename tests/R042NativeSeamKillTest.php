@@ -279,7 +279,7 @@ final class R042NativeSeamKillTest extends TestCase
             }
         };
         foreach ([$inv, [$inv, 'resolve'], null, new Obj()] as $i => $v2) {
-            $mw = new PcaMiddleware('aud', fn() => null, null, $f, $f, 'pca', null, $v2);
+            $mw = new PcaMiddleware('aud', fn() => null, null, $f, $f, 'pca', null, $v2, signatureOnly: true);
             $held = (new \ReflectionProperty(PcaMiddleware::class, 'intentV2'))->getValue($mw);
             if ($v2 === null || $v2 instanceof Obj) {
                 $this->assertSame($v2, $held, "case $i");

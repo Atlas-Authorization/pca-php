@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Atlas\Pca;
 
 require_once __DIR__ . '/Pca.php';
+require_once __DIR__ . '/Authorize.php';
 
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -24,7 +25,7 @@ use Psr\Http\Server\RequestHandlerInterface;
  * strict-JSON request body of the shape `{"pcactn": {...}}`. The `grant_ref` is pulled from the PCActn and
  * resolved to its root grant capability through a caller-supplied resolver; the verifier then runs the eight
  * offline checks (wire, version, audience vs signed `aud`, validity, chain rooted at the grant, plan
- * inclusion, leaf signature, counter).
+ * inclusion, leaf signature, counter_format).
  *
  * On success the verdict array (`['allow'=>true,'checks'=>[...],'reason'=>'']`) is attached to the request
  * as the `pca` attribute (configurable) and the next handler runs — read it downstream with
@@ -34,9 +35,17 @@ use Psr\Http\Server\RequestHandlerInterface;
  *   - 401 when no PCActn is presented, it cannot be decoded, or its `grant_ref` is unknown;
  *   - 403 when the grant resolver throws (fail closed), or a well-formed PCActn resolves a grant but the verdict denies.
  *
- * Caveats are NOT evaluated here (nor by the core verifier). A resource server that enforces the grant's caveats calls
- * {@see Pca::evaluateCaveats}(Pca::policyCaveats($grant, $pcactn->get('cap_chain')), $ctx) with its own action params
- * (the root grant's caveats outside the envelope included: the 0.4.1 policy-layer security fix).
+ * Caveats are NOT evaluated on the signature-only path (`signatureOnly: true`, nor by the core verifier). A resource server
+ * that uses it and enforces the grant's caveats calls {@see Pca::evaluateCaveats}(Pca::policyCaveats($grant, $pcactn->get('cap_chain')), $ctx) with its own
+ * action params (the root grant's caveats outside the envelope included: the 0.4.1 policy-layer security fix).
+ *
+ * By default (the `$authorize` option, {@see AuthorizeOptions}) the middleware runs the full {@see Authorize::authorize}
+ * pipeline: the operation the route will execute (`$authorize->operation`, mapped from the request; null denies),
+ * the operation binding, predicates and caveats, revocation, plan and the atomic replay claim. The handler runs only on
+ * `allow`; it then finds the core verdict under the `pca` attribute (as on the default path), the bound
+ * {@see AuthorizedOperation} under `pca.operation` and the {@see AuthorizeResult} under `pca.authorization` (the attribute
+ * name is configurable). A denial answers 401 (`invalid_pcactn`) or 403 (`insufficient_authority`) with the decisive
+ * reason and the checks in the JSON body.
  */
 final class PcaMiddleware implements MiddlewareInterface
 {
@@ -55,6 +64,9 @@ final class PcaMiddleware implements MiddlewareInterface
     /** @var Obj|\Closure(Obj):?Obj|null Intent Layer v2 verifier state, or its per-request resolver */
     private readonly Obj|\Closure|null $intentV2;
 
+    /** null only in signature-only mode */
+    private readonly ?AuthorizeOptions $authorize;
+
     /**
      * @param string                        $audience        this resource server / instance id, checked against the PCActn's signed `aud`
      * @param callable(string):mixed        $resolveGrant    maps a PCActn's `grant_ref` to its root grant capability (null = unknown grant)
@@ -71,6 +83,11 @@ final class PcaMiddleware implements MiddlewareInterface
      *                                                       under its row lock, receipts, plaintext params). A callable that throws or
      *                                                       returns anything but an Obj / null fails closed (403
      *                                                       `intent_v2_context_error`, no verdict)
+     * @param AuthorizeOptions|null         $authorize       the components of the full authorize pipeline (see the class doc). The
+     *                                                       default: with none (and not `$signatureOnly`) every request is refused with a
+     *                                                       403 `authorize_config` naming what is missing
+     * @param bool                          $signatureOnly   opt in to verifying the signature and chain only (no caveats, replay,
+     *                                                       revocation or operation binding); cannot be combined with `$authorize`
      */
     public function __construct(
         private readonly string $audience,
@@ -81,7 +98,14 @@ final class PcaMiddleware implements MiddlewareInterface
         private readonly string $attribute = 'pca',
         private readonly ?array $intentPolicy = null,
         mixed $intentV2 = null,
+        ?AuthorizeOptions $authorize = null,
+        bool $signatureOnly = false,
     ) {
+        if ($signatureOnly && $authorize !== null) {
+            throw new \InvalidArgumentException('signatureOnly and authorize are mutually exclusive (signatureOnly skips the checks authorize enforces)');
+        }
+        // the default is the full authorize path; with no options it refuses every request (403 authorize_config)
+        $this->authorize = $signatureOnly ? null : ($authorize ?? new AuthorizeOptions());
         if ($intentV2 !== null && !($intentV2 instanceof Obj) && !is_callable($intentV2)) {
             throw new \InvalidArgumentException('intentV2 must be an Obj, a callable (Obj $pcactn): ?Obj, or null');
         }
@@ -106,6 +130,10 @@ final class PcaMiddleware implements MiddlewareInterface
         [$pcactn, $text, $reason] = $this->extract($request);
         if ($pcactn === null) {
             return $this->error(401, 'invalid_request', $reason);
+        }
+
+        if ($this->authorize !== null) {
+            return $this->processAuthorize($request, $handler, $text ?? $pcactn, $this->authorize);
         }
 
         // 2. Resolve the grant the chain must be rooted at.
@@ -147,6 +175,95 @@ final class PcaMiddleware implements MiddlewareInterface
         }
 
         return $handler->handle($request->withAttribute($this->attribute, $verdict));
+    }
+
+    /** The opt-in authorize path: the handler runs only when the operation this request executes is authorized. */
+    private function processAuthorize(ServerRequestInterface $request, RequestHandlerInterface $handler, Obj|string $pcactn,
+                                      AuthorizeOptions $opts): ResponseInterface
+    {
+        try {
+            $operation = $opts->operation !== null ? ($opts->operation)($request) : null;
+        } catch (\Throwable) {
+            $operation = null; // a mapping that fails names no operation: denied below
+        }
+        $result = Authorize::authorize(
+            $pcactn,
+            $operation,
+            $this->audience,
+            $this->resolveGrant,
+            $opts->stateStore,
+            $opts->isRevoked,
+            ($this->clock)(),
+            $opts->plan,
+            $opts->context,
+            $this->intentPolicy,
+            $this->intentV2,
+            null,
+            $opts->require,
+            $opts->escalationPrincipals,
+            $opts->escalationPrincipals ? $this->escalationAnswerOf($request, $opts) : null,
+        );
+        if (!$result->allow) {
+            $extra = ['reason' => $result->reason ?? 'denied', 'checks' => $result->checks, 'decision' => $result->decision];
+            if ($result->escalation !== null) {
+                $extra['escalation'] = self::plain($result->escalation);
+            }
+            if ($result->missing !== null) {
+                $extra['missing'] = $result->missing;
+            }
+            return $this->respond($result->status, $result->status === 401 ? 'invalid_pcactn' : 'insufficient_authority',
+                $result->reason ?? 'denied', $extra);
+        }
+        return $handler->handle($request
+            ->withAttribute($this->attribute, $result->verdict)
+            ->withAttribute($this->attribute . '.operation', $result->operation)
+            ->withAttribute($this->attribute . '.authorization', $result));
+    }
+
+    /**
+     * The principal's EscalationAnswer for this request: the host's reader, else the header `PCA-Escalation-Answer` (strict
+     * unpadded base64url of the JSON), else the JSON body member `escalation_answer`. An unreadable answer is no answer: the
+     * decision stays `escalate` (refused).
+     */
+    private function escalationAnswerOf(ServerRequestInterface $request, AuthorizeOptions $opts): ?Obj
+    {
+        try {
+            if ($opts->escalationAnswer !== null) {
+                $a = ($opts->escalationAnswer)($request);
+                return $a instanceof Obj ? $a : null;
+            }
+            $h = $request->getHeaderLine('PCA-Escalation-Answer');
+            if ($h !== '') {
+                $raw = Pca::decodePcaHeader($h);
+                $o = $raw === null || strlen($raw) > Pca::MAX_ARTIFACT_BYTES ? null : Json::parseStrict($raw);
+                return $o instanceof Obj ? $o : null;
+            }
+            $text = $this->readBody($request);
+            if ($text === '') {
+                return null;
+            }
+            $body = Json::parseStrict($text);
+            $a = $body instanceof Obj ? $body->get('escalation_answer') : null;
+            return $a instanceof Obj ? $a : null;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /** A library JSON value as plain PHP for json_encode (Obj -> object, Num -> int|float). */
+    private static function plain(mixed $v): mixed
+    {
+        if ($v instanceof Obj) {
+            $o = new \stdClass();
+            foreach ($v->keys() as $k) {
+                $o->{$k} = self::plain($v->get($k));
+            }
+            return $o;
+        }
+        if ($v instanceof Num) {
+            return $v->isInt() ? $v->int() : $v->float();
+        }
+        return is_array($v) ? array_map(self::plain(...), $v) : $v;
     }
 
     /**
@@ -248,18 +365,26 @@ final class PcaMiddleware implements MiddlewareInterface
      */
     private function error(int $status, string $code, string $description, ?array $verdict = null): ResponseInterface
     {
+        $extra = [];
+        if ($verdict !== null) {
+            if ($verdict['reason'] !== '') {
+                $extra['reason'] = $verdict['reason'];
+            }
+            $extra['checks'] = $verdict['checks'];
+        }
+        return $this->respond($status, $code, $description, $extra);
+    }
+
+    /** @param array<string,mixed> $extra members appended to the JSON body */
+    private function respond(int $status, string $code, string $description, array $extra): ResponseInterface
+    {
         $challenge = sprintf('PCA realm="pca", error="%s"', $code);
 
         $payload = ['error' => $code];
         if ($description !== '') {
             $payload['error_description'] = $description;
         }
-        if ($verdict !== null) {
-            if ($verdict['reason'] !== '') {
-                $payload['reason'] = $verdict['reason'];
-            }
-            $payload['checks'] = $verdict['checks'];
-        }
+        $payload += $extra;
 
         $body = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 

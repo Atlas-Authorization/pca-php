@@ -69,6 +69,7 @@ final class PcaMiddlewareTest extends TestCase
             fn (): int => $this->now,
             $factory,
             $factory,
+            signatureOnly: true,
         );
     }
 

@@ -12,6 +12,7 @@ require_once __DIR__ . '/SafeRegex.php';
 require_once __DIR__ . '/IntentWb.php';
 require_once __DIR__ . '/Predicates.php';
 require_once __DIR__ . '/IntentV2.php';
+require_once __DIR__ . '/Decision.php';
 
 /**
  * An opaque PQ verification key (R3-01 choke point). Minted ONLY by Pca::resolvePqKey, so the low-level PQ verification
@@ -37,7 +38,7 @@ final class PinnedPq
 
 /**
  * Verifier for the CORE PCActn checks, wire format v2 (strict): wire, version, audience, validity, chain,
- * plan_inclusion, leaf_signature, counter. Values are Json::parse* trees (Obj / list / string / Num / bool / null).
+ * plan_inclusion, leaf_signature, counter_format. Values are Json::parse* trees (Obj / list / string / Num / bool / null).
  */
 final class Pca
 {
@@ -189,7 +190,7 @@ final class Pca
     }
 
     /** Sibling sides (leaf -> root) determined by index/size (RFC 6962 split). */
-    private static function pathShape(int $index, int $size): array
+    public static function pathShape(int $index, int $size): array
     {
         $out = [];
         $idx = $index;
@@ -252,12 +253,12 @@ final class Pca
         return self::hashCanonical($params ?? new Obj());
     }
 
-    private static function conditionsDigest(mixed $pre, mixed $post): string
+    public static function conditionsDigest(mixed $pre, mixed $post): string
     {
         return self::hashCanonical(Obj::of(['pre' => $pre, 'post' => $post]));
     }
 
-    private static function planLeaf(mixed $nodeId, mixed $action, string $cond): Obj
+    public static function planLeaf(mixed $nodeId, mixed $action, string $cond): Obj
     {
         $pd = self::get($action, 'params_digest') ?? self::paramsDigest();
         $rc = self::get($action, 'reversibility_class') ?? self::DEFAULT_REV;
@@ -1063,7 +1064,7 @@ final class Pca
     // ---- Intent Layer M2: the signed `envelope.intent` binding --------------------------------
     //
     // Normative rules: packages/pca/src/intent-binding.ts and conformance/README.md "Intent binding". The optional
-    // top-level `intent` slot is SIGNED (part of the canonical body). The `intent` check runs after `counter` and is
+    // top-level `intent` slot is SIGNED (part of the canonical body). The `intent` check runs after `counter_format` and is
     // reported iff the PCActn carries `intent` OR the verifier's intent policy is ACTIVE; otherwise the verdict is the
     // pre-M2 one.
 
@@ -1280,7 +1281,7 @@ final class Pca
      * A wire failure is terminal: checks == ['wire' => false].
      * `$intentPolicy` (Intent Layer M2): optional ['require' => bool, 'min_fidelity_ppm' => int,
      * 'max_residual_risk_ppm' => int] (a PHP assoc array or a parsed Obj; every key optional). The `intent` check is
-     * reported (after `counter`) iff the PCActn carries `intent` or the policy is active.
+     * reported (after `counter_format`) iff the PCActn carries `intent` or the policy is active.
      * `$intentV2` (Intent Layer v2): optional verifier state + policy Obj {policy?, params?, schema?: {docs, keys}, session?:
      * {root, grants, revocation?: {epoch, proofs}}, layers?, acc?: {state?, monitors?, receipts?, last_seq?, sequencer_keys?},
      * wb?: {artifacts?, policy?}}. The v2 checks (schema, intent_session, layers, accumulators, facts, provenance, classes)
@@ -1304,9 +1305,11 @@ final class Pca
             return ['allow' => false, 'checks' => ['wire' => false], 'reason' => 'wire: ' . $wire];
         }
         $checks = ['wire' => true, 'version' => false, 'audience' => false, 'validity' => false, 'chain' => false,
-            'grant_ref_bound' => false, 'plan_inclusion' => false, 'leaf_signature' => false, 'counter' => false];
+            'grant_ref_bound' => false, 'plan_inclusion' => false, 'leaf_signature' => false, 'counter_format' => false];
         $reason = '';
-        $fail = function (string $name, string $why) use (&$reason): void {
+        $reasons = [];
+        $fail = function (string $name, string $why) use (&$reason, &$reasons): void {
+            $reasons[] = $name . ': ' . $why;
             if ($reason === '') {
                 $reason = $name . ': ' . $why;
             }
@@ -1405,9 +1408,9 @@ final class Pca
         }
 
         if ($p->get('counter')->int() >= 0) {
-            $checks['counter'] = true;
+            $checks['counter_format'] = true;
         } else {
-            $fail('counter', 'not a non-negative safe integer');
+            $fail('counter_format', 'missing or not a non-negative safe integer');
         }
 
         // Intent Layer M2: `intent` check (present iff the PCActn carries `intent` or the policy is active).
@@ -1427,16 +1430,22 @@ final class Pca
 
         // Intent Layer v2: schema (14), intent_session (13), layers (V5), accumulators (15), facts / provenance / classes
         // (16-18), each reported only when the PCActn carries `intent_session` or a v2 policy is active.
-        foreach (IntentV2::decideIntentV2($p, $grant, $intentV2, $now)['checks'] as $c) {
-            if ($c['ok']) {
-                $checks[$c['name']] = true;
-            } else {
-                $checks[$c['name']] = false;
-                $fail($c['name'], $c['reason'] ?? 'rejected');
-            }
+        $v2d = IntentV2::decideIntentV2($p, $grant, $intentV2, $now);
+        foreach ($v2d['checks'] as $c) {
+            $checks[$c['name']] = (bool)$c['ok'];
         }
+        // every failing v2 check is listed after the core reasons (one without a reason adds none; a repeated text once)
+        $reasons = Decision::foldV2Reasons($reasons, $v2d['checks']);
+        if ($reason === '' && $reasons !== []) {
+            $reason = $reasons[0];
+        }
+        $legacyPolarity = ($v2d['legacy_model_polarity'] ?? false) === true;
 
-        return ['allow' => !in_array(false, $checks, true), 'checks' => $checks, 'reason' => $reason];
+        $out = ['allow' => !in_array(false, $checks, true), 'checks' => $checks, 'reason' => $reason, 'reasons' => $reasons];
+        if ($legacyPolarity) {
+            $out['legacy_model_polarity'] = true;
+        }
+        return $out;
     }
 
     // ---- suite introspection (for suite-aware conformance driving) ----------------------

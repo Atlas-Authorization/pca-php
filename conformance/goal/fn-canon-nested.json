@@ -1,0 +1,1 @@
+{"id":"fn-canon-nested","kind":"fn","fn":"canon","input":{"a":{"b":{"c":[]}},"d":{}},"expect":{"canon":"{\"a\":{\"b\":{\"c\":[]}},\"d\":{}}","digest":"qTQ2Jc0PNE86Y47cgq1S7tjzfTZqoqsfPpHzjiI3F5E"}}

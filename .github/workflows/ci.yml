@@ -1,6 +1,7 @@
 name: CI
 
-# The shared conformance corpus (conformance.php over conformance/vectors.json) + the PHPUnit suites. ML-DSA comes from
+# The shared conformance corpus (conformance.php over conformance/vectors.json), the native-parity vector families
+# (conformance-vectors.php: decision / escalation / model rules, passport, vendor attestation evidence, Track 3) + the PHPUnit suites. ML-DSA comes from
 # OpenSSL >= 3.5 libcrypto through FFI: ubuntu-26.04 and macOS have it; ubuntu-24.04 (OpenSSL 3.0) exercises the
 # fail-closed path where the ML-DSA vectors must be skipped, never passed. The PHPUnit corpus suites locate the full
 # adversarial set and the mutation-oracle inputs by the source layout, rebuilt from the flagship at the same ref.
@@ -37,7 +38,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: sodium, json, mbstring, ffi
+          extensions: sodium, json, mbstring, ffi, openssl, gmp, pdo_sqlite, sqlite3
           ini-values: ffi.enable=true
           coverage: none
           tools: composer
@@ -46,6 +47,18 @@ jobs:
         run: .github/scripts/fetch-flagship-corpus.sh --mono php-pca $([ "$RUNNER_OS" = Windows ] || echo --less)
       - name: Conformance corpus
         run: php conformance.php
+      - name: Decision vectors (rules 20 and 21, ternary decision, signed escalation answers, model rules through authorize)
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php decision escalation model-rules
+      - name: Passport vectors (every reason code, every suite, the hardware seam)
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php passport
+      - name: Attestation vectors (vendor evidence, strict X.509; a missing vector file FAILS)
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php attestation passport-hardware
+      - name: Track 3 vectors (intent state, ledger, optimistic, mesh)
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php intent-state ledger optimistic mesh
       - name: Install
         if: ${{ !cancelled() }}
         shell: bash
