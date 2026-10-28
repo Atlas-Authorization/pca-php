@@ -1,0 +1,1 @@
+{"id":"fn-meet-allow-deny","kind":"fn","fn":"meet","input":{"decision":"allow","signal":"deny"},"expect":"deny"}

@@ -1,0 +1,1 @@
+{"id":"fn-units-match","kind":"fn","fn":"units","input":{"schema":{"amount":{"currency":"USD","exponent":2}},"terms":{"amount":{"currency":"USD","exponent":2}}},"expect":[]}
