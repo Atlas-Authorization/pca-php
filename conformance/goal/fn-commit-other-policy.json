@@ -1,0 +1,1 @@
+{"id":"fn-commit-other-policy","kind":"fn","fn":"commit","input":{"goal_digest":"o2cLEINtvyXoEqXBoMKC-GgSdZyeaD9h0m_Sfi8957c","policy_digest":"OTox6DH_tvUjsDTQ3pwgpYaVtGSmbo0RlW3andrFC4k","salt":"s1"},"expect":{"commit":"CUoG1U-FsWTmFNJp3BVooQ1svMiwLopk6CJ63S1ohmI","opens_other_goal":false}}
