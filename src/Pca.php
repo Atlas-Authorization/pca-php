@@ -12,6 +12,8 @@ require_once __DIR__ . '/SafeRegex.php';
 require_once __DIR__ . '/IntentWb.php';
 require_once __DIR__ . '/Predicates.php';
 require_once __DIR__ . '/IntentV2.php';
+require_once __DIR__ . '/Decision.php';
+require_once __DIR__ . '/FreshAt.php'; // the `fresh_at` consistency-token member and check
 
 /**
  * An opaque PQ verification key (R3-01 choke point). Minted ONLY by Pca::resolvePqKey, so the low-level PQ verification
@@ -37,7 +39,7 @@ final class PinnedPq
 
 /**
  * Verifier for the CORE PCActn checks, wire format v2 (strict): wire, version, audience, validity, chain,
- * plan_inclusion, leaf_signature, counter. Values are Json::parse* trees (Obj / list / string / Num / bool / null).
+ * plan_inclusion, leaf_signature, counter_format. Values are Json::parse* trees (Obj / list / string / Num / bool / null).
  */
 final class Pca
 {
@@ -66,7 +68,9 @@ final class Pca
         // Intent Layer M2 (additive, SIGNED): the `envelope.intent` binding (see validateIntentWire).
         'intent',
         // Intent Layer v2 (additive, SIGNED): the session member (IntentV2::validateIntentSessionWire, rule 13).
-        'intent_session'];
+        'intent_session',
+        // Consistency token (additive, SIGNED): the `fresh_at` member (FreshAt::validateWire).
+        'fresh_at'];
 
     // B4 post-quantum suites (mirrors packages/pca/src/pq.ts), every one OpenSSL >= 3.5 provides (OpensslPq: pure mode,
     // empty context): alg name => [sig bytes, needs pq_pk, needs pq_sig, OpenSSL key type of the PQ half (null = none),
@@ -189,7 +193,7 @@ final class Pca
     }
 
     /** Sibling sides (leaf -> root) determined by index/size (RFC 6962 split). */
-    private static function pathShape(int $index, int $size): array
+    public static function pathShape(int $index, int $size): array
     {
         $out = [];
         $idx = $index;
@@ -252,12 +256,12 @@ final class Pca
         return self::hashCanonical($params ?? new Obj());
     }
 
-    private static function conditionsDigest(mixed $pre, mixed $post): string
+    public static function conditionsDigest(mixed $pre, mixed $post): string
     {
         return self::hashCanonical(Obj::of(['pre' => $pre, 'post' => $post]));
     }
 
-    private static function planLeaf(mixed $nodeId, mixed $action, string $cond): Obj
+    public static function planLeaf(mixed $nodeId, mixed $action, string $cond): Obj
     {
         $pd = self::get($action, 'params_digest') ?? self::paramsDigest();
         $rc = self::get($action, 'reversibility_class') ?? self::DEFAULT_REV;
@@ -1028,6 +1032,12 @@ final class Pca
                     return $sessionErr;
                 }
             }
+            if ($p->has('fresh_at')) {
+                $freshErr = FreshAt::validateWire($p->get('fresh_at'));
+                if ($freshErr !== null) {
+                    return $freshErr;
+                }
+            }
             if ($p->has('prohibition_evidence')) {
                 $pe = $p->get('prohibition_evidence');
                 if (!($pe instanceof Obj) && !is_array($pe)) {
@@ -1063,7 +1073,7 @@ final class Pca
     // ---- Intent Layer M2: the signed `envelope.intent` binding --------------------------------
     //
     // Normative rules: packages/pca/src/intent-binding.ts and conformance/README.md "Intent binding". The optional
-    // top-level `intent` slot is SIGNED (part of the canonical body). The `intent` check runs after `counter` and is
+    // top-level `intent` slot is SIGNED (part of the canonical body). The `intent` check runs after `counter_format` and is
     // reported iff the PCActn carries `intent` OR the verifier's intent policy is ACTIVE; otherwise the verdict is the
     // pre-M2 one.
 
@@ -1072,6 +1082,8 @@ final class Pca
     public const INTENT_GOAL_V2_PREFIX = 'pca-intent:v2:';
     /** Intent Layer v2 session grants over a COMMITTED map (rule 19): `pca-intent:v2c:<session>:<map_commit>`. */
     public const INTENT_GOAL_V2C_PREFIX = 'pca-intent:v2c:';
+    /** Goal binding v3: `pca-intent:v3:<goal_digest>:<policy_digest>` (the digests come from the verifier's own `approved_goal`). */
+    public const INTENT_GOAL_V3_PREFIX = 'pca-intent:v3:';
     public const INTENT_GOAL_COMMIT_DOMAIN = "atlas-pca/goal/v1\0";
     public const PPM_ONE = 1000000;
     public const MAX_INTENT_GOAL_SALT_LEN = 128;
@@ -1135,6 +1147,42 @@ final class Pca
         ]));
     }
 
+    /** An `approved_goal` as [key => value] (Obj or PHP assoc array), or null when it is neither. @return array<string,mixed>|null */
+    private static function approvedGoalMap(mixed $v): ?array
+    {
+        if ($v instanceof Obj) {
+            $m = [];
+            foreach ($v->keys() as $k) {
+                $m[$k] = $v->get($k);
+            }
+            return $m;
+        }
+        return is_array($v) && ($v === [] || !array_is_list($v)) ? $v : null;
+    }
+
+    /** Goal binding v3: a closed object of exactly `goal_digest` and `policy_digest`, both canonical base64url (32 bytes). */
+    public static function isApprovedGoalRef(mixed $v): bool
+    {
+        $m = self::approvedGoalMap($v);
+        return $m !== null && count($m) === 2 && self::b($m['goal_digest'] ?? null, 32) && self::b($m['policy_digest'] ?? null, 32);
+    }
+
+    /** The v3 goal string. Throws on a malformed digest: never commit to garbage. */
+    public static function intentGoalV3(mixed $ref): string
+    {
+        if (!self::isApprovedGoalRef($ref)) {
+            throw new \InvalidArgumentException('intentGoalV3: goal_digest and policy_digest must be canonical base64url (32 bytes)');
+        }
+        $m = self::approvedGoalMap($ref);
+        return self::INTENT_GOAL_V3_PREFIX . $m['goal_digest'] . ':' . $m['policy_digest'];
+    }
+
+    /** The v3 goal commitment for a salt (same domain and hash as the v1/v2 commitments). */
+    public static function intentGoalCommitV3(mixed $ref, string $goalSalt): string
+    {
+        return self::hashCanonical(Obj::of(['d' => self::INTENT_GOAL_COMMIT_DOMAIN, 'goal' => self::intentGoalV3($ref), 'salt' => $goalSalt]));
+    }
+
     /**
      * An intent policy as [key => value] (an Obj tree from the JSON parser, or a PHP assoc array), or null when it
      * is neither.
@@ -1157,7 +1205,8 @@ final class Pca
     {
         $m = self::intentPolicyMap($policy);
         return $m !== null && ((array_key_exists('require', $m) && $m['require'] === true)
-            || array_key_exists('min_fidelity_ppm', $m) || array_key_exists('max_residual_risk_ppm', $m));
+            || array_key_exists('min_fidelity_ppm', $m) || array_key_exists('max_residual_risk_ppm', $m)
+            || array_key_exists('approved_goal', $m));
     }
 
     /**
@@ -1214,6 +1263,10 @@ final class Pca
             if ($min === null || $max === null) {
                 return ['status' => 'fail', 'reason' => 'intent policy misconfigured: thresholds must be non-negative safe integers (fail closed)'];
             }
+            $v3 = array_key_exists('approved_goal', $m);
+            if ($v3 && !self::isApprovedGoalRef($m['approved_goal'])) {
+                return ['status' => 'fail', 'reason' => 'intent policy misconfigured: approved_goal digests must be canonical base64url (32 bytes) (fail closed)'];
+            }
             if (!($intent instanceof Obj)) {
                 return ['status' => 'fail', 'reason' => 'this verifier requires an intent binding but the PCActn carries none'];
             }
@@ -1221,7 +1274,11 @@ final class Pca
             if ($commit === null) {
                 return ['status' => 'fail', 'reason' => 'the root grant carries no envelope goal commitment to bind the intent to'];
             }
-            if (self::intentGoalCommit($intent->get('ref'), $intent->get('map_digest'), $intent->get('goal_salt'), $session, $mapForm) !== $commit) {
+            if ($v3) {
+                if (self::intentGoalCommitV3($m['approved_goal'], $intent->get('goal_salt')) !== $commit) {
+                    return ['status' => 'fail', 'reason' => "the root grant's goal commitment does not open to the approved goal and compiled policy (v3)"];
+                }
+            } elseif (self::intentGoalCommit($intent->get('ref'), $intent->get('map_digest'), $intent->get('goal_salt'), $session, $mapForm) !== $commit) {
                 return ['status' => 'fail', 'reason' => "intent ref / map_digest / goal_salt do not open the root grant's goal commitment"];
             }
             $fid = $intent->get('fidelity_ppm')->int();
@@ -1252,17 +1309,17 @@ final class Pca
      * @return array{allow:bool, checks:array<string,bool>, reason:string}
      */
     public static function verifyJson(string $text, mixed $grant, int $now, string $audience, ?array $allowedSuites = null,
-                                      mixed $intentPolicy = null, ?Obj $intentV2 = null): array
+                                      mixed $intentPolicy = null, ?Obj $intentV2 = null, ?Obj $freshAt = null): array
     {
         try { // TOTAL (R6-05)
-            return self::verifyJsonUnchecked($text, $grant, $now, $audience, $allowedSuites, $intentPolicy, $intentV2);
+            return self::verifyJsonUnchecked($text, $grant, $now, $audience, $allowedSuites, $intentPolicy, $intentV2, $freshAt);
         } catch (\Throwable $e) {
             return ['allow' => false, 'checks' => ['wire' => false], 'reason' => 'wire: malformed input (' . get_class($e) . ')'];
         }
     }
 
     private static function verifyJsonUnchecked(string $text, mixed $grant, int $now, string $audience, ?array $allowedSuites,
-                                                mixed $intentPolicy, ?Obj $intentV2): array
+                                                mixed $intentPolicy, ?Obj $intentV2, ?Obj $freshAt): array
     {
         if (strlen($text) > self::MAX_ARTIFACT_BYTES) { // FIRST: before any parsing (strlen = UTF-8 bytes)
             return ['allow' => false, 'checks' => ['wire' => false], 'reason' => 'wire: ' . self::ARTIFACT_SIZE_REASON];
@@ -1272,7 +1329,7 @@ final class Pca
         } catch (JsonError $e) {
             return ['allow' => false, 'checks' => ['wire' => false], 'reason' => 'wire: ' . $e->getMessage()];
         }
-        return self::verifyPcactnCore($p, $grant, $now, $audience, $allowedSuites, $intentPolicy, $intentV2);
+        return self::verifyPcactnCore($p, $grant, $now, $audience, $allowedSuites, $intentPolicy, $intentV2, $freshAt);
     }
 
     /**
@@ -1280,33 +1337,37 @@ final class Pca
      * A wire failure is terminal: checks == ['wire' => false].
      * `$intentPolicy` (Intent Layer M2): optional ['require' => bool, 'min_fidelity_ppm' => int,
      * 'max_residual_risk_ppm' => int] (a PHP assoc array or a parsed Obj; every key optional). The `intent` check is
-     * reported (after `counter`) iff the PCActn carries `intent` or the policy is active.
+     * reported (after `counter_format`) iff the PCActn carries `intent` or the policy is active.
      * `$intentV2` (Intent Layer v2): optional verifier state + policy Obj {policy?, params?, schema?: {docs, keys}, session?:
      * {root, grants, revocation?: {epoch, proofs}}, layers?, acc?: {state?, monitors?, receipts?, last_seq?, sequencer_keys?},
      * wb?: {artifacts?, policy?}}. The v2 checks (schema, intent_session, layers, accumulators, facts, provenance, classes)
      * are appended after `intent` in pipeline order, each only when reported (see IntentV2::decideIntentV2); allow needs them.
+     * `$freshAt`: optional `fresh_at` policy Obj {signer, scope, local: {revocation_epoch, ledger_tree_size, budget_version, policy_revision,
+     * policy_digest}, max_token_age_ms?, require?, side_carried?}; the `fresh_at` check follows the intent checks (see FreshAt::decide).
      */
     public static function verifyPcactnCore(mixed $p, mixed $grant, int $now, string $audience, ?array $allowedSuites = null,
-                                            mixed $intentPolicy = null, ?Obj $intentV2 = null): array
+                                            mixed $intentPolicy = null, ?Obj $intentV2 = null, ?Obj $freshAt = null): array
     {
         try { // TOTAL (R6-05): a malformed input is a verdict, never an exception
-            return self::verifyPcactnCoreUnchecked($p, $grant, $now, $audience, $allowedSuites, $intentPolicy, $intentV2);
+            return self::verifyPcactnCoreUnchecked($p, $grant, $now, $audience, $allowedSuites, $intentPolicy, $intentV2, $freshAt);
         } catch (\Throwable $e) {
             return ['allow' => false, 'checks' => ['wire' => false], 'reason' => 'wire: malformed input (' . get_class($e) . ')'];
         }
     }
 
     private static function verifyPcactnCoreUnchecked(mixed $p, mixed $grant, int $now, string $audience, ?array $allowedSuites,
-                                                      mixed $intentPolicy = null, ?Obj $intentV2 = null): array
+                                                      mixed $intentPolicy = null, ?Obj $intentV2 = null, ?Obj $freshAt = null): array
     {
         $wire = self::validateWire($p);
         if ($wire !== null) {
             return ['allow' => false, 'checks' => ['wire' => false], 'reason' => 'wire: ' . $wire];
         }
         $checks = ['wire' => true, 'version' => false, 'audience' => false, 'validity' => false, 'chain' => false,
-            'grant_ref_bound' => false, 'plan_inclusion' => false, 'leaf_signature' => false, 'counter' => false];
+            'grant_ref_bound' => false, 'plan_inclusion' => false, 'leaf_signature' => false, 'counter_format' => false];
         $reason = '';
-        $fail = function (string $name, string $why) use (&$reason): void {
+        $reasons = [];
+        $fail = function (string $name, string $why) use (&$reason, &$reasons): void {
+            $reasons[] = $name . ': ' . $why;
             if ($reason === '') {
                 $reason = $name . ': ' . $why;
             }
@@ -1405,9 +1466,9 @@ final class Pca
         }
 
         if ($p->get('counter')->int() >= 0) {
-            $checks['counter'] = true;
+            $checks['counter_format'] = true;
         } else {
-            $fail('counter', 'not a non-negative safe integer');
+            $fail('counter_format', 'missing or not a non-negative safe integer');
         }
 
         // Intent Layer M2: `intent` check (present iff the PCActn carries `intent` or the policy is active).
@@ -1427,16 +1488,35 @@ final class Pca
 
         // Intent Layer v2: schema (14), intent_session (13), layers (V5), accumulators (15), facts / provenance / classes
         // (16-18), each reported only when the PCActn carries `intent_session` or a v2 policy is active.
-        foreach (IntentV2::decideIntentV2($p, $grant, $intentV2, $now)['checks'] as $c) {
-            if ($c['ok']) {
-                $checks[$c['name']] = true;
-            } else {
-                $checks[$c['name']] = false;
-                $fail($c['name'], $c['reason'] ?? 'rejected');
+        $v2d = IntentV2::decideIntentV2($p, $grant, $intentV2, $now);
+        foreach ($v2d['checks'] as $c) {
+            $checks[$c['name']] = (bool)$c['ok'];
+        }
+        // every failing v2 check is listed after the core reasons (one without a reason adds none; a repeated text once)
+        $reasons = Decision::foldV2Reasons($reasons, $v2d['checks']);
+        if ($reason === '' && $reasons !== []) {
+            $reason = $reasons[0];
+        }
+        $legacyPolarity = ($v2d['legacy_model_polarity'] ?? false) === true;
+
+        // Consistency token: `fresh_at` (reported only when the PCActn carries the member, a side-carried token is read, or the
+        // policy requires one). A failing reason after "fresh_at: " that starts "escalate:" is escalate-class (Decision::decisionOf).
+        $fa = FreshAt::decide($p->has('fresh_at'), $p->get('fresh_at'), $freshAt, $now);
+        if ($fa['status'] === 'pass') {
+            $checks['fresh_at'] = true;
+        } elseif ($fa['status'] === 'fail') {
+            $checks['fresh_at'] = false;
+            $reasons[] = 'fresh_at: ' . $fa['reason'];
+            if ($reason === '') {
+                $reason = 'fresh_at: ' . $fa['reason'];
             }
         }
 
-        return ['allow' => !in_array(false, $checks, true), 'checks' => $checks, 'reason' => $reason];
+        $out = ['allow' => !in_array(false, $checks, true), 'checks' => $checks, 'reason' => $reason, 'reasons' => $reasons];
+        if ($legacyPolarity) {
+            $out['legacy_model_polarity'] = true;
+        }
+        return $out;
     }
 
     // ---- suite introspection (for suite-aware conformance driving) ----------------------

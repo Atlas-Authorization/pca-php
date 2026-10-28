@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace Atlas\Pca;
 
+require_once __DIR__ . '/Decision.php';
+require_once __DIR__ . '/Authorize.php';
+
 require_once __DIR__ . '/Json.php';
 require_once __DIR__ . '/Pca.php';
 require_once __DIR__ . '/IntentV2Schema.php';
@@ -114,12 +117,23 @@ final class IntentV2
     public const RESERVED_NAMES = ['__proto__', 'constructor', 'prototype'];
 
     public const PARAM_PATH_RE = '/\Aaction\.params\.[A-Za-z0-9_]{1,64}\z/';
+    public const PARAM_PATH_RE_V2 = '/\Aaction\.params\.[A-Za-z0-9_]{1,64}(?:\.[A-Za-z0-9_]{1,64}){0,2}\z/';
     public const UNIT_ID_RE = '/\A[a-z0-9_]+(?:\.[a-z0-9_]+)*\z/';
     public const ACC_ID_RE = '/\A[A-Za-z0-9_]{1,64}\z/';
     public const KID_RE = '/\A[A-Za-z0-9_.:-]{1,64}\z/';
     private const DATE_RE = '/\A([0-9]{4})-([0-9]{2})-([0-9]{2})\z/';
 
     public const PARAM_TYPES = ['string', 'integer', 'boolean', 'date', 'set', 'array'];
+    public const PARAM_TYPES_V2 = ['string', 'integer', 'boolean', 'date', 'set', 'array', 'datetime', 'duration', 'object_ref'];
+    public const SCHEMA_V2_EFFECTS = ['read', 'create', 'update', 'delete', 'send', 'pay', 'exec', 'privilege', 'export', 'publish', 'provision', 'sign'];
+    public const SCHEMA_V2_CAVEATS = ['amount_cap', 'count_cap', 'window', 'resource_scope', 'recipient_scope', 'approval_ref', 'short_expiry', 'rate_cap'];
+    public const SCHEMA_V2_PRULES = ['array_bounded', 'export_bounded', 'id_not_wildcard', 'money_amount_bounded', 'money_has_currency',
+        'pay_has_idempotency', 'recipient_param_declared', 'secret_not_logged'];
+    public const SCHEMA_V2_CONTEXT = ['approval_ref', 'dry_run_first', 'fresh_revocation', 'idempotency', 'revocable', 'sandbox_attested'];
+    public const SCHEMA_V2_TAGS = ['pii', 'phi', 'pci', 'secret', 'credential', 'free_text_outbound', 'code', 'path', 'sql'];
+    public const SCHEMA_V2_PROVENANCE = ['first_party', 'tool', 'agent'];
+    private const TRAIT_ID_RE = '/\A[a-z][a-z0-9_]{0,31}\.[a-z][a-z0-9_]{0,63}\z/';
+    private const TAINT_CTX_RE = '/\Asession_taint_max:[a-z_]{1,16}\z/';
     public const SENSITIVITIES = ['free', 'material', 'critical'];
     public const SCHEMA_REVERSIBILITY = ['reversible', 'rate_limited', 'irreversible'];
     public const ACC_AGGS = ['sum', 'count', 'distinct', 'max'];
@@ -130,6 +144,14 @@ final class IntentV2
         'effects', 'returns', 'description'];
     private const PARAM_KEYS = ['type', 'semantic', 'sensitivity', 'required', 'values', 'min', 'max', 'unit', 'max_len', 'items',
         'min_items', 'max_items', 'default', 'principal_neutral_default', 'accumulates_into', 'issued_by_site', 'description'];
+    private const DOC_KEYS_V2 = ['v', 'kind', 'site', 'aud', 'version', 'units', 'state', 'verbs', 'sig', 'traits_digest', 'trait_defs', 'pack'];
+    private const VERB_KEYS_V2 = ['verb', 'kind', 'params', 'reversibility', 'reversibility_by', 'mcp', 'openapi', 'harm', 'world',
+        'effects', 'returns', 'description', 'traits', 'def', 'floors', 'confirmation'];
+    private const PARAM_KEYS_V2 = ['type', 'semantic', 'sensitivity', 'required', 'values', 'min', 'max', 'unit', 'max_len', 'items',
+        'min_items', 'max_items', 'default', 'principal_neutral_default', 'accumulates_into', 'issued_by_site', 'description',
+        'role', 'format', 'tags', 'provenance_min'];
+    private const WS = '\t\n\x0b\f\r \x{00a0}\x{1680}\x{2000}-\x{200a}\x{2028}\x{2029}\x{202f}\x{205f}\x{3000}\x{feff}'; // ECMAScript \s
+    private const DATETIME_RE = '/\A([0-9]{4}-[0-9]{2}-[0-9]{2})T([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])(?:\.[0-9]{1,3})?Z\z/';
     private const SIG_KEYS = ['alg', 'kid', 'value', 'pq_value'];
     private const ROOT_KEYS = ['v', 'kind', 'session', 'principals', 'intent_ref', 'schema', 'layers', 'accumulators', 'monitors',
         'question_uri', 'revocation', 'flows', 'expires_at', 'signer', 'alg', 'pq_pk', 'sig', 'pq_sig'];
@@ -580,6 +602,59 @@ final class IntentV2
             self::isU($sig) ? null : $sig, self::isU($pqSig) ? null : $pqSig, $pinKey !== null ? $pinPq : null) === true;
     }
 
+    /**
+     * Registry-signed documents (evolution records, packs): verify `$sig` over DOMAIN . canonical($body) against the pinned `$keys`
+     * (the suite comes from the KEY entry). Never throws. @return array{ok:bool, reason?:string}
+     */
+    public static function verifyRegistrySig(string $domain, Obj $body, mixed $sig, mixed $keys): array
+    {
+        try {
+            if (!self::isList($keys)) {
+                return self::bad('the registry keys must be an array');
+            }
+            $kid = self::m($sig, 'kid');
+            $key = null;
+            foreach ($keys as $k) {
+                if ($k instanceof Obj && self::eq(self::m($k, 'kid'), $kid)) {
+                    $key = $k;
+                    break;
+                }
+            }
+            if ($key === null) {
+                return self::bad('no registry key with kid \'' . (is_string($kid) ? $kid : 'undefined') . '\'');
+            }
+            if ($key->has('pq_pk') && !is_string($key->get('pq_pk'))) {
+                return self::bad('the registry key pq_pk must be a string');
+            }
+            $pk = self::m($key, 'pk');
+            if (Pca::unb64u($pk, 32) === null) {
+                return self::bad('registry key pk is not canonical base64url (32 bytes)');
+            }
+            if (self::suiteError(self::m($key, 'alg')) !== null || self::suiteError(self::m($sig, 'alg')) !== null
+                || self::suiteOf(self::m($key, 'alg')) !== self::suiteOf(self::m($sig, 'alg'))) {
+                return self::bad('sig.alg does not match the pinned key suite');
+            }
+            $pq = self::m($key, 'pq_pk');
+            if (!self::verifyPinned(self::suiteOf(self::m($key, 'alg')), $pk, $pq, $domain . self::canonicalize($body), self::m($sig, 'value'),
+                self::m($sig, 'pq_value'), self::isU($pq) ? null : $pk, $pq)) {
+                return self::bad('signature invalid');
+            }
+            return ['ok' => true];
+        } catch (\Throwable $e) {
+            return self::bad('verification error: ' . $e->getMessage());
+        }
+    }
+
+    /** An Ed25519 signature over `$msg` by the key `$issuer` (b64u). Never throws. */
+    public static function verifyEd25519(mixed $issuer, string $msg, mixed $sigValue): bool
+    {
+        try {
+            return self::verifyPinned('ed25519', $issuer, self::undef(), $msg, $sigValue, self::undef());
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
     // ==== the v2 pipeline (intent-v2.ts) ==============================================================================
 
     /** A member that is absent, or present as an object. */
@@ -612,9 +687,12 @@ final class IntentV2
         if ($pol instanceof Obj) {
             // closed member sets; every flag a JSON boolean and every number a safe integer when present (absent = default)
             foreach (self::jsKeys($pol) as $k) {
-                if ($k !== 'session' && $k !== 'schema' && $k !== 'acc' && $k !== 'map') {
+                if ($k !== 'session' && $k !== 'schema' && $k !== 'acc' && $k !== 'map' && $k !== 'model_polarity') {
                     return "policy: unknown member '$k'";
                 }
+            }
+            if ($pol->has('model_polarity') && $pol->get('model_polarity') !== 'strict' && $pol->get('model_polarity') !== 'legacy') {
+                return "policy.model_polarity must be 'strict' or 'legacy'";
             }
             if (!self::optObj($pol, 'session')) {
                 return 'policy.session must be an object';
@@ -683,6 +761,9 @@ final class IntentV2
         }
         if (!self::optObj($ctx, 'params')) {
             return 'params must be an object';
+        }
+        if (!self::optObj($ctx, 'env')) {
+            return 'env must be an object';
         }
         foreach (['schema', 'session', 'acc'] as $k) {
             if (!self::optObj($ctx, $k)) {
@@ -1229,6 +1310,7 @@ final class IntentV2
         $checks = [];
         $env = null;
         $schemaOut = null;
+        $singleSource = [];
         if (!($p instanceof Obj)) {
             return ['checks' => [], 'env' => null, 'schema' => null];
         }
@@ -1319,6 +1401,9 @@ final class IntentV2
                     $checks[] = $c === 'pass' ? ['name' => $name, 'ok' => true] : ['name' => $name, 'ok' => false,
                         'reason' => $c === 'question' ? 'intent_required: ' . ($why ?? 'a question is required') : ($why ?? 'rejected')];
                 }
+                if (isset($wb['single_source']) && is_array($wb['single_source'])) {
+                    $singleSource = array_values($wb['single_source']);
+                }
                 if (($wb['outcome'] ?? null) !== 'deny') {
                     foreach (['world', 'prov', 'class'] as $k) {
                         if (isset($wb['env'][$k])) {
@@ -1331,7 +1416,104 @@ final class IntentV2
         } elseif ($mapActive) {
             $run('map', fn() => self::mapStep($p, $ctx));
         }
-        return ['checks' => $checks, 'env' => $env, 'schema' => $schemaOut];
+        $legacy = false;
+        self::modelRules($p, $grant, $ctx, $env, $schemaOut, $singleSource, $action, $run, $legacy);
+        $out = ['checks' => $checks, 'env' => $env, 'schema' => $schemaOut];
+        if ($legacy) {
+            $out['legacy_model_polarity'] = true;
+        }
+        return $out;
+    }
+
+    /** The predicate lists a model-derived path could widen: the grant's allow-list and the ceilings (V5 layers). */
+    private static function allowSidePredicates(?Obj $env, mixed $ctx): array
+    {
+        $lists = [$env?->get('predicates')];
+        $layers = self::m($ctx, 'layers');
+        if ($layers instanceof Obj) {
+            foreach (['org', 'site', 'std'] as $k) {
+                $lists[] = self::m($layers->get($k), 'predicates');
+            }
+        }
+        return $lists;
+    }
+
+    /**
+     * Rules 20 and 21, evaluated last (after `classes`, so the verifier-computed env is complete); both read the signed
+     * ENVELOPE of the stored grant. `units` (20): reported iff `envelope.units` is present. `tighten` (21): reported iff
+     * `envelope.tighten` or a `model_polarity` (envelope or policy) is present, or a grant-side `where` reads a
+     * model-derived env path (so that case is refused, never silently skipped). A PCActn with none of these verifies
+     * exactly as a verifier without the two rules.
+     *
+     * @param list<string> $single
+     */
+    private static function modelRules(Obj $p, mixed $grant, mixed $ctx, ?Obj $env, ?Obj $schemaDoc, array $single, Obj $action,
+                                       callable $run, bool &$legacy): void
+    {
+        $envelope = Authorize::readEnvelope($grant);
+        $preds = self::allowSidePredicates($envelope, $ctx);
+        if ($envelope !== null && $envelope->has('units')) {
+            $run('units', function () use ($p, $ctx, $envelope, $schemaDoc, $preds, $action): array {
+                if ($schemaDoc !== null) {
+                    $doc = $schemaDoc;
+                } else {
+                    $s = self::schemaStep($p, $ctx);
+                    if (!$s['ok']) {
+                        return $s;
+                    }
+                    $doc = $s['doc'];
+                }
+                $verb = $action->get('verb');
+                $decl = null;
+                $verbs = $doc->get('verbs');
+                foreach (self::isList($verbs) ? $verbs : [] as $v) {
+                    if ($v instanceof Obj && $v->get('verb') === $verb) {
+                        $decl = $v;
+                        break;
+                    }
+                }
+                $in = Obj::of(['units' => $envelope->get('units'), 'verb' => $verb, 'predicates' => $preds]);
+                if ($doc->has('units')) {
+                    $in->set('schema_units', $doc->get('units'));
+                }
+                if ($decl !== null && $decl->has('params')) {
+                    $in->set('verb_params', $decl->get('params'));
+                }
+                $d = Decision::decideUnits($in);
+                return $d['ok'] ? ['ok' => true] : self::bad((string)$d['reason']);
+            });
+        }
+        $polPolicy = self::cg($ctx, 'policy', 'model_polarity');
+        $polarity = self::undef();
+        if ($polPolicy !== 'strict') {
+            $polarity = (!self::isU($polPolicy) && $polPolicy !== null) ? $polPolicy : self::m($envelope, 'model_polarity');
+        }
+        if (($envelope !== null && $envelope->has('tighten')) || !self::isU($polarity) || !self::isU($polPolicy)
+            || count(Decision::modelPathsRead($preds, $single)) > 0) {
+            $run('tighten', function () use ($envelope, $preds, $polarity, $single, $ctx, $env, $action, &$legacy): array {
+                $merged = new Obj();
+                $hostEnv = self::m($ctx, 'env');
+                foreach ($hostEnv instanceof Obj ? $hostEnv->keys() : [] as $k) {
+                    $merged->set($k, $hostEnv->get($k));
+                }
+                foreach ($env !== null ? $env->keys() : [] as $k) {
+                    $merged->set($k, $env->get($k));
+                }
+                $in = Obj::of(['predicates' => $preds, 'single_source' => $single,
+                    'context' => Obj::of(['action' => $action, 'env' => $merged])]);
+                if ($envelope !== null && $envelope->has('tighten')) {
+                    $in->set('tighten', $envelope->get('tighten'));
+                }
+                if (!self::isU($polarity)) {
+                    $in->set('polarity', $polarity);
+                }
+                $r = Decision::decideTighten($in);
+                if ($r['legacy']) {
+                    $legacy = true;
+                }
+                return $r['outcome'] === 'ok' ? ['ok' => true] : self::bad($r['reason'] ?? 'refused');
+            });
+        }
     }
 
     /**
