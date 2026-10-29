@@ -1,6 +1,7 @@
 name: CI
 
-# The shared conformance corpus (conformance.php over conformance/vectors.json) + the PHPUnit suites. ML-DSA comes from
+# The shared conformance corpus (conformance.php over conformance/vectors.json), the native-parity vector families
+# (conformance-vectors.php: decision / escalation / model rules, caveat language v2, passport, vendor attestation evidence, Track 3, goal binding v3, staleness, operations, plans, assurance, K3 + fresh_at, provenance by default, undo windows) + the PHPUnit suites. ML-DSA comes from
 # OpenSSL >= 3.5 libcrypto through FFI: ubuntu-26.04 and macOS have it; ubuntu-24.04 (OpenSSL 3.0) exercises the
 # fail-closed path where the ML-DSA vectors must be skipped, never passed. The PHPUnit corpus suites locate the full
 # adversarial set and the mutation-oracle inputs by the source layout, rebuilt from the flagship at the same ref.
@@ -37,7 +38,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: sodium, json, mbstring, ffi
+          extensions: sodium, json, mbstring, intl, ffi, openssl, gmp, pdo_sqlite, sqlite3
           ini-values: ffi.enable=true
           coverage: none
           tools: composer
@@ -46,13 +47,96 @@ jobs:
         run: .github/scripts/fetch-flagship-corpus.sh --mono php-pca $([ "$RUNNER_OS" = Windows ] || echo --less)
       - name: Conformance corpus
         run: php conformance.php
+      - name: Decision vectors (rules 20 and 21, ternary decision, signed escalation answers, model rules through authorize)
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php decision escalation model-rules
+      - name: Caveat language v2 vectors (shared caveat-lang-vectors.json; a missing file FAILS, never skips)
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php caveat-lang
+      - name: Forbid-wins certificate and linked policy template vectors (a missing file fails, never skips)
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php policy-authoring
+      - name: Passport vectors (every reason code, every suite, the hardware seam)
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php passport
+      - name: Attestation vectors (vendor evidence, strict X.509; a missing vector file FAILS)
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php attestation passport-hardware
+      - name: Track 3 vectors (intent state, ledger, optimistic, mesh)
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php intent-state ledger optimistic mesh
+      - name: Goal binding v3 vectors (approved_goal, commit, invalid, binding; a missing file FAILS)
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php goal
+      - name: Revocation staleness vectors (T9, max age, effective class, age, signed epoch, gate; a missing file FAILS)
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php staleness
+      - name: 'Operation records and plan lifecycle vectors (T3, T10: every scenario step, memory and database stores; a missing file FAILS)'
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php operations plans
+      - name: 'Assurance vectors (T8, B7: signature level, report, requirement gate, multi-root; a missing file FAILS)'
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php assurance
+      - name: K3 vectors (signed bundles, decision log, list receipts, grant management) and the fresh_at member
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php k3 fresh-at pca-grant blueprint a2a k4 workflow readside vault-aggregate authorize-workflow lease obligations break-glass missing-context policy-classes provenance sigstore
+      - name: 'Provenance by default and undo window vectors (arg-provenance, undo: every section; a missing file FAILS)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          test -s conformance/arg-provenance-vectors.json
+          test -s conformance/undo-vectors.json
+          php conformance-vectors.php arg-provenance undo
+      - name: 'actions-vectors (action kit: ActionDef parse, canonical digest, trait expansion, floor check, pack proof, v2 schema formats; a missing vector directory FAILS)'
+        if: ${{ !cancelled() }}
+        run: php conformance-actions.php
       - name: Install
         if: ${{ !cancelled() }}
         shell: bash
         working-directory: ${{ env.PCA_MONO_SDK }}
-        run: composer install --no-interaction --no-progress --prefer-dist
+        run: |
+          for n in 1 2 3 4; do composer install --no-interaction --no-progress --prefer-dist && break; [ "$n" = 4 ] && exit 1; echo "composer attempt $n failed (network); retrying"; sleep $((n * 15)); done
+      - name: 'Operation records, executor and plan lifecycle (PHPUnit: vectors, N processes on one database, store failures)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: vendor/bin/phpunit --filter 'OperationsTest|PlanLifecycleTest|RevocationStalenessTest|GoalCommitV3Test|AssuranceTest|MiddlewareOptionsTest|StepUpTest|StoreConformanceTest'
+      - name: Agent / issuer side (producer vectors byte for byte, round trips; a missing file fails)
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        env:
+          PCA_REQUIRE_PQ: ${{ matrix.os == 'ubuntu-26.04' && '1' || '0' }} # OpenSSL 3.5 over FFI: ML-DSA and SLH-DSA signing must work there
+        run: vendor/bin/phpunit --filter 'AgentProducerTest'
+      - name: 'Provenance by default and undo windows (PHPUnit: vectors, mutation kills, the authorize gate, the undo admission hook)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        env:
+          PCA_REQUIRE_PQ: ${{ matrix.os == 'ubuntu-26.04' && '1' || '0' }} # the hybrid provenance receipt test must run there
+        run: vendor/bin/phpunit --filter 'ArgProvenance|Undo|ProvenanceFlow'
       - name: PHPUnit
         if: ${{ !cancelled() }}
         shell: bash
         working-directory: ${{ env.PCA_MONO_SDK }}
+        run: vendor/bin/phpunit
+
+  laravel-example:
+    name: Laravel example (POST /refunds behind protect())
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: sodium, json, mbstring, intl, openssl, gmp
+          coverage: none
+          tools: composer
+      - name: Install
+        working-directory: examples/laravel-server
+        run: |
+          for n in 1 2 3 4; do composer install --no-interaction --no-progress --prefer-dist && break; [ "$n" = 4 ] && exit 1; echo "composer attempt $n failed (network); retrying"; sleep $((n * 15)); done
+      - name: Smoke test (a signed refund is allowed once, the replay and an unsigned call are refused with a doc link)
+        working-directory: examples/laravel-server
         run: vendor/bin/phpunit

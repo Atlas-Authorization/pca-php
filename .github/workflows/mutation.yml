@@ -43,11 +43,11 @@ env:
   # distro OpenSSL 3.0 (the fallback) + a cached OpenSSL 3.5 (the PQ path) side by side: every PQ / probe test runs, none skips
   PCA_REQUIRE_MLDSA: '1'
   ATLAS_PCA_LIBCRYPTO: /opt/openssl35/lib/libcrypto.so.3
-  SHARDS: '9'
+  SHARDS: '20'
 
 jobs:
   shard:
-    name: shard ${{ matrix.shard }}/9 (${{ matrix.files }})
+    name: shard ${{ matrix.shard }}/20 (${{ matrix.files }})
     runs-on: ubuntu-24.04
     timeout-minutes: 340
     strategy:
@@ -64,6 +64,21 @@ jobs:
           - { shard: 7, files: 'src/IntentV2Session.php' }
           - { shard: 8, files: 'src/IntentV2Acc.php' }
           - { shard: 9, files: 'src/IntentV2Map.php' }
+          # the modules track mN added (and the other unlisted ones); the PHPUnit oracle already runs their tests
+          - { shard: 10, files: 'src/Authorize.php' }
+          - { shard: 11, files: 'src/Operations.php,src/Executor.php,src/AtomicKv.php,src/StateStore.php' }
+          - { shard: 12, files: 'src/PlanLifecycle.php,src/RevocationStaleness.php,src/Assurance.php' }
+          - { shard: 13, files: 'src/StepUp.php,src/StoreConformance.php,src/Decision.php,src/Escalation.php' }
+          - { shard: 14, files: 'src/Mesh.php,src/Ledger.php,src/Optimistic.php' }
+          - { shard: 15, files: 'src/Passport.php,src/IntentHistory.php,src/Agent.php' }
+          # the action-kit module (digest, trait algebra, rule 22): killed by tests/ActionsOracle.php and the shared vectors
+          - { shard: 16, files: 'src/Actions.php,src/ActionsRegistry.php' }
+          # the K1-K3 modules (caveat language, forbid-wins certificate and policy links, consistency tokens and operational-plane artifacts)
+          - { shard: 17, files: 'src/CaveatLang.php,src/ForbidCertificate.php,src/PolicyLink.php' }
+          - { shard: 18, files: 'src/FreshAt.php,src/K3.php,src/K3Sig.php,src/PcaGrant.php,src/Blueprint.php,src/A2a.php,src/Workflow.php,src/ReadSide.php,src/ReadVault.php' }
+          - { shard: 19, files: 'src/K4.php,src/Lease.php,src/Obligations.php,src/BreakGlass.php,src/MissingContext.php,src/PolicyClasses.php' }
+          # 0.5 modules: approvals, protect()/refusal explanations, provenance gate, runtime claims, Sigstore bundles
+          - { shard: 20, files: 'src/Approval.php,src/Protect.php,src/ProvenanceGate.php,src/Refusals.php,src/RuntimeClaim.php,src/SigstoreBundle.php' }
     steps:
       - uses: actions/checkout@v4
       - name: OpenSSL 3.5 (cached)
@@ -82,7 +97,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: sodium, json, mbstring, ffi
+          extensions: sodium, json, mbstring, intl, ffi
           ini-values: ffi.enable=true
           coverage: pcov
           tools: composer
@@ -120,11 +135,11 @@ jobs:
           FILES: ${{ matrix.files }}
         run: |
           # every file of src/ belongs to exactly one shard
-          diff <(ls src/*.php | sort) <(tr ',' '\n' <<<"src/Pca.php,src/IntentV2.php,src/IntentV2Schema.php,src/IntentV2Session.php,src/IntentV2Acc.php,src/IntentV2Map.php,src/IntentWb.php,src/SafeRegex.php,src/Predicates.php,src/Json.php,src/PcaMiddleware.php,src/OpensslPq.php,src/LessFfi.php,src/Mldsa.php" | sort)
-          composer install --no-interaction --no-progress -q
+          diff <(ls src/*.php | sort) <(tr ',' '\n' <<<"src/Pca.php,src/IntentV2.php,src/IntentWb.php,src/SafeRegex.php,src/Predicates.php,src/Json.php,src/PcaMiddleware.php,src/OpensslPq.php,src/LessFfi.php,src/Mldsa.php,src/IntentV2Schema.php,src/IntentV2Session.php,src/IntentV2Acc.php,src/IntentV2Map.php,src/Authorize.php,src/Operations.php,src/Executor.php,src/AtomicKv.php,src/StateStore.php,src/PlanLifecycle.php,src/RevocationStaleness.php,src/Assurance.php,src/StepUp.php,src/StoreConformance.php,src/Decision.php,src/Escalation.php,src/Mesh.php,src/Ledger.php,src/Optimistic.php,src/Passport.php,src/IntentHistory.php,src/Agent.php,src/Actions.php,src/ActionsRegistry.php,src/CaveatLang.php,src/ForbidCertificate.php,src/PolicyLink.php,src/FreshAt.php,src/K3.php,src/K3Sig.php,src/PcaGrant.php,src/Blueprint.php,src/A2a.php,src/Workflow.php,src/ReadSide.php,src/ReadVault.php,src/K4.php,src/Lease.php,src/Obligations.php,src/BreakGlass.php,src/MissingContext.php,src/PolicyClasses.php,src/Approval.php,src/Protect.php,src/ProvenanceGate.php,src/Refusals.php,src/RuntimeClaim.php,src/SigstoreBundle.php" | sort)
+          for n in 1 2 3 4; do composer install --prefer-dist --no-interaction --no-progress -q && break; [ "$n" = 4 ] && exit 1; echo "composer attempt $n failed (network); retrying"; sleep $((n * 15)); done
           # Infection is not a dev dependency of the package: added to this CI copy only
           composer config --no-interaction allow-plugins.infection/extension-installer true
-          composer require --dev --no-interaction --no-progress -q -W "infection/infection:^0.29"
+          for n in 1 2 3 4; do composer require --dev --no-interaction --no-progress -q -W "infection/infection:^0.29" && break; [ "$n" = 4 ] && exit 1; echo "composer attempt $n failed (network); retrying"; sleep $((n * 15)); done
           vendor/bin/phpunit > "$RUNNER_TEMP/baseline.log" || { tail -60 "$RUNNER_TEMP/baseline.log"; echo "::error::the PHPUnit oracle fails on the unmutated source"; exit 1; }
           if [ -z "${INFECTION_BASELINE:-}" ]; then
             vendor/bin/infection --threads=3 --no-progress --min-msi=0 --min-covered-msi=0 --filter="$FILES" | tail -25

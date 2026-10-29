@@ -333,7 +333,7 @@ final class MutationKillR2Test extends TestCase
     {
         [$json, $grant, $aud, $now] = self::vector();
         $ref = Json::parseLax($json)->get('grant_ref');
-        return new PcaMiddleware($aud, fn(string $r) => $r === $ref ? $grant : null, $clock ?? fn() => $now, $rf, $sf);
+        return new PcaMiddleware($aud, fn(string $r) => $r === $ref ? $grant : null, $clock ?? fn() => $now, $rf, $sf, signatureOnly: true);
     }
 
     private static function okHandler(): RequestHandlerInterface
@@ -351,7 +351,7 @@ final class MutationKillR2Test extends TestCase
 
     public function testDefaultClockIsEpochMilliseconds(): void
     {
-        $m = new PcaMiddleware('aud', fn() => null, null, new HttpFactory(), new HttpFactory());
+        $m = new PcaMiddleware('aud', fn() => null, null, new HttpFactory(), new HttpFactory(), signatureOnly: true);
         $clock = (new \ReflectionProperty(PcaMiddleware::class, 'clock'))->getValue($m);
         $this->assertEqualsWithDelta((int)(microtime(true) * 1000), $clock(), 5000);
     }

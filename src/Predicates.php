@@ -736,6 +736,108 @@ final class Predicates
         }
     }
 
+    private const OP_TEXT = ['eq' => '==', 'ne' => '!=', 'lt' => '<', 'lte' => '<=', 'gt' => '>', 'gte' => '>=', 'in' => 'in',
+        'nin' => 'not in', 'prefix' => 'starts with', 'like' => 'like', 'matches' => 'matches', 'is_a' => 'is a',
+        'member_of' => 'member of'];
+    private const MAX_SHOWN_STRING = 64;
+    private const MAX_SHOWN_ITEMS = 8;
+
+    /** A scalar operand in a denial reason (TypeScript `showValue`): only safe integers, booleans, null and plain short strings are spelled out. */
+    private static function showValue(mixed $v, int $depth = 0): string
+    {
+        if ($v === null) {
+            return 'null';
+        }
+        if (is_bool($v)) {
+            return $v ? 'true' : 'false';
+        }
+        if ($v instanceof Num) {
+            $f = $v->float();
+            return is_finite($f) && $f === floor($f) && abs($f) <= 9007199254740991.0 ? (string)(int)$f : '<number>';
+        }
+        if (is_string($v)) {
+            // control characters, quote, backslash, anything above U+FFFF (4-byte UTF-8) or a surrogate (ED A0..BF) is elided
+            $plain = SafeRegex::utf16Len($v) <= self::MAX_SHOWN_STRING && preg_match('/[\x00-\x1f"\\\\]|[\xF0-\xF7]|\xED[\xA0-\xBF]/', $v) !== 1;
+            return $plain ? '"' . $v . '"' : '"..."';
+        }
+        if (is_array($v) && $depth === 0) {
+            if (count($v) > self::MAX_SHOWN_ITEMS) {
+                return '[...]';
+            }
+            return '[' . implode(', ', array_map(static fn($x): string => self::showValue($x, 1), array_values($v))) . ']';
+        }
+        return '<value>';
+    }
+
+    /** The condition as the limit a reader recognises: `amount <= 500`, `currency in ["usd", "eur"]`. */
+    private static function describeCondition(mixed $c, int $depth = 0): string
+    {
+        if (!($c instanceof Obj) && !is_array($c)) {
+            return '<condition>';
+        }
+        if (self::isGroupCondition($c)) {
+            if ($depth >= 2) {
+                return '(...)';
+            }
+            foreach (['all_of' => 'all of', 'any_of' => 'any of'] as $key => $word) {
+                if ($c->has($key) && is_array($c->get($key))) {
+                    $kids = array_map(static fn($x): string => self::describeCondition($x, $depth + 1),
+                        array_slice(array_values($c->get($key)), 0, self::MAX_SHOWN_ITEMS));
+                    return $word . ' (' . implode('; ', $kids) . ')';
+                }
+            }
+            return $c->has('not') ? 'not (' . self::describeCondition($c->get('not'), $depth + 1) . ')' : '<condition>';
+        }
+        $f = $c instanceof Obj && is_string($c->get('field')) ? $c->get('field') : '<field>';
+        $name = str_starts_with($f, 'action.params.') ? substr($f, strlen('action.params.')) : $f;
+        $op = $c instanceof Obj ? $c->get('op') : null;
+        if ($op === 'exists') {
+            return $c->get('value') === false ? "$name absent" : "$name present";
+        }
+        $text = is_string($op) ? (self::OP_TEXT[$op] ?? null) : null;
+        if ($text === null) {
+            return "$name <condition>";
+        }
+        $operand = $c->has('ref') ? (is_string($c->get('ref')) ? $c->get('ref') : '<ref>')
+            : ($c->has('value') ? self::showValue($c->get('value')) : '<value>');
+        return "$name $text $operand";
+    }
+
+    /** Inside an unmet top-level condition, the narrowest part that failed (an `all_of` points at its first unmet child). */
+    private static function narrowestUnmet(mixed $c, Obj $ctx, int $depth = 0): mixed
+    {
+        if ($depth < 4 && self::isGroupCondition($c) && $c->has('all_of') && is_array($c->get('all_of'))) {
+            foreach ($c->get('all_of') as $x) {
+                if (!self::evaluateCondition($x, $ctx)) {
+                    return self::narrowestUnmet($x, $ctx, $depth + 1);
+                }
+            }
+        }
+        return $c;
+    }
+
+    /** 0.5: when the verb and resource are in scope but a `where` limit is not met, name that limit; null otherwise. */
+    private static function firstUnmetLimit(array $predicates, Obj $ctx): ?string
+    {
+        [, $a] = self::own($ctx, 'action');
+        if (!($a instanceof Obj) || !is_string($a->get('verb')) || !is_string($a->get('resource'))) {
+            return null;
+        }
+        foreach ($predicates as $p) {
+            if (!($p instanceof Obj) || !self::verbMatches($p->get('verb'), $a->get('verb'))
+                || !self::resourceMatches($p->has('resource'), $p->get('resource'), $a->get('resource'))
+                || !is_array($p->get('where'))) {
+                continue;
+            }
+            foreach ($p->get('where') as $c) {
+                if (!self::evaluateCondition($c, $ctx)) {
+                    return self::describeCondition(self::narrowestUnmet($c, $ctx));
+                }
+            }
+        }
+        return null;
+    }
+
     private static function evaluatePredicatesInner(mixed $predicates, Obj $ctx): array
     {
         try {
@@ -750,6 +852,11 @@ final class Predicates
             [, $a] = self::own($ctx, 'action');
             [$hv, $verb] = self::own($a, 'verb');
             [$hr, $res] = self::own($a, 'resource');
+            $limit = self::firstUnmetLimit($predicates, $ctx);
+            if ($limit !== null) {
+                return ['allowed' => false, 'reason' => $limit . ' not satisfied for ' . self::jsString($hv, $verb) . ' on '
+                    . self::jsString($hr, $res)];
+            }
             return ['allowed' => false, 'reason' => 'no predicate permits ' . self::jsString($hv, $verb) . ' on '
                 . self::jsString($hr, $res)];
         } catch (\Throwable) {

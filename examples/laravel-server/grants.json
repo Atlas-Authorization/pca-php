@@ -1,0 +1,46 @@
+[
+ {
+  "id": "qL4c9Kg0rip6y6ZymwdC6E1RAcQ3EtBJ9PsLrDU6PmY",
+  "issuer": "bs9w31lShUG77IukzMDucQKxMxD5ihjCZS55bi-YuOQ",
+  "holder": "a1B3uxRS6gmgkh6UvfEZ1BVfZvylYa1g7rGNSac9kZM",
+  "caveats": [
+   {
+    "agent_binding": {},
+    "caveats": [],
+    "goal_commit": "1TK8Ori0BCcg4WKpWQGRG6s3zr2vtRbDOKVHZQ-Nd9I",
+    "predicates": [
+     {
+      "resource": "payments/*",
+      "verb": "payments.send",
+      "where": [
+       {
+        "field": "action.params.amount",
+        "op": "lte",
+        "value": 100
+       }
+      ]
+     }
+    ],
+    "risk_policy": {
+     "bMax": 1000,
+     "kappa": 1,
+     "lambda": 0,
+     "rho": 0,
+     "theta1": 0.5,
+     "theta2": 0.8,
+     "weights": {
+      "alpha": 0,
+      "beta": 0,
+      "delta": 0,
+      "epsilon": 0,
+      "gamma": 0,
+      "zeta": 0
+     }
+    },
+    "type": "envelope"
+   }
+  ],
+  "body_digest": "qL4c9Kg0rip6y6ZymwdC6E1RAcQ3EtBJ9PsLrDU6PmY",
+  "sig": "WKQI6v1LtVGKKZJiHKC8YGjRCPj01_wBRMs3OjTnWpYUqp6USYZE4lqa2202obhpUXJvMXtcOpTSn-NfFOuZBg"
+ }
+]

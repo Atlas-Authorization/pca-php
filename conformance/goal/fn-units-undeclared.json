@@ -1,0 +1,1 @@
+{"id":"fn-units-undeclared","kind":"fn","fn":"units","input":{"schema":{},"terms":{"fee":{"currency":"USD","exponent":2}}},"expect":["fee"]}

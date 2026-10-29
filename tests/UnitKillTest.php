@@ -392,7 +392,7 @@ final class UnitKillTest extends TestCase
         [$json, $grant, $audience, $now] = $this->fixture();
         $ref = Json::parseLax($json)->get('grant_ref');
         $f = new HttpFactory();
-        return new PcaMiddleware($aud ?? $audience, $resolver ?? fn(string $r) => $r === $ref ? $grant : null, fn() => $now, $f, $f);
+        return new PcaMiddleware($aud ?? $audience, $resolver ?? fn(string $r) => $r === $ref ? $grant : null, fn() => $now, $f, $f, signatureOnly: true);
     }
 
     private function handler(): RequestHandlerInterface
@@ -468,7 +468,7 @@ final class UnitKillTest extends TestCase
         $this->assertSame('PCA realm="pca", error="insufficient_authority"', $r->getHeaderLine('WWW-Authenticate'));
         // request-derived text (quotes, backslash, CR/LF) stays out of the header; the JSON body keeps it (unescaped slash)
         $f = new HttpFactory();
-        $mw = new PcaMiddleware('a', fn() => null, fn() => 0, $f, $f);
+        $mw = new PcaMiddleware('a', fn() => null, fn() => 0, $f, $f, signatureOnly: true);
         $q = new \ReflectionMethod($mw, 'error');
         $q->setAccessible(true);
         $resp = $q->invoke($mw, 401, 'invalid_request', 'say "hi" \\ a/b');
@@ -476,24 +476,24 @@ final class UnitKillTest extends TestCase
         $crlf = $q->invoke($mw, 403, 'insufficient_authority', "x\r\nSet-Cookie: pwned=1");
         $this->assertSame('PCA realm="pca", error="insufficient_authority"', $crlf->getHeaderLine('WWW-Authenticate'));
         $this->assertSame("x\r\nSet-Cookie: pwned=1", json_decode((string)$crlf->getBody(), true)['error_description']);
-        $this->assertSame('{"error":"invalid_request","error_description":"say \"hi\" \\\\ a/b"}', (string)$resp->getBody());
+        $this->assertSame('{"error":"invalid_request","error_description":"say \"hi\" \\\\ a/b","doc":"https://github.com/Atlas-Authorization/pca/blob/main/docs/reference/refusals.md"}', (string)$resp->getBody());
         $resp = $q->invoke($mw, 401, 'invalid_request', '');
         $this->assertSame('PCA realm="pca", error="invalid_request"', $resp->getHeaderLine('WWW-Authenticate'));
-        $this->assertSame('{"error":"invalid_request"}', (string)$resp->getBody());
+        $this->assertSame('{"error":"invalid_request","doc":"https://github.com/Atlas-Authorization/pca/blob/main/docs/reference/refusals.md"}', (string)$resp->getBody());
         // a verdict with an empty reason omits "reason" but keeps the checks
         $resp = $q->invoke($mw, 403, 'insufficient_authority', 'd', ['allow' => false, 'checks' => ['wire' => false], 'reason' => '']);
-        $this->assertSame('{"error":"insufficient_authority","error_description":"d","checks":{"wire":false}}', (string)$resp->getBody());
+        $this->assertSame('{"error":"insufficient_authority","error_description":"d","checks":{"wire":false},"doc":"https://github.com/Atlas-Authorization/pca/blob/main/docs/reference/refusals.md"}', (string)$resp->getBody());
         // the default clock is the wall clock: the 2027 fixture is in the future -> denied, not an exception
-        $mw2 = new PcaMiddleware('rs-conformance', fn(string $ref) => $this->fixture()[1], null, $f, $f);
+        $mw2 = new PcaMiddleware('rs-conformance', fn(string $ref) => $this->fixture()[1], null, $f, $f, signatureOnly: true);
         $this->assertSame(403, $mw2->process(new ServerRequest('POST', '/', [PcaMiddleware::HEADER => Pca::b64u($json)]), $h)->getStatusCode());
         // factories are auto-discovered when omitted
-        $mw3 = new PcaMiddleware('a', fn() => null);
+        $mw3 = new PcaMiddleware('a', fn() => null, signatureOnly: true);
         $this->assertSame(401, $mw3->process(new ServerRequest('GET', '/'), $h)->getStatusCode());
         // custom attribute name
         $h4 = $this->handler();
         [$jj, $grant, $aud, $now] = $this->fixture();
         $ref = Json::parseLax($jj)->get('grant_ref');
-        $mw4 = new PcaMiddleware($aud, fn(string $r) => $r === $ref ? $grant : null, fn() => $now, $f, $f, 'custom');
+        $mw4 = new PcaMiddleware($aud, fn(string $r) => $r === $ref ? $grant : null, fn() => $now, $f, $f, 'custom', signatureOnly: true);
         $mw4->process(new ServerRequest('POST', '/', [PcaMiddleware::HEADER => Pca::b64u($jj)]), $h4);
         $this->assertTrue($h4->got->getAttribute('custom')['allow']);
         $this->assertNull($h4->got->getAttribute('pca'));
