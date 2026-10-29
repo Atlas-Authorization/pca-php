@@ -1,0 +1,1 @@
+{"id":"fn-commit-basic","kind":"fn","fn":"commit","input":{"goal_digest":"o2cLEINtvyXoEqXBoMKC-GgSdZyeaD9h0m_Sfi8957c","policy_digest":"x2GA4pZvtIRy8CmYlyOkBlgxaDh4e2VHymcFXMdv96U","salt":"s1"},"expect":{"commit":"t3IJN7ejib72Y9o7J9m6cIFNIuH9O_WNb2pjpMCNgW8","opens_other_goal":false}}

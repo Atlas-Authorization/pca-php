@@ -1,0 +1,1 @@
+{"id":"fn-meet-allow-escalate","kind":"fn","fn":"meet","input":{"decision":"allow","signal":"escalate"},"expect":"escalate"}

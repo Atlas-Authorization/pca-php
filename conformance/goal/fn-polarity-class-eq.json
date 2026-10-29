@@ -1,0 +1,1 @@
+{"id":"fn-polarity-class-eq","kind":"fn","fn":"polarity","input":[{"k":"cmp","op":"eq","l":{"k":"param","path":"env.class.tone","ty":{"k":"s"}},"r":{"k":"lit","v":{"k":"s","s":"calm"}}}],"expect":["env.class.tone"]}

@@ -149,12 +149,12 @@ final class IntentWb
         return new Num((string)$i);
     }
 
-    private static function isBoundedString(mixed $v, int $max): bool
+    public static function isBoundedString(mixed $v, int $max): bool
     {
         return is_string($v) && $v !== '' && strlen($v) <= $max;
     }
 
-    private static function isDigest(mixed $v): bool
+    public static function isDigest(mixed $v): bool
     {
         return Pca::unb64u($v, 32) !== null;
     }
@@ -310,7 +310,7 @@ final class IntentWb
     }
 
     /** strictCanonical(value) of the JS value. Throws JsonError on any strict-profile violation. */
-    private static function canon(mixed $v): string
+    public static function canon(mixed $v): string
     {
         return Json::canonicalizeStrict(self::norm($v));
     }
@@ -390,7 +390,7 @@ final class IntentWb
     }
 
     /** Closed member set check: null when `o` has exactly the `required` members plus any of `optional`. */
-    private static function closedMembers(Obj $o, array $required, array $optional = [], string $where = 'object'): ?string
+    public static function closedMembers(Obj $o, array $required, array $optional = [], string $where = 'object'): ?string
     {
         foreach (self::jsKeys($o) as $k) {
             if (!in_array($k, $required, true) && !in_array($k, $optional, true)) {
@@ -406,7 +406,7 @@ final class IntentWb
     }
 
     /** Validate a pin's optional `pq_pk` (absent, or a non-empty string; JSON null is malformed). */
-    private static function pinPqOk(mixed $v): bool
+    public static function pinPqOk(mixed $v): bool
     {
         return $v === JsUndefined::U || (is_string($v) && $v !== '');
     }
