@@ -1,0 +1,1 @@
+{"id":"fn-polarity-lookalike-prefix","kind":"fn","fn":"polarity","input":[{"k":"cmp","op":"eq","l":{"k":"param","path":"env.classy","ty":{"k":"s"}},"r":{"k":"lit","v":{"k":"s","s":"a"}}},{"k":"cmp","op":"eq","l":{"k":"param","path":"env.clas","ty":{"k":"s"}},"r":{"k":"lit","v":{"k":"s","s":"a"}}}],"expect":[]}

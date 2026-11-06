@@ -14,8 +14,8 @@
                                                --files <...> --summary <summary.json> --baseline <infection-baseline.json>
      summary.json = the shard's complete result (carried + new; a mutant Infection reported again wins) in the format
      php-survivors.py reads ({stats, escaped, uncovered, killed, timeouted, errored, syntaxErrors, ignored}: {file, line,
-     mutator, diff}); infection-baseline.json = the shard's sources and every mutant with its bucket, for the next run."""
-import difflib, json, os, sys
+     mutator, diff[, evidence: an errored mutant's process output tail]}); infection-baseline.json = the shard's sources and every mutant with its bucket, for the next run."""
+import difflib, json, os, re, sys
 
 BUCKETS = {"escaped": "escapedCount", "uncovered": "notCoveredCount", "killed": "killedCount", "timeouted": "timeOutCount",
            "errored": "errorCount", "syntaxErrors": "syntaxErrorCount", "ignored": "ignoredCount"}
@@ -40,7 +40,7 @@ def minus_count(diff):
 
 cmd = sys.argv[1]
 src = opt("--src")
-files = [os.path.basename(f) for f in opt("--files").split(",") if f]
+files = [os.path.relpath(f, "src") for f in opt("--files").split(",") if f]  # keyed by the path under src/
 cur = {f: open(os.path.join(src, f), encoding="utf-8").read().split("\n") for f in files}
 
 if cmd == "plan":
@@ -76,6 +76,7 @@ if cmd == "plan":
         if target:
             ntarget += len(target)
             alt = [l + " //~infection-target" if i in target else l for i, l in enumerate(lines, 1)]
+            os.makedirs(os.path.dirname(os.path.join(outdir, f)), exist_ok=True)
             open(os.path.join(outdir, f), "w", encoding="utf-8").write("\n".join(alt))
         print(f"{f}: {len(target)} target line(s), {sum(1 for m in carried if m['file'] == f)} mutant(s) carried", file=sys.stderr)
     json.dump(carried, open(opt("--carried"), "w"))
@@ -89,8 +90,10 @@ elif cmd == "finish":
         stats = d.get("stats", {})
         for b in BUCKETS:
             for m in d.get(b) or []:
-                new.append({"file": os.path.basename(m["mutator"]["originalFilePath"]), "line": m["mutator"]["originalStartLine"],
+                new.append({"file": re.sub(r"^(?:.*/)?src/", "", m["mutator"]["originalFilePath"]), "line": m["mutator"]["originalStartLine"],
                             "mutator": m["mutator"]["mutatorName"], "diff": m["diff"], "bucket": b})
+                if b == "errored":  # the run-error gate shows why the test process died (fatal error / signal / memory)
+                    new[-1]["evidence"] = (m.get("processOutput") or "")[-800:]
     car = opt("--carried", False)
     seen = {key(m) for m in new}
     allm = new + [m for m in (json.load(open(car)) if car and os.path.exists(car) else []) if key(m) not in seen]
@@ -100,7 +103,7 @@ elif cmd == "finish":
     out["stats"]["skippedCount"] = stats.get("skippedCount", 0)
     out["stats"]["totalMutantsCount"] = len(allm)
     for b in BUCKETS:
-        out[b] = [{k: m[k] for k in ("file", "line", "mutator", "diff")} for m in allm if m["bucket"] == b]
+        out[b] = [{k: m[k] for k in ("file", "line", "mutator", "diff", "evidence") if k in m} for m in allm if m["bucket"] == b]
     json.dump(out, open(opt("--summary"), "w"), indent=1)
     json.dump({"files": files, "sources": {f: "\n".join(cur[f]) for f in files}, "mutants": allm}, open(opt("--baseline"), "w"))
     print(f"{len(allm)} mutant(s) ({len(allm) - len(new)} carried, {len(new)} run now): {out['stats']}")

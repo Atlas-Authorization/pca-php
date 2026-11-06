@@ -148,12 +148,12 @@ final class SafeRegex
     }
 
     /**
-     * `^\{(\d+)(?:(,)(\d*))?\}` (or, with $maxDigits, `^\{(\d{1,N})(?:(,)(\d{0,N}))?\}`) at $i over code units.
+     * `^\{(\d+)(?:(,)(\d*))?\}` at $i over code units.
      *
      * @param list<int> $u
      * @return array{0:string,1:bool,2:string,3:int}|null [lo digits, has comma, hi digits, match length]
      */
-    private static function scanBrace(array $u, int $i, ?int $maxDigits): ?array
+    private static function scanBrace(array $u, int $i): ?array
     {
         $n = count($u);
         $j = $i + 1;
@@ -162,8 +162,8 @@ final class SafeRegex
             $lo .= chr($u[$j]);
             $j++;
         }
-        if ($lo === '' || ($maxDigits !== null && strlen($lo) > $maxDigits)) {
-            return null; // fewer digits would be followed by a digit: no match either
+        if ($lo === '') {
+            return null;
         }
         $c = $u[$j] ?? null;
         if ($c === 0x7D) { // }
@@ -177,9 +177,6 @@ final class SafeRegex
         while ($k < $n && self::isDigitUnit($u[$k])) {
             $hi .= chr($u[$k]);
             $k++;
-        }
-        if ($maxDigits !== null && strlen($hi) > $maxDigits) {
-            return null; // the optional group fails, and then `}` would be needed where `,` is
         }
         if (($u[$k] ?? null) !== 0x7D) {
             return null;
@@ -228,11 +225,8 @@ final class SafeRegex
                 continue;
             }
             if ($ch === 0x5B) { // [
-                $j = $i + 1;
-                if (($u[$j] ?? null) === 0x5E) {
-                    $j++;
-                }
-                for (; $j < $n && $u[$j] !== 0x5D; $j++) {
+                // a leading `^` needs no skip: only `]` and `\` steer this scan
+                for ($j = $i + 1; $j < $n && $u[$j] !== 0x5D; $j++) {
                     if ($u[$j] === 0x5C) {
                         $j++;
                     }
@@ -284,7 +278,7 @@ final class SafeRegex
             } elseif ($ch === 0x3F) { // ?
                 $q = [1, false, 1.0, 2.0];
             } elseif ($ch === 0x7B) { // {
-                $m = self::scanBrace($u, $i, null);
+                $m = self::scanBrace($u, $i);
                 if ($m === null) {
                     return false;
                 }
@@ -302,10 +296,10 @@ final class SafeRegex
                 if (is_array($prev) && ($prev[0] || $prev[1])) {
                     return false; // nested quantifier
                 }
-                if (!$q[1] && $q[2] !== INF && $q[2] > self::MAX_BOUNDED_REPEAT) {
+                if (!$q[1] && $q[2] > self::MAX_BOUNDED_REPEAT) { // !$q[1] already means a finite max
                     return false;
                 }
-                $bits += $q[1] ? self::UNBOUNDED_QUANTIFIER_BITS : ($q[3] > 1 ? self::ceilLog2($q[3]) : 0);
+                $bits += $q[1] ? self::UNBOUNDED_QUANTIFIER_BITS : self::ceilLog2($q[3]); // ceilLog2(1) = 0
                 if ($bits > self::MAX_REGEX_COST_BITS) {
                     return false;
                 }
@@ -323,7 +317,7 @@ final class SafeRegex
         return count($stack) === 1 && self::compileCached($src) !== null;
     }
 
-    /** Math.ceil(Math.log2(x)) for a finite x > 1 (here x <= 65, an integer). */
+    /** Math.ceil(Math.log2(x)) for a finite x >= 1 (here x <= 65, an integer); 0 for x = 1. */
     private static function ceilLog2(float $x): int
     {
         $b = 0;
@@ -402,17 +396,17 @@ final class SafeRegex
                 for ($i = 0; $i < $cnt; $i++) {
                     if ($i < $cnt - 1) {
                         $split = count($prog);
-                        $prog[] = [self::OP_SPLIT, $split + 1, -1, null, false];
+                        $prog[] = null; // the SPLIT, written once the next alternative's start is known
                         self::emit($items[$i], $prog);
                         $jmps[] = count($prog);
-                        $prog[] = [self::OP_JMP, -1, 0, null, false];
-                        $prog[$split][2] = count($prog);
+                        $prog[] = null; // the JMP past the last alternative, written below
+                        $prog[$split] = [self::OP_SPLIT, $split + 1, count($prog), null, false];
                     } else {
                         self::emit($items[$i], $prog);
                     }
                 }
                 foreach ($jmps as $j) {
-                    $prog[$j][1] = count($prog);
+                    $prog[$j] = [self::OP_JMP, count($prog), 0, null, false];
                 }
                 return;
             case 'rep':
@@ -422,19 +416,19 @@ final class SafeRegex
                 }
                 if ($max === null) { // unbounded
                     $split = count($prog);
-                    $prog[] = [self::OP_SPLIT, $split + 1, -1, null, false];
+                    $prog[] = null; // the loop SPLIT, written once the exit is known
                     self::emit($body, $prog);
                     $prog[] = [self::OP_JMP, $split, 0, null, false];
-                    $prog[$split][2] = count($prog);
+                    $prog[$split] = [self::OP_SPLIT, $split + 1, count($prog), null, false];
                 } else {
                     $splits = [];
                     for ($i = $min; $i < $max; $i++) {
                         $splits[] = count($prog);
-                        $prog[] = [self::OP_SPLIT, count($prog) + 1, -1, null, false];
+                        $prog[] = null; // an optional copy's SPLIT, written once the exit is known
                         self::emit($body, $prog);
                     }
                     foreach ($splits as $sp) {
-                        $prog[$sp][2] = count($prog);
+                        $prog[$sp] = [self::OP_SPLIT, $sp + 1, count($prog), null, false];
                     }
                 }
                 if (count($prog) > self::MAX_NFA_INSTRUCTIONS) {

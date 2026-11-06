@@ -1,0 +1,954 @@
+[
+ {
+  "file": "src/Pca.php",
+  "line": "$k = 1;",
+  "occurrence": 1,
+  "mutant": "IncrementInteger: $k = 2;",
+  "reason": "[unbounded recursion] split() starts at k=2, so split(2)=2: Pca::build() on any 2-element (sub)list slices array_slice($hs,0,2) = the same list and recurses on it forever (pathShape() also loops forever appending R to $out when idx < k = n); unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Reached by every tree with >= 2 leaves (Pca::merkleRoot/pathShape/verifyInclusion tests, e.g. K05KillPca2Test pathShape(0,4))."
+ },
+ {
+  "file": "src/Pca.php",
+  "line": "while ($k * 2 < $n) {",
+  "occurrence": 1,
+  "mutant": "DecrementInteger: while ($k * 1 < $n) {",
+  "reason": "[unbounded recursion] `$k * 1 < $n` lets k reach n (split(2)=2, split(3)=4), so array_slice($hs,0,$k) is the whole list and Pca::build() recurses on the same list forever (pathShape() also loops forever appending R to $out when idx < k = n); unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any tree with >= 2 leaves (Pca::merkleRoot/pathShape/verifyInclusion tests, e.g. K05KillPca2Test pathShape(0,4))."
+ },
+ {
+  "file": "src/Pca.php",
+  "line": "while ($k * 2 < $n) {",
+  "occurrence": 1,
+  "mutant": "LessThan: while ($k * 2 <= $n) {",
+  "reason": "[unbounded recursion] `$k * 2 <= $n` gives split(2)=2, so a 2-element (sub)list splits into itself and Pca::build() recurses on it forever (pathShape() also loops forever appending R to $out when idx < k = n); unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any tree with >= 2 leaves (Pca::merkleRoot/pathShape/verifyInclusion tests, e.g. K05KillPca2Test pathShape(0,4))."
+ },
+ {
+  "file": "src/Pca.php",
+  "line": "$k *= 2;",
+  "occurrence": 1,
+  "mutant": "IncrementInteger: $k *= 3;",
+  "reason": "[unbounded recursion] `$k *= 3` gives split(3)=3, so a 3-element (sub)list slices into itself and Pca::build() recurses forever (pathShape() also loops forever appending R to $out when idx < k = n); unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any tree whose size is 3 or splits to a 3-leaf subtree, e.g. 3/7-leaf plans (Pca::merkleRoot/pathShape/verifyInclusion tests, e.g. K05KillPca2Test pathShape(0,4))."
+ },
+ {
+  "file": "src/Pca.php",
+  "line": "if (count($hs) === 1) {",
+  "occurrence": 1,
+  "mutant": "Identical: if (count($hs) !== 1) {",
+  "reason": "[unbounded recursion] `!== 1` makes a 1-element list skip the base case: split(1)=1, array_slice($hs,0,1) is the same 1-element list and Pca::build() recurses on it forever; unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any single-leaf input (Pca::merkleRoot/pathShape/verifyInclusion tests, e.g. K05KillPca2Test pathShape(0,4)); larger inputs just return $hs[0] (a normal kill)."
+ },
+ {
+  "file": "src/Pca.php",
+  "line": "if (count($hs) === 1) {",
+  "occurrence": 1,
+  "mutant": "IncrementInteger: if (count($hs) === 2) {",
+  "reason": "[unbounded recursion] the base case now fires at 2, so a 1-element list (a single-leaf tree, or the 1-leaf right half of a 3-leaf tree) gets split(1)=1 and Pca::build() recurses on the same list forever; unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Single-leaf or 3-leaf inputs (Pca::merkleRoot/pathShape/verifyInclusion tests, e.g. K05KillPca2Test pathShape(0,4))."
+ },
+ {
+  "file": "src/Pca.php",
+  "line": "return self::nodeHash(self::build(array_slice($hs, 0, $k)), self::build(array_slice($hs, $k)));",
+  "occurrence": 1,
+  "mutant": "UnwrapArraySlice: return self::nodeHash(self::build($hs), self::build(array_slice($hs, $k)));",
+  "reason": "[unbounded recursion] the left child is Pca::build()($hs) on the unsliced list, so every call with >= 2 elements recurses on the same list forever; unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any tree with >= 2 leaves (Pca::merkleRoot/pathShape/verifyInclusion tests, e.g. K05KillPca2Test pathShape(0,4))."
+ },
+ {
+  "file": "src/Pca.php",
+  "line": "return self::nodeHash(self::build(array_slice($hs, 0, $k)), self::build(array_slice($hs, $k)));",
+  "occurrence": 1,
+  "mutant": "UnwrapArraySlice: return self::nodeHash(self::build(array_slice($hs, 0, $k)), self::build($hs));",
+  "reason": "[unbounded recursion] after the left half returns, the right child is Pca::build()($hs) on the unsliced list, so every call with >= 2 elements recurses on the same list forever; unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any tree with >= 2 leaves (Pca::merkleRoot/pathShape/verifyInclusion tests, e.g. K05KillPca2Test pathShape(0,4))."
+ },
+ {
+  "file": "src/Pca.php",
+  "line": "throw new \\InvalidArgumentException('empty leaf set');",
+  "occurrence": 1,
+  "mutant": "Throw_: new \\InvalidArgumentException('empty leaf set');",
+  "reason": "[unbounded recursion] with the throw removed merkleRoot([]) calls build([]): count 0 !== 1, split(0)=1, array_slice([],0,1) = [] so build([]) recurses forever; unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: the empty leaf set in MutationKillR2Test / PcaSurvivorKillTest (expects 'empty leaf set')."
+ },
+ {
+  "file": "src/Pca.php",
+  "line": "while ($n > 1) {",
+  "occurrence": 1,
+  "mutant": "GreaterThan: while ($n >= 1) {",
+  "reason": "[non-terminating loop, memory] `while ($n >= 1)`: every path reaches n=1 with idx=0; split(1)=1 so idx < k appends 'R' and sets n=k=1 again, forever; $out grows by one element per iteration until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any pathShape()/verifyInclusion call, e.g. K05KillPca2Test pathShape(0,4)."
+ },
+ {
+  "file": "src/Authorize.php",
+  "line": "for ($i = 0; $i < $len; $i++) {",
+  "occurrence": 1,
+  "mutant": "Increment: for ($i = 0; $i < $len; $i--) {",
+  "reason": "[non-terminating loop, memory] `$i--` from 0 never reaches $len (>= 1): it walks negative offsets (valid from the end) then past -$len, where each read is an 'Uninitialized string offset' warning returning '' (ord 0 < 0x20) so `$o .= '\\u0000'` appends 6 bytes per iteration; $o (plus one PHPUnit warning Issue per distinct offset) grows until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any non-empty name rendered by Authorize::show() (tool-not-authorized / unexpected-argument reasons) (e.g. K05KillAuthorize1Test toolReason cases and the k05-authorize oracle)."
+ },
+ {
+  "file": "src/Authorize.php",
+  "line": "$i += 2;",
+  "occurrence": 1,
+  "mutant": "Assignment: $i = 2;",
+  "reason": "[non-terminating loop, memory] `$i = 2` (not += 2) after a lone-surrogate escape at byte p >= 3 jumps back to byte 3, re-scans to p and escapes it again, forever; each pass appends to $o until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: the k05-authorize oracle case whose tool name is 47 'a' + an astral char cut at 48 units, leaving a lone high surrogate at byte 47 ('tool \"aaa...\\ud83d\u2026'). (p < 3 would terminate.)"
+ },
+ {
+  "file": "src/Authorize.php",
+  "line": "$i += 2;",
+  "occurrence": 1,
+  "mutant": "PlusEqual: $i -= 2;",
+  "reason": "[non-terminating loop, memory] `$i -= 2` after escaping a lone surrogate at byte p moves to p-2, the loop's ++ to p-1, and the next iteration re-reaches p and escapes it again, forever; each pass appends the \\udXXX text to $o until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: any shown name containing a WTF-8 lone surrogate, e.g. K05KillAuthorize1Test toolReason(\"x\\xED\\xA0\\x80\") / the k05-authorize 'x\\ud800y' tool case."
+ },
+ {
+  "file": "src/Agent.php",
+  "line": "$k = 1;",
+  "occurrence": 1,
+  "mutant": "IncrementInteger: $k = 2;",
+  "reason": "[unbounded recursion] split() starts at k=2, so split(2)=2: Agent build()/prove() on any 2-element (sub)list slices array_slice($hs,0,2) = the same list and recurses on it forever (commitPlan proofs via prove() hit the same self-split); unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Reached by every tree with >= 2 leaves (Sign::commitPlan / plan inclusion tests, e.g. AgentProducerTest, K05KillAgentTest)."
+ },
+ {
+  "file": "src/Agent.php",
+  "line": "while ($k * 2 < $n) {",
+  "occurrence": 1,
+  "mutant": "DecrementInteger: while ($k * 1 < $n) {",
+  "reason": "[unbounded recursion] `$k * 1 < $n` lets k reach n (split(2)=2, split(3)=4), so array_slice($hs,0,$k) is the whole list and Agent build()/prove() recurses on the same list forever (commitPlan proofs via prove() hit the same self-split); unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any tree with >= 2 leaves (Sign::commitPlan / plan inclusion tests, e.g. AgentProducerTest, K05KillAgentTest)."
+ },
+ {
+  "file": "src/Agent.php",
+  "line": "while ($k * 2 < $n) {",
+  "occurrence": 1,
+  "mutant": "LessThan: while ($k * 2 <= $n) {",
+  "reason": "[unbounded recursion] `$k * 2 <= $n` gives split(2)=2, so a 2-element (sub)list splits into itself and Agent build()/prove() recurses on it forever (commitPlan proofs via prove() hit the same self-split); unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any tree with >= 2 leaves (Sign::commitPlan / plan inclusion tests, e.g. AgentProducerTest, K05KillAgentTest)."
+ },
+ {
+  "file": "src/Agent.php",
+  "line": "while ($k * 2 < $n) {",
+  "occurrence": 1,
+  "mutant": "Multiplication: while ($k / 2 < $n) {",
+  "reason": "[unbounded recursion] `$k / 2 < $n` keeps doubling until k >= 2n, so array_slice($hs,0,$k) is always the whole list and Agent build()/prove() recurses on it forever; unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any tree with >= 2 leaves (Sign::commitPlan / plan inclusion tests, e.g. AgentProducerTest, K05KillAgentTest)."
+ },
+ {
+  "file": "src/Agent.php",
+  "line": "$k *= 2;",
+  "occurrence": 1,
+  "mutant": "IncrementInteger: $k *= 3;",
+  "reason": "[unbounded recursion] `$k *= 3` gives split(3)=3, so a 3-element (sub)list slices into itself and Agent build()/prove() recurses forever (commitPlan proofs via prove() hit the same self-split); unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any tree whose size is 3 or splits to a 3-leaf subtree, e.g. 3/7-leaf plans (Sign::commitPlan / plan inclusion tests, e.g. AgentProducerTest, K05KillAgentTest)."
+ },
+ {
+  "file": "src/Agent.php",
+  "line": "if (count($hs) === 1) {",
+  "occurrence": 1,
+  "mutant": "Identical: if (count($hs) !== 1) {",
+  "reason": "[unbounded recursion] `!== 1` makes a 1-element list skip the base case: split(1)=1, array_slice($hs,0,1) is the same 1-element list and Agent build()/prove() recurses on it forever; unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any single-leaf input (Sign::commitPlan / plan inclusion tests, e.g. AgentProducerTest, K05KillAgentTest); larger inputs just return $hs[0] (a normal kill)."
+ },
+ {
+  "file": "src/Agent.php",
+  "line": "if (count($hs) === 1) {",
+  "occurrence": 1,
+  "mutant": "IncrementInteger: if (count($hs) === 2) {",
+  "reason": "[unbounded recursion] the base case now fires at 2, so a 1-element list (a single-leaf tree, or the 1-leaf right half of a 3-leaf tree) gets split(1)=1 and Agent build()/prove() recurses on the same list forever; unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Single-leaf or 3-leaf inputs (Sign::commitPlan / plan inclusion tests, e.g. AgentProducerTest, K05KillAgentTest)."
+ },
+ {
+  "file": "src/Agent.php",
+  "line": "return self::sha(\"\\x01\" . self::build(array_slice($hs, 0, $k)) . self::build(array_slice($hs, $k)));",
+  "occurrence": 1,
+  "mutant": "UnwrapArraySlice: return self::sha(\"\\x01\" . self::build($hs) . self::build(array_slice($hs, $k)));",
+  "reason": "[unbounded recursion] the left child is Agent build()/prove()($hs) on the unsliced list, so every call with >= 2 elements recurses on the same list forever; unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any tree with >= 2 leaves (Sign::commitPlan / plan inclusion tests, e.g. AgentProducerTest, K05KillAgentTest)."
+ },
+ {
+  "file": "src/Agent.php",
+  "line": "return self::sha(\"\\x01\" . self::build(array_slice($hs, 0, $k)) . self::build(array_slice($hs, $k)));",
+  "occurrence": 1,
+  "mutant": "UnwrapArraySlice: return self::sha(\"\\x01\" . self::build(array_slice($hs, 0, $k)) . self::build($hs));",
+  "reason": "[unbounded recursion] after the left half returns, the right child is Agent build()/prove()($hs) on the unsliced list, so every call with >= 2 elements recurses on the same list forever; unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any tree with >= 2 leaves (Sign::commitPlan / plan inclusion tests, e.g. AgentProducerTest, K05KillAgentTest)."
+ },
+ {
+  "file": "src/Agent.php",
+  "line": "self::prove(array_slice($hs, 0, $k), $idx, $out);",
+  "occurrence": 1,
+  "mutant": "UnwrapArraySlice: self::prove($hs, $idx, $out);",
+  "reason": "[unbounded recursion] prove() recurses on the unsliced $hs with the same idx whenever idx < k, so it never reaches the 1-element base case; unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any plan with >= 2 nodes passed to Sign::commitPlan (AgentProducerTest, K05KillAgentTest) -- leaf 0 always takes this branch."
+ },
+ {
+  "file": "src/Agent.php",
+  "line": "throw new \\InvalidArgumentException('commitPlan: empty plan');",
+  "occurrence": 1,
+  "mutant": "Throw_: new \\InvalidArgumentException('commitPlan: empty plan');",
+  "reason": "[unbounded recursion] without the throw, planHashes([]) returns [[],[]] and commitPlan builds the root with build([]): count 0 !== 1, split(0)=1, array_slice([],0,1) = [] so build([]) recurses forever; unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: AgentProducerTest Sign::commitPlan([]) (expects 'commitPlan: empty plan')."
+ },
+ {
+  "file": "src/Agent.php",
+  "line": "foreach ($nodes as $raw) {",
+  "occurrence": 1,
+  "mutant": "Foreach_: foreach ([] as $raw) {",
+  "reason": "[unbounded recursion] `foreach ([] as $raw)` leaves $ns and the leaf-hash list empty for every plan, so commitPlan ends in build([]), which recurses on array_slice([],0,1) = [] forever; unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any non-empty Sign::commitPlan call (AgentProducerTest, K05KillAgentTest)."
+ },
+ {
+  "file": "src/ReadVault.php",
+  "line": "for ($k = 0; $k < 5; $k++) {",
+  "occurrence": 1,
+  "mutant": "Increment: for ($k = 0; $k < 5; $k--) {",
+  "reason": "[non-terminating loop, memory] `$k--` from 0 never reaches 5, and each outer iteration appends a value to $this->buf; reads go to negative offsets of the 32-byte block, then past -32 give 'Uninitialized string offset' warnings (ord '' = 0) -- the buf array (and PHPUnit's per-offset warning Issues) grow until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: any draw from the vault stream, e.g. K05KillReadVaultTest::testUniform* via uniform() -> next48()."
+ },
+ {
+  "file": "src/ReadVault.php",
+  "line": "for ($j = 0; $j < 6; $j++) {",
+  "occurrence": 1,
+  "mutant": "Increment: for ($j = 0; $j < 6; $j--) {",
+  "reason": "[non-terminating loop, memory] `$j--` from 0 never reaches 6: the inner loop reads $raw[$k*6+$j] at ever more negative offsets, valid down to -32 and then 'Uninitialized string offset' warnings; the loop itself allocates nothing ($v just overflows to float/INF) but PHPUnit 10.5 (failOnWarning=true) records each warning as an Issue keyed by file:line:message, and the message embeds the ever-changing offset/key, so every iteration adds a new Issue: memory grows until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: any draw, e.g. K05KillReadVaultTest::testUniform* via uniform() -> next48()."
+ },
+ {
+  "file": "src/Workflow.php",
+  "line": "if (($state[$id] ?? 0) === 1) {",
+  "occurrence": 1,
+  "mutant": "Coalesce: if ((0 ?? $state[$id]) === 1) {",
+  "reason": "[unbounded recursion] `(0 ?? $state[$id]) === 1` is always false, so a step in progress is never detected; on a dependency cycle $visit recurses a -> b -> a ... forever (the state-2 check never fires because no step finishes); unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: K05KillWorkflowTest's cyclic blueprint (a deps b, b deps a) passed to Workflow::ancestors (expects null)."
+ },
+ {
+  "file": "src/Workflow.php",
+  "line": "if (($state[$id] ?? 0) === 1) {",
+  "occurrence": 1,
+  "mutant": "IncrementInteger: if (($state[$id] ?? 0) === 2) {",
+  "reason": "[unbounded recursion] the in-progress check now tests `=== 2`, already handled by the line above, so state 1 is never detected; on a dependency cycle $visit recurses a -> b -> a ... forever; unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: K05KillWorkflowTest's cyclic blueprint (a <-> b) passed to Workflow::ancestors (expects null)."
+ },
+ {
+  "file": "src/K4.php",
+  "line": "for ($i = strlen($d) - 1; $i >= 0; $i--) {",
+  "occurrence": 1,
+  "mutant": "Decrement: for ($i = strlen($d) - 1; $i >= 0; $i++) {",
+  "reason": "[non-terminating loop, memory] `$i++` from strlen-1 keeps $i >= 0 forever; from $i = strlen on every $d[$i] is an 'Uninitialized string offset' warning (ord '' - 48 = -48 summed); the loop allocates nothing itself but PHPUnit 10.5 (failOnWarning=true) records each warning as an Issue keyed by file:line:message, and the message embeds the ever-changing offset/key, so every iteration adds a new Issue: memory grows until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: a 13-19 digit candidate reaching luhn(), e.g. K05KillK4Test::testPanHeuristicAndTokenRef."
+ },
+ {
+  "file": "src/IntentV2.php",
+  "line": "for ($i = 0; $i < $n; $i++) {",
+  "occurrence": 1,
+  "mutant": "Increment: for ($i = 0; $i < $n; $i--) {",
+  "reason": "[non-terminating loop, memory] `$i--` never reaches $n; the loop only returns on a differing byte, so for two strings that are byte-identical after the U+FFFD rewrite every comparison is equal: offsets -1..-3 match, then both reads are out of range ('Uninitialized string offset' warnings, ord 0 = ord 0) forever; PHPUnit 10.5 (failOnWarning=true) records each warning as an Issue keyed by file:line:message, and the message embeds the ever-changing offset/key, so every iteration adds a new Issue: memory grows until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: IntentV2HelperKillTest::testCompareUtf8 compareUtf8(\"\\xED\\xA0\\x80\", \"\\xEF\\xBF\\xBD\") (lone surrogate vs U+FFFD; raw strings differ so the === fast path is skipped). Other pairs still return."
+ },
+ {
+  "file": "src/Approval.php",
+  "line": "for ($i = 0; $i < 6; $i++) {",
+  "occurrence": 1,
+  "mutant": "Increment: for ($i = 0; $i < 6; $i--) {",
+  "reason": "[non-terminating loop, memory] `$i--` from 0 never reaches 6: reads the 32-byte digest at negative offsets, then out-of-range offsets (warning, ord 0 -> WORDS[0]), appending a word to $w every iteration; the array (plus PHPUnit warning Issues) grows until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: any valid bindingWords call, e.g. the k05-approval 'bindingWords'/'renderApproval' oracle cases (K05ApprovalDifferentialKillTest) and ActionVectors."
+ },
+ {
+  "file": "src/Approval.php",
+  "line": "if ($minor < 0 || $minor > 9007199254740991 || $exp < 0 || $exp > 18) {",
+  "occurrence": 1,
+  "mutant": "GreaterThanNegotiation: if ($minor < 0 || $minor > 9007199254740991 || $exp < 0 || $exp <= 18) {",
+  "reason": "[memory fatal, huge allocation] `$exp <= 18` refuses every valid exponent (normal kills) but lets exp > 18 through, so minorToDecimal reaches str_pad((string)$minor, $exp + 1, '0', STR_PAD_LEFT) with exp = 9007199254740992, which asks the allocator for ~9 PB: immediate fatal 'Allowed memory size of 1610612736 bytes exhausted (tried to allocate ~9007199254740993 bytes)' (exit 255). Input: the k05-approval oracle cases 'minorToDecimal/<m> e9007199254740992' (K05ApprovalDifferentialKillTest), which the reference refuses."
+ },
+ {
+  "file": "src/Approval.php",
+  "line": "if ($minor < 0 || $minor > 9007199254740991 || $exp < 0 || $exp > 18) {",
+  "occurrence": 1,
+  "mutant": "LogicalOr: if (($minor < 0 || $minor > 9007199254740991 || $exp < 0) && $exp > 18) {",
+  "reason": "[memory fatal, huge allocation] `(...) && $exp > 18` no longer refuses a valid minor with exp > 18, so minorToDecimal reaches str_pad((string)$minor, $exp + 1, '0', STR_PAD_LEFT) with exp = 9007199254740992, which asks the allocator for ~9 PB: immediate fatal 'Allowed memory size of 1610612736 bytes exhausted (tried to allocate ~9007199254740993 bytes)' (exit 255). Input: the k05-approval oracle cases 'minorToDecimal/<m> e9007199254740992' (K05ApprovalDifferentialKillTest), which the reference refuses."
+ },
+ {
+  "file": "src/Approval.php",
+  "line": "if ($minor < 0 || $minor > 9007199254740991 || $exp < 0 || $exp > 18) {",
+  "occurrence": 1,
+  "mutant": "LogicalOrNegation: if (!($minor < 0 || $minor > 9007199254740991 || $exp < 0 || $exp > 18)) {",
+  "reason": "[memory fatal, huge allocation] the negated guard refuses valid inputs and lets every invalid one through, so minorToDecimal reaches str_pad((string)$minor, $exp + 1, '0', STR_PAD_LEFT) with exp = 9007199254740992, which asks the allocator for ~9 PB: immediate fatal 'Allowed memory size of 1610612736 bytes exhausted (tried to allocate ~9007199254740993 bytes)' (exit 255). Input: the k05-approval oracle cases 'minorToDecimal/<m> e9007199254740992' (K05ApprovalDifferentialKillTest), which the reference refuses."
+ },
+ {
+  "file": "src/Approval.php",
+  "line": "self::unlinkable('minor units must be a non-negative safe integer');",
+  "occurrence": 1,
+  "mutant": "MethodCallRemoval: ",
+  "reason": "[memory fatal, huge allocation] with the unlinkable() refusal removed nothing is rejected, so minorToDecimal reaches str_pad((string)$minor, $exp + 1, '0', STR_PAD_LEFT) with exp = 9007199254740992, which asks the allocator for ~9 PB: immediate fatal 'Allowed memory size of 1610612736 bytes exhausted (tried to allocate ~9007199254740993 bytes)' (exit 255). Input: the k05-approval oracle cases 'minorToDecimal/<m> e9007199254740992' (K05ApprovalDifferentialKillTest), which the reference refuses."
+ },
+ {
+  "file": "src/SigstoreBundle.php",
+  "line": "for ($i = 0; $i < $n; $i++) {",
+  "occurrence": 1,
+  "mutant": "Increment: for ($i = 0; $i < $n; $i--) {",
+  "reason": "[non-terminating loop, memory] in a long-form DER length `$i--` from 0 never reaches $n (1..4): reads $b[$body+$i] backwards (negative offsets valid from the end) then out of range ('Uninitialized string offset' warnings, ord 0); $len just overflows to float, so the loop itself allocates nothing, but PHPUnit 10.5 (failOnWarning=true) records each warning as an Issue keyed by file:line:message, and the message embeds the ever-changing offset/key, so every iteration adds a new Issue: memory grows until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: any certificate/DER element > 127 bytes (long-form length 0x81/0x82), e.g. the Fulcio leaf in K05KillSigstoreBundleTest / the k05-sigstore oracle."
+ },
+ {
+  "file": "src/SigstoreBundle.php",
+  "line": "continue 2;",
+  "occurrence": 1,
+  "mutant": "IncrementInteger: continue 3;",
+  "reason": "[compile-time fatal] `continue 3` sits inside foreach ($times) inside foreach ($roots['cas']) directly in verifyCore's try block -- only 2 enclosing loops -- so compiling SigstoreBundle.php fails with \"Fatal error: Cannot 'continue' 3 levels\" (exit 255) as soon as any test autoloads the class (K05KillSigstoreBundleTest, K05SigstoreDifferentialKillTest, Vectors)."
+ },
+ {
+  "file": "src/Predicates.php",
+  "line": "for ($i = 0; $i < $n; $i++) {",
+  "occurrence": 1,
+  "mutant": "Increment: for ($i = 0; $i < $n; $i--) {",
+  "reason": "[non-terminating loop, memory] `$i--` from 0 is always < $n: $g[-1], $g[-2]... are 'Undefined array key' warnings returning null, which falls to the literal branch and appends [0, null] to $out every iteration; the array (plus PHPUnit warning Issues) grows until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: any non-empty glob, e.g. K05KillPredicatesTest / killPred glob cases."
+ },
+ {
+  "file": "src/Predicates.php",
+  "line": "$i++;",
+  "occurrence": 1,
+  "mutant": "Increment: $i--;",
+  "reason": "[non-terminating loop, memory] after a `\\x` escape `$i--` plus the loop's ++ puts $i back on the backslash, which is re-read and appends [0, next] to $out again, forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: a glob with a non-trailing backslash escape (e.g. the escaped '*'/'?' globs in K05KillPredicatesTest / killPred)."
+ },
+ {
+  "file": "src/Predicates.php",
+  "line": "$si = ++$starSi;",
+  "occurrence": 1,
+  "mutant": "Increment: $si = --$starSi;",
+  "reason": "[non-terminating loop, memory] on a mismatch after '*', `$si = --$starSi` moves the subject cursor backwards instead of forwards, so it drifts below 0; $s[$si] then is an 'Undefined array key -N' warning (null never matches a literal) and it backtracks again, forever -- no allocation in the loop, but PHPUnit 10.5 (failOnWarning=true) records each warning as an Issue keyed by file:line:message, and the message embeds the ever-changing offset/key, so every iteration adds a new Issue: memory grows until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: a star glob that needs backtracking, e.g. 'a*c'-style cases in K05KillPredicatesTest / killPred."
+ },
+ {
+  "file": "src/Predicates.php",
+  "line": "while ($ti < $nt && $toks[$ti][0] === 2) {",
+  "occurrence": 1,
+  "mutant": "LogicalAndAllSubExprNegation: while (!($ti < $nt) && !($toks[$ti][0] === 2)) {",
+  "reason": "[non-terminating loop, memory] once the subject is consumed with $ti === $nt (any full match, e.g. glob 'a' vs 'a'), `!($ti < $nt) && !($toks[$ti][0] === 2)` is true: $toks[$nt] is undefined (warning) and null[0] is null, so $ti++ forever with an 'Undefined array key N' warning for each new N; PHPUnit 10.5 (failOnWarning=true) records each warning as an Issue keyed by file:line:message, and the message embeds the ever-changing offset/key, so every iteration adds a new Issue: memory grows until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: any matching glob in K05KillPredicatesTest / killPred."
+ },
+ {
+  "file": "src/ActionsRegistry.php",
+  "line": "for ($k = 1; $k <= 3; $k++) {",
+  "occurrence": 1,
+  "mutant": "Increment: for ($k = 1; $k <= 3; $k--) {",
+  "reason": "[non-terminating loop, memory] `$k--`: when the majors are equal, k goes 1 -> 0 ((int) of the whole matches, equal) -> -1, -2 ...; $pa[-N]/$pb[-N] are 'Undefined array key' warnings, (int)null = 0 on both sides, so the loop never returns; PHPUnit 10.5 (failOnWarning=true) records each warning as an Issue keyed by file:line:message, and the message embeds the ever-changing offset/key, so every iteration adds a new Issue: memory grows until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: any two versions with the same major in the k05-actionregistry 'compareVersions' oracle (K05ActionsRegistryDifferentialKillTest), e.g. 1.0.0 vs 1.1.0."
+ },
+ {
+  "file": "src/Escalation.php",
+  "line": "for ($i = 0; $i < $len; $i++) {",
+  "occurrence": 1,
+  "mutant": "Increment: for ($i = 0; $i < $len; $i--) {",
+  "reason": "[non-terminating loop, memory] `$i--` from 0 never reaches $len (>= 1): it walks negative offsets (valid from the end) then past -$len, where each read is an 'Uninitialized string offset' warning returning '' (ord 0 < 0x20) so `$o .= '\\u0000'` appends 6 bytes per iteration; $o (plus one PHPUnit warning Issue per distinct offset) grows until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any non-empty reason string in Escalation::reasonsWire() (e.g. K05KillEscalationTest::testReasonsWireEscapesOnlyACompleteLoneSurrogate, Vectors escalation_truncate)."
+ },
+ {
+  "file": "src/Escalation.php",
+  "line": "$i += 2;",
+  "occurrence": 1,
+  "mutant": "Assignment: $i = 2;",
+  "reason": "[non-terminating loop, memory] `$i = 2` (not += 2) after a lone-surrogate escape at byte p >= 3 jumps back to byte 3, re-scans to p and escapes it again, forever; $o grows each pass until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: the escalation_truncate conformance vectors tr-astral-split / tr-astral-split-other / tr-mixed (Vectors::escalation), where a 512-unit cut leaves a lone high surrogate at byte 511. (Surrogates at byte 0, as in K05KillEscalationTest, would not loop.)"
+ },
+ {
+  "file": "src/Escalation.php",
+  "line": "$i += 2;",
+  "occurrence": 1,
+  "mutant": "PlusEqual: $i -= 2;",
+  "reason": "[non-terminating loop, memory] `$i -= 2` after escaping a lone surrogate at byte p goes to p-2 (the loop's ++ makes p-1) and the next iteration escapes the same surrogate again, forever; $o grows each pass until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: any reason with a lone surrogate, e.g. K05KillEscalationTest reasonsWire(\"\\xED\\xA0\\x80\")."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$i++;",
+  "occurrence": 1,
+  "mutant": "Increment: $i--;",
+  "reason": "[non-terminating loop, memory] for an ASCII byte `$i--` moves backwards: negative offsets read from the end, then out of range ('' -> ord 0 < 0x80, ASCII again), so units() appends a unit to $out and decrements forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: any string with an ASCII byte (every regex/glob/units test, e.g. SafeRegexKillTest::testUnits \"\\x00\")."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "for ($k = 1; $ok && $k < $len; $k++) {",
+  "occurrence": 1,
+  "mutant": "LogicalAndAllSubExprNegation: for ($k = 1; !$ok && !($k < $len); $k++) {",
+  "reason": "[non-terminating loop, memory] for an invalid lead byte (len 0, ok false) `!$ok && !($k < $len)` is true for every k >= 1, so the continuation check reads $s[$i+$k] with k growing forever, each past the end an 'Uninitialized string offset N' warning; PHPUnit 10.5 (failOnWarning=true) records each warning as an Issue keyed by file:line:message, and the message embeds the ever-changing offset/key, so every iteration adds a new Issue: memory grows until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: SafeRegexKillTest::testUnits \"\\x80\" / \"\\xFF\" etc."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "for ($k = 1; $ok && $k < $len; $k++) {",
+  "occurrence": 1,
+  "mutant": "LogicalAndNegation: for ($k = 1; !($ok && $k < $len); $k++) {",
+  "reason": "[non-terminating loop, memory] `!($ok && $k < $len)` is true whenever ok is false, so for any invalid or truncated sequence the check loop runs k = 1, 2, ... forever, reading past the end ('Uninitialized string offset N' warnings); PHPUnit 10.5 (failOnWarning=true) records each warning as an Issue keyed by file:line:message, and the message embeds the ever-changing offset/key, so every iteration adds a new Issue: memory grows until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: SafeRegexKillTest::testUnits malformed cases (\"\\x80\", \"\\xC2\", \"\\xE2\\x82\" ...)."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$i++;",
+  "occurrence": 2,
+  "mutant": "Increment: $i--;",
+  "reason": "[non-terminating loop, memory] after a malformed byte at i, `$i--` returns to i-1 (or a negative offset at 0) and the next steps come back to the bad byte, appending U+FFFD to $out every pass, forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: SafeRegexKillTest::testUnits malformed cases (e.g. \"a\\xC2\", \"\\x80\")."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$i += $len;",
+  "occurrence": 1,
+  "mutant": "Assignment: $i = $len;",
+  "reason": "[non-terminating loop, memory] `$i = $len` after a multibyte sequence at byte p >= len resets the cursor to 2/3/4, which is <= p, so decoding re-reaches p and resets again, appending units to $out forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: e.g. SafeRegexKillTest::testUnits \"\\xED\\xA0\\xBD\\xED\\xB8\\x80\" (second sequence at p=3, len 3) and the many non-ASCII regex/glob corpus strings."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$i += $len;",
+  "occurrence": 1,
+  "mutant": "PlusEqual: $i -= $len;",
+  "reason": "[non-terminating loop, memory] `$i -= $len` after any valid multibyte sequence moves the cursor back before it, so it is decoded again and again, appending units to $out forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: any non-ASCII string, e.g. SafeRegexKillTest::testUnits \"\\xC2\\x80\"."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "for ($i = 0; $i < $m; $i++) {",
+  "occurrence": 1,
+  "mutant": "Increment: for ($i = 0; $i < $m; $i--) {",
+  "reason": "[non-terminating loop, memory] off the byte-prefix fast path, `$i--` goes 0 -> -1 -> ...; once the first units are equal, $a[-N] and $b[-N] are both 'Undefined array key' warnings (null === null) so it never returns; PHPUnit 10.5 (failOnWarning=true) records each warning as an Issue keyed by file:line:message, and the message embeds the ever-changing offset/key, so every iteration adds a new Issue: memory grows until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: SafeRegexKillTest startsWithUnits('abc', 'abd') (first unit equal, not a byte prefix)."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "for ($j = $i + 1; $j < $n && $u[$j] !== 0x5D; $j++) {",
+  "occurrence": 1,
+  "mutant": "LogicalAnd: for ($j = $i + 1; $j < $n || $u[$j] !== 0x5d; $j++) {",
+  "reason": "[non-terminating loop, memory] `$j < $n || $u[$j] !== 0x5D` keeps scanning past ']' and past the end, where $u[$j] is an 'Undefined array key N' warning (null !== 0x5D) for every growing j, forever; PHPUnit 10.5 (failOnWarning=true) records each warning as an Issue keyed by file:line:message, and the message embeds the ever-changing offset/key, so every iteration adds a new Issue: memory grows until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: any regex with a character class, e.g. '[a-c](?:)(0, 1)' in the killRegex corpus / SafeRegexKillTest."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$i += 3;",
+  "occurrence": 1,
+  "mutant": "Assignment: $i = 3;",
+  "reason": "[non-terminating loop, memory] `$i = 3` (not += 3) for a '(?:' at unit p >= 3 jumps back to 3 and re-scans to p, pushing a frame onto $stack each time, forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: killRegex corpus patterns like '[a-c](?:)(0, 1)' or '^\\x61?(?:ab)??...'. (A group at p = 0 behaves like the original.)"
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$i += 1;",
+  "occurrence": 1,
+  "mutant": "DecrementInteger: $i += 0;",
+  "reason": "[non-terminating loop, memory] `$i += 0` for a plain '(' leaves the cursor on it, so it is handled again and again, pushing [false,false] onto $stack forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: any regex with a capturing group, e.g. '(a|bc)|...' in the killRegex corpus."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$i++;",
+  "occurrence": 5,
+  "mutant": "Increment: $i--;",
+  "reason": "[non-terminating loop, memory] the plain-atom `$i--` moves backwards past 0; $u[-N] is an 'Undefined array key' warning (null takes the plain-atom path) and it decrements again, forever; PHPUnit 10.5 (failOnWarning=true) records each warning as an Issue keyed by file:line:message, and the message embeds the ever-changing offset/key, so every iteration adds a new Issue: memory grows until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: any regex with a literal, e.g. 'a(5, 70)?...' in the killRegex corpus."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "while ($this->at($this->i) === 0x7C) {",
+  "occurrence": 1,
+  "mutant": "Identical: while ($this->at($this->i) !== 0x7c) {",
+  "reason": "[non-terminating loop, memory] `!== 0x7c`: after the first branch the cursor is at the end (null) or ')', so alt() keeps doing i++ and appending cat() (an empty ['cat',[]] past the end) to $items forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: every parsed pattern without '|' (SafeRegex::compile / parser tests, killRegex corpus)."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$this->i++;",
+  "occurrence": 1,
+  "mutant": "Increment: $this->i--;",
+  "reason": "[non-terminating loop, memory] on '|' `$this->i--` moves back onto the last atom of the previous branch; cat() parses it and stops at the same '|' again, so alt() appends to $items forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: any alternation whose left branch ends in an atom, e.g. 'a|b' / '(a|bc)|...' in the killRegex corpus."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "while ($this->i < $this->n && $this->s[$this->i] !== 0x7C && $this->s[$this->i] !== 0x29) {",
+  "occurrence": 1,
+  "mutant": "LogicalAnd: while ($this->i < $this->n && $this->s[$this->i] !== 0x7c || $this->s[$this->i] !== 0x29) {",
+  "reason": "[non-terminating loop, memory] `(i<n && s[i]!=='|') || s[i] !== ')'`: at the end $this->s[$this->i] is an 'Undefined array key' warning (null !== ')'), so cat() calls quantified() past the end, atom() reads null -> default i++, and appends an item every iteration, forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: every parsed pattern (SafeRegex::compile on the killRegex corpus)."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "while ($this->i < $this->n && $this->s[$this->i] !== 0x7C && $this->s[$this->i] !== 0x29) {",
+  "occurrence": 1,
+  "mutant": "LogicalAnd: while (($this->i < $this->n || $this->s[$this->i] !== 0x7c) && $this->s[$this->i] !== 0x29) {",
+  "reason": "[non-terminating loop, memory] `(i<n || s[i] !== '|') && s[i] !== ')'`: at the end both reads are undefined (null), so the condition stays true; cat() keeps parsing null atoms past the end (default branch i++) and appending to $items forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: every parsed pattern (SafeRegex::compile on the killRegex corpus)."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$this->i++;",
+  "occurrence": 2,
+  "mutant": "Increment: $this->i--;",
+  "reason": "[non-terminating loop, memory] after '*' `$this->i--` puts the cursor back on the quantified atom's last unit, so cat() parses the same atom + '*' again and again, appending a rep node to $items forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: a simple atom followed by '*', e.g. 'a*' / '[^a]...(?:a|b)*'-style patterns in the killRegex corpus / SafeRegexKillTest. (After a group the cursor lands on ')' and the parse is refused -- a normal kill.)"
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$this->i++;",
+  "occurrence": 3,
+  "mutant": "Increment: $this->i--;",
+  "reason": "[non-terminating loop, memory] after '+' `$this->i--` puts the cursor back on the quantified atom's last unit, so cat() parses the same atom + '+' again and again, appending a rep node to $items forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: a simple atom followed by '+', e.g. 'a+' (e.g. 'a{5,70}?a+[ab]...') in the killRegex corpus / SafeRegexKillTest. (After a group the cursor lands on ')' and the parse is refused -- a normal kill.)"
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$this->i++;",
+  "occurrence": 4,
+  "mutant": "Increment: $this->i--;",
+  "reason": "[non-terminating loop, memory] after '?' `$this->i--` puts the cursor back on the quantified atom's last unit, so cat() parses the same atom + '?' again and again, appending a rep node to $items forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: a simple atom followed by '?', e.g. '\\x61?' (e.g. '^\\x61?(?:ab)??...') in the killRegex corpus / SafeRegexKillTest. (After a group the cursor lands on ')' and the parse is refused -- a normal kill.)"
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$this->i += $m[3];",
+  "occurrence": 1,
+  "mutant": "PlusEqual: $this->i -= $m[3];",
+  "reason": "[non-terminating loop, memory] `$this->i -= $m[3]` moves the cursor back before the '{n,m}' quantifier (negative positions read as null -> default i++), so the same brace is reached and rewound again, appending to $items forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: any bounded repeat, e.g. 'a(5, 70)?...' in the killRegex corpus."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$this->i++;",
+  "occurrence": 7,
+  "mutant": "Increment: $this->i--;",
+  "reason": "[non-terminating loop, memory] for '.' atom() does `$this->i--`, so the cursor goes back to the previous unit (or to -1 -> 'Undefined array key' null -> default i++ when '.' is first); parsing returns to the same '.' and steps back again, so cat() appends to $items forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: any pattern containing '.', e.g. '.' / 'a.b'-style patterns in the killRegex corpus."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$this->i++;",
+  "occurrence": 8,
+  "mutant": "Increment: $this->i--;",
+  "reason": "[non-terminating loop, memory] for '^' atom() does `$this->i--`, so the cursor goes back to the previous unit (or to -1 -> 'Undefined array key' null -> default i++ when '^' is first); parsing returns to the same '^' and steps back again, so cat() appends to $items forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: any pattern containing '^', e.g. '^\\x61?(?:ab)??(?:a|b){2,}$' in the killRegex corpus."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$this->i++;",
+  "occurrence": 9,
+  "mutant": "Increment: $this->i--;",
+  "reason": "[non-terminating loop, memory] for '$' atom() does `$this->i--`, so the cursor goes back to the previous unit (or to -1 -> 'Undefined array key' null -> default i++ when '$' is first); parsing returns to the same '$' and steps back again, so cat() appends to $items forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: any pattern containing '$', e.g. '^\\x61?(?:ab)??(?:a|b){2,}$' in the killRegex corpus."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$this->i++;",
+  "occurrence": 10,
+  "mutant": "Increment: $this->i--;",
+  "reason": "[non-terminating loop, memory] the literal case does `$this->i--`, so the cursor moves backwards past 0 ($this->s[-N] -> 'Undefined array key' warning, null -> default again), returning a set node each time that cat() appends to $items, forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: any pattern with a literal, e.g. 'a(5, 70)?...' in the killRegex corpus."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$this->i++;",
+  "occurrence": 11,
+  "mutant": "Increment: $this->i--;",
+  "reason": "[non-terminating loop, memory] escapeInner's second `$this->i--` leaves the cursor on the backslash, so a class/single escape (\\d \\w \\s \\t \\n ...) is parsed again and again and cat() (or cls()) appends a node forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: any pattern with such an escape in the killRegex corpus / SafeRegexKillTest. (\\x/\\u read the backslash as a digit and are refused -- normal kill.)"
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$this->i += 2;",
+  "occurrence": 2,
+  "mutant": "PlusEqual: $this->i -= 2;",
+  "reason": "[non-terminating loop, memory] after '\\xHH' `$this->i -= 2` returns the cursor to the backslash, so the escape is parsed again and again, appending a node forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: '\\x61' patterns such as '^\\x61?(?:ab)??(?:a|b)(2,)$' in the killRegex corpus."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$this->i += 4;",
+  "occurrence": 1,
+  "mutant": "PlusEqual: $this->i -= 4;",
+  "reason": "[non-terminating loop, memory] after '\\uHHHH' `$this->i -= 4` puts the cursor 2 units before the backslash (negative -> null literal), the escape is re-reached and rewound again, appending nodes forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: '\\u0062{1,2}?'-style patterns in the killRegex corpus."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "self::refuse('unterminated class');",
+  "occurrence": 1,
+  "mutant": "MethodCallRemoval: ",
+  "reason": "[non-terminating loop, memory] with the 'unterminated class' refusal removed, cls() keeps going at the end: readAtom() reads $this->s[$this->i] past the end ('Undefined array key N' warning, null), steps i++, and appends a range to $ranges every iteration, forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: an unterminated class handed straight to SafeRegex::compile / SafeRegexParser (the refusal cases in the killRegex corpus / R9SafeRegexKillTest, e.g. '[a')."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$this->i++;",
+  "occurrence": 15,
+  "mutant": "Increment: $this->i--;",
+  "reason": "[non-terminating loop, memory] on the closing ']' `$this->i--` steps back onto the class's last member, which readAtom() consumes, landing on ']' again, so the class loop never breaks and appends to $ranges forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: any character class, e.g. '[a-c]' / '[ab]' in the killRegex corpus."
+ },
+ {
+  "file": "src/Json.php",
+  "line": "$this->err('nesting too deep');",
+  "occurrence": 1,
+  "mutant": "MethodCallRemoval: ",
+  "reason": "[unbounded nesting -> stack/memory crash] Object nesting is no longer limited, so TotalityDepthTest's 100000-deep '{\"a\":' x 100000 text (testStrictParseDepthBoundary, testLaxParseIsBoundedToo, testVerifyJsonDeepTextIsACleanWireDeny) is parsed into a 100000-level tree through 100000 nested value() calls; freeing that tree (PHP destroys nested arrays/objects recursively on the C stack) overflows the C stack -> SIGSEGV (exit 139), or the frames/Obj instances hit the memory_limit fatal. (The 33-deep cases alone would just fail an assertion -- normal kill.)"
+ },
+ {
+  "file": "src/Json.php",
+  "line": "$v = $this->value($depth + 1);",
+  "occurrence": 1,
+  "mutant": "DecrementInteger: $v = $this->value($depth + 0);",
+  "reason": "[unbounded nesting -> stack/memory crash] Object (`$depth + 0` never grows) nesting is no longer limited, so TotalityDepthTest's 100000-deep '{\"a\":' x 100000 text (testStrictParseDepthBoundary, testLaxParseIsBoundedToo, testVerifyJsonDeepTextIsACleanWireDeny) is parsed into a 100000-level tree through 100000 nested value() calls; freeing that tree (PHP destroys nested arrays/objects recursively on the C stack) overflows the C stack -> SIGSEGV (exit 139), or the frames/Obj instances hit the memory_limit fatal. (The 33-deep cases alone would just fail an assertion -- normal kill.)"
+ },
+ {
+  "file": "src/Json.php",
+  "line": "$v = $this->value($depth + 1);",
+  "occurrence": 1,
+  "mutant": "Plus: $v = $this->value($depth - 1);",
+  "reason": "[unbounded nesting -> stack/memory crash] Object (`$depth - 1` decreases) nesting is no longer limited, so TotalityDepthTest's 100000-deep '{\"a\":' x 100000 text (testStrictParseDepthBoundary, testLaxParseIsBoundedToo, testVerifyJsonDeepTextIsACleanWireDeny) is parsed into a 100000-level tree through 100000 nested value() calls; freeing that tree (PHP destroys nested arrays/objects recursively on the C stack) overflows the C stack -> SIGSEGV (exit 139), or the frames/Obj instances hit the memory_limit fatal. (The 33-deep cases alone would just fail an assertion -- normal kill.)"
+ },
+ {
+  "file": "src/Json.php",
+  "line": "$this->err('nesting too deep');",
+  "occurrence": 2,
+  "mutant": "MethodCallRemoval: ",
+  "reason": "[unbounded nesting -> stack/memory crash] Array nesting is no longer limited, so TotalityDepthTest's 100000-deep '[' x 100000 text (testStrictParseDepthBoundary, testLaxParseIsBoundedToo, testVerifyJsonDeepTextIsACleanWireDeny) is parsed into a 100000-level tree through 100000 nested value() calls; freeing that tree (PHP destroys nested arrays/objects recursively on the C stack) overflows the C stack -> SIGSEGV (exit 139), or the frames/Obj instances hit the memory_limit fatal. (The 33-deep cases alone would just fail an assertion -- normal kill.)"
+ },
+ {
+  "file": "src/Json.php",
+  "line": "$a[] = $this->value($depth + 1);",
+  "occurrence": 1,
+  "mutant": "DecrementInteger: $a[] = $this->value($depth + 0);",
+  "reason": "[unbounded nesting -> stack/memory crash] Array (`$depth + 0` never grows) nesting is no longer limited, so TotalityDepthTest's 100000-deep '[' x 100000 text (testStrictParseDepthBoundary, testLaxParseIsBoundedToo, testVerifyJsonDeepTextIsACleanWireDeny) is parsed into a 100000-level tree through 100000 nested value() calls; freeing that tree (PHP destroys nested arrays/objects recursively on the C stack) overflows the C stack -> SIGSEGV (exit 139), or the frames/Obj instances hit the memory_limit fatal. (The 33-deep cases alone would just fail an assertion -- normal kill.)"
+ },
+ {
+  "file": "src/Json.php",
+  "line": "$a[] = $this->value($depth + 1);",
+  "occurrence": 1,
+  "mutant": "Plus: $a[] = $this->value($depth - 1);",
+  "reason": "[unbounded nesting -> stack/memory crash] Array (`$depth - 1` decreases) nesting is no longer limited, so TotalityDepthTest's 100000-deep '[' x 100000 text (testStrictParseDepthBoundary, testLaxParseIsBoundedToo, testVerifyJsonDeepTextIsACleanWireDeny) is parsed into a 100000-level tree through 100000 nested value() calls; freeing that tree (PHP destroys nested arrays/objects recursively on the C stack) overflows the C stack -> SIGSEGV (exit 139), or the frames/Obj instances hit the memory_limit fatal. (The 33-deep cases alone would just fail an assertion -- normal kill.)"
+ },
+ {
+  "file": "src/Json.php",
+  "line": "$this->i += 4;",
+  "occurrence": 1,
+  "mutant": "PlusEqual: $this->i -= 4;",
+  "reason": "[non-terminating loop, memory] after a \\uXXXX escape `$this->i -= 4` puts the cursor 2 bytes before the backslash; if those 2 bytes are string text the fast path copies them into $out again and reaches the same escape again, forever, so $out grows until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: a JSON string with >= 2 characters before a \\u escape (e.g. surrogate/escape corpus strings parsed by Json::parse*). (With fewer than 2 preceding bytes the cursor lands on the opening quote, the string ends early and a JsonError is a normal kill.)"
+ },
+ {
+  "file": "src/Json.php",
+  "line": "$this->i++;",
+  "occurrence": 11,
+  "mutant": "Increment: $this->i--;",
+  "reason": "[non-terminating loop, memory] after reading the escape letter `$this->i--` puts the cursor back on the backslash, so a simple escape (\\n, \\\", \\\\ ...) is decoded again and again, appending one char to $out each time, forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: any parsed JSON string with a non-\\u escape (e.g. the reason/escape vectors). (\\u then reads '\\u00' as hex and throws -- normal kill.)"
+ },
+ {
+  "file": "src/PcaMiddleware.php",
+  "line": "public function handle(ServerRequestInterface $request): ResponseInterface",
+  "occurrence": 1,
+  "mutant": "PublicVisibility: protected function handle(ServerRequestInterface $request): ResponseInterface",
+  "reason": "[compile-time fatal] the anonymous class `new class ($next) implements RequestHandlerInterface` in PcaMiddleware::handle() declares a protected handle(), so linking it raises \"Fatal error: Access level to RequestHandlerInterface@anonymous::handle() must be public (as in class Psr\\Http\\Server\\RequestHandlerInterface)\" (exit 255) when PcaMiddleware::handle($request, $next) runs. Input: the closure-style middleware tests (e.g. PcaMiddlewareWorkflowTest / PcaMiddleware tests calling handle())."
+ },
+ {
+  "file": "src/IntentV2Session.php",
+  "line": "for ($i = 1, $n = self::isInt($w) ? self::iv($w) : 0; $i <= $n; $i++) {",
+  "occurrence": 1,
+  "mutant": "Increment: for ($i = 1, $n = self::isInt($w) ? self::iv($w) : 0; $i <= $n; $i--) {",
+  "reason": "[non-terminating loop, memory] `$i--` from 1 stays <= $n (>= 1), so the responds_within state list appends 'pending:$i' forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: a responds_within monitor with within >= 1, e.g. Track3Test / K05KillIntentHistoryTest ('within':2)."
+ },
+ {
+  "file": "src/IntentV2Session.php",
+  "line": "for ($i = 1, $n = self::isInt($w) ? self::iv($w) : 0; $i <= $n; $i++) {",
+  "occurrence": 1,
+  "mutant": "LessThanOrEqualToNegotiation: for ($i = 1, $n = self::isInt($w) ? self::iv($w) : 0; $i > $n; $i++) {",
+  "reason": "[non-terminating loop, memory] `$i > $n` with n = 0 (within missing or non-integer) is true for every growing i, so 'pending:$i' is appended forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: IntentV2KillTest's responds_within monitor without 'within' (n = 0). (With within >= 1 the loop is skipped -- normal kill.)"
+ },
+ {
+  "file": "src/IntentV2Map.php",
+  "line": "if ($n === 0) {",
+  "occurrence": 1,
+  "mutant": "DecrementInteger: if ($n === -1) {",
+  "reason": "[unbounded recursion] `$n === -1` never fires, so mapTreeRoot([]) falls through: n !== 1, k = 1, array_slice([],0,1) = [] and it recurses on [] forever; unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: R9MapKillTest IntentV2::mapTreeRoot([]) (expects 'mapTree: empty')."
+ },
+ {
+  "file": "src/IntentV2Map.php",
+  "line": "if ($n === 0) {",
+  "occurrence": 1,
+  "mutant": "Identical: if ($n !== 0) {",
+  "reason": "[unbounded recursion] `$n !== 0` throws for every non-empty list (normal kills) but lets [] through: k = 1, array_slice([],0,1) = [] and mapTreeRoot recurses on [] forever; unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: R9MapKillTest IntentV2::mapTreeRoot([])."
+ },
+ {
+  "file": "src/IntentV2Map.php",
+  "line": "throw new \\InvalidArgumentException('mapTree: empty');",
+  "occurrence": 1,
+  "mutant": "Throw_: new \\InvalidArgumentException('mapTree: empty');",
+  "reason": "[unbounded recursion] with the throw removed mapTreeRoot([]) falls through: k = 1, array_slice([],0,1) = [] and it recurses on [] forever; unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: R9MapKillTest IntentV2::mapTreeRoot([])."
+ },
+ {
+  "file": "src/IntentV2Map.php",
+  "line": "if ($n === 1) {",
+  "occurrence": 1,
+  "mutant": "Identical: if ($n !== 1) {",
+  "reason": "[unbounded recursion] `!== 1` makes a 1-element list skip the base case: split(1)=1, array_slice($hs,0,1) is the same 1-element list and IntentV2Map::mapTreeRoot() recurses on it forever; unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any single-leaf input (R9MapKillTest and the IntentV2 map-commit tests); larger inputs just return $hs[0] (a normal kill)."
+ },
+ {
+  "file": "src/IntentV2Map.php",
+  "line": "if ($n === 1) {",
+  "occurrence": 1,
+  "mutant": "IncrementInteger: if ($n === 2) {",
+  "reason": "[unbounded recursion] the base case now fires at 2, so a 1-element list (a single-leaf tree, or the 1-leaf right half of a 3-leaf tree) gets split(1)=1 and IntentV2Map::mapTreeRoot() recurses on the same list forever; unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Single-leaf or 3-leaf inputs (R9MapKillTest and the IntentV2 map-commit tests)."
+ },
+ {
+  "file": "src/IntentV2Map.php",
+  "line": "$k = 1;",
+  "occurrence": 1,
+  "mutant": "IncrementInteger: $k = 2;",
+  "reason": "[unbounded recursion] split() starts at k=2, so split(2)=2: IntentV2Map::mapTreeRoot() on any 2-element (sub)list slices array_slice($hs,0,2) = the same list and recurses on it forever (the map/receipt root); unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Reached by every tree with >= 2 leaves (R9MapKillTest and the IntentV2 map-commit tests)."
+ },
+ {
+  "file": "src/IntentV2Map.php",
+  "line": "while ($k * 2 < $n) {",
+  "occurrence": 1,
+  "mutant": "DecrementInteger: while ($k * 1 < $n) {",
+  "reason": "[unbounded recursion] `$k * 1 < $n` lets k reach n (split(2)=2, split(3)=4), so array_slice($hs,0,$k) is the whole list and IntentV2Map::mapTreeRoot() recurses on the same list forever (the map/receipt root); unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any tree with >= 2 leaves (R9MapKillTest and the IntentV2 map-commit tests)."
+ },
+ {
+  "file": "src/IntentV2Map.php",
+  "line": "while ($k * 2 < $n) {",
+  "occurrence": 1,
+  "mutant": "LessThan: while ($k * 2 <= $n) {",
+  "reason": "[unbounded recursion] `$k * 2 <= $n` gives split(2)=2, so a 2-element (sub)list splits into itself and IntentV2Map::mapTreeRoot() recurses on it forever (the map/receipt root); unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any tree with >= 2 leaves (R9MapKillTest and the IntentV2 map-commit tests)."
+ },
+ {
+  "file": "src/IntentV2Map.php",
+  "line": "while ($k * 2 < $n) {",
+  "occurrence": 1,
+  "mutant": "Multiplication: while ($k / 2 < $n) {",
+  "reason": "[unbounded recursion] `$k / 2 < $n` keeps doubling until k >= 2n, so array_slice($hs,0,$k) is always the whole list and IntentV2Map::mapTreeRoot() recurses on it forever; unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any tree with >= 2 leaves (R9MapKillTest and the IntentV2 map-commit tests)."
+ },
+ {
+  "file": "src/IntentV2Map.php",
+  "line": "$k *= 2;",
+  "occurrence": 1,
+  "mutant": "IncrementInteger: $k *= 3;",
+  "reason": "[unbounded recursion] `$k *= 3` gives split(3)=3, so a 3-element (sub)list slices into itself and IntentV2Map::mapTreeRoot() recurses forever (the map/receipt root); unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any tree whose size is 3 or splits to a 3-leaf subtree, e.g. 3/7-leaf plans (R9MapKillTest and the IntentV2 map-commit tests)."
+ },
+ {
+  "file": "src/IntentV2Map.php",
+  "line": "return self::mapNodeHash(self::mapTreeRoot(array_slice($hs, 0, $k)), self::mapTreeRoot(array_slice($hs, $k)));",
+  "occurrence": 1,
+  "mutant": "UnwrapArraySlice: return self::mapNodeHash(self::mapTreeRoot($hs), self::mapTreeRoot(array_slice($hs, $k)));",
+  "reason": "[unbounded recursion] the left child is IntentV2Map::mapTreeRoot()($hs) on the unsliced list, so every call with >= 2 elements recurses on the same list forever; unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any tree with >= 2 leaves (R9MapKillTest and the IntentV2 map-commit tests)."
+ },
+ {
+  "file": "src/IntentV2Map.php",
+  "line": "return self::mapNodeHash(self::mapTreeRoot(array_slice($hs, 0, $k)), self::mapTreeRoot(array_slice($hs, $k)));",
+  "occurrence": 1,
+  "mutant": "UnwrapArraySlice: return self::mapNodeHash(self::mapTreeRoot(array_slice($hs, 0, $k)), self::mapTreeRoot($hs));",
+  "reason": "[unbounded recursion] after the left half returns, the right child is IntentV2Map::mapTreeRoot()($hs) on the unsliced list, so every call with >= 2 elements recurses on the same list forever; unbounded user-level recursion (PHP's VM does not use the C stack for it), so frames and array_slice copies pile up until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Any tree with >= 2 leaves (R9MapKillTest and the IntentV2 map-commit tests)."
+ },
+ {
+  "file": "src/Actions.php",
+  "line": "for ($i = 0; $i < strlen($u); $i += 2) {",
+  "occurrence": 1,
+  "mutant": "Assignment: for ($i = 0; $i < strlen($u); $i = 2) {",
+  "reason": "[non-terminating loop, memory] `$i = 2` pins $i at 2 after the first step, so on any string of two or more UTF-16 code units (strlen($u) > 2, e.g. every core trait phrase passed through units()) `2 < strlen($u)` holds for ever while each iteration appends to $out, until the memory_limit fatal 'Allowed memory size exhausted' (exit 255)."
+ },
+ {
+  "file": "src/Actions.php",
+  "line": "for ($i = 0; $i < strlen($u); $i += 2) {",
+  "occurrence": 1,
+  "mutant": "LessThanNegotiation: for ($i = 0; $i >= strlen($u); $i += 2) {",
+  "reason": "[non-terminating loop, memory] `$i >= strlen($u)` is false at once for a non-empty string, but on the empty string (strlen 0) it is true for every $i >= 0 and $i only grows, so each iteration appends an empty string to $out until the memory_limit fatal 'Allowed memory size exhausted' (exit 255)."
+ },
+ {
+  "file": "src/Actions.php",
+  "line": "for ($i = 0; $i < strlen($u); $i += 2) {",
+  "occurrence": 1,
+  "mutant": "PlusEqual: for ($i = 0; $i < strlen($u); $i -= 2) {",
+  "reason": "[non-terminating loop, memory] `$i -= 2` from 0 only goes negative, so on any non-empty string `$i < strlen($u)` holds for ever; substr() accepts the negative offset without a warning and each iteration appends to $out, until the memory_limit fatal 'Allowed memory size exhausted' (exit 255)."
+ },
+ {
+  "file": "src/Actions.php",
+  "line": "if (count($hs) === 1) {",
+  "occurrence": 1,
+  "mutant": "Identical: if (count($hs) !== 1) {",
+  "reason": "[infinite recursion, memory] subRoot has no base case for this call: the recursion never shrinks its input, so PHP (no recursion limit) exhausts memory_limit, 'Allowed memory size exhausted' (exit 255). `count !== 1` falls through on a single leaf: k = 1 and array_slice($hs, 0, 1) is the same one-element list."
+ },
+ {
+  "file": "src/Actions.php",
+  "line": "if (count($hs) === 1) {",
+  "occurrence": 1,
+  "mutant": "IncrementInteger: if (count($hs) === 2) {",
+  "reason": "[infinite recursion, memory] subRoot has no base case for this call: the recursion never shrinks its input, so PHP (no recursion limit) exhausts memory_limit, 'Allowed memory size exhausted' (exit 255). `count === 2` makes a single leaf fall through: k = 1 and array_slice($hs, 0, 1) is the same one-element list; any odd pack reaches a single leaf."
+ },
+ {
+  "file": "src/Actions.php",
+  "line": "$k = 1;",
+  "occurrence": 1,
+  "mutant": "IncrementInteger: $k = 2;",
+  "reason": "[infinite recursion, memory] subRoot has no base case for this call: the recursion never shrinks its input, so PHP (no recursion limit) exhausts memory_limit, 'Allowed memory size exhausted' (exit 255). `$k = 2` on two leaves: 4 < 2 is false, k stays 2, and array_slice($hs, 0, 2) is the whole list."
+ },
+ {
+  "file": "src/Actions.php",
+  "line": "while ($k * 2 < count($hs)) {",
+  "occurrence": 1,
+  "mutant": "DecrementInteger: while ($k * 1 < count($hs)) {",
+  "reason": "[infinite recursion, memory] subRoot has no base case for this call: the recursion never shrinks its input, so PHP (no recursion limit) exhausts memory_limit, 'Allowed memory size exhausted' (exit 255). `$k * 1 <` on two leaves ends with k = 2, and array_slice($hs, 0, 2) is the whole list."
+ },
+ {
+  "file": "src/Actions.php",
+  "line": "while ($k * 2 < count($hs)) {",
+  "occurrence": 1,
+  "mutant": "LessThan: while ($k * 2 <= count($hs)) {",
+  "reason": "[infinite recursion, memory] subRoot has no base case for this call: the recursion never shrinks its input, so PHP (no recursion limit) exhausts memory_limit, 'Allowed memory size exhausted' (exit 255). `$k * 2 <=` on two leaves ends with k = 2, and array_slice($hs, 0, 2) is the whole list."
+ },
+ {
+  "file": "src/Actions.php",
+  "line": "while ($k * 2 < count($hs)) {",
+  "occurrence": 1,
+  "mutant": "Multiplication: while ($k / 2 < count($hs)) {",
+  "reason": "[infinite recursion, memory] subRoot has no base case for this call: the recursion never shrinks its input, so PHP (no recursion limit) exhausts memory_limit, 'Allowed memory size exhausted' (exit 255). `$k / 2 <` on two leaves ends with k = 4, and array_slice($hs, 0, 4) is the whole list."
+ },
+ {
+  "file": "src/Actions.php",
+  "line": "$k *= 2;",
+  "occurrence": 1,
+  "mutant": "IncrementInteger: $k *= 3;",
+  "reason": "[infinite recursion, memory] subRoot has no base case for this call: the recursion never shrinks its input, so PHP (no recursion limit) exhausts memory_limit, 'Allowed memory size exhausted' (exit 255). `$k *= 3` on three leaves ends with k = 3, and array_slice($hs, 0, 3) is the whole list."
+ },
+ {
+  "file": "src/Actions.php",
+  "line": "return self::nodeHash(self::subRoot(array_slice($hs, 0, $k)), self::subRoot(array_slice($hs, $k)));",
+  "occurrence": 1,
+  "mutant": "UnwrapArraySlice: return self::nodeHash(self::subRoot($hs), self::subRoot(array_slice($hs, $k)));",
+  "reason": "[infinite recursion, memory] subRoot has no base case for this call: the recursion never shrinks its input, so PHP (no recursion limit) exhausts memory_limit, 'Allowed memory size exhausted' (exit 255). The left call receives $hs itself, on every list of two or more."
+ },
+ {
+  "file": "src/Actions.php",
+  "line": "return self::nodeHash(self::subRoot(array_slice($hs, 0, $k)), self::subRoot(array_slice($hs, $k)));",
+  "occurrence": 1,
+  "mutant": "UnwrapArraySlice: return self::nodeHash(self::subRoot(array_slice($hs, 0, $k)), self::subRoot($hs));",
+  "reason": "[infinite recursion, memory] subRoot has no base case for this call: the recursion never shrinks its input, so PHP (no recursion limit) exhausts memory_limit, 'Allowed memory size exhausted' (exit 255). The right call receives $hs itself, on every list of two or more, after the left call returns."
+ },
+ {
+  "file": "src/Actions.php",
+  "line": "while (count($seg) > 1) {",
+  "occurrence": 1,
+  "mutant": "GreaterThan: while (count($seg) >= 1) {",
+  "reason": "[infinite recursion, memory] the mutated split leaves an empty right segment, and subRoot([]) has no base case (count 0 is not 1, k stays 1, it calls subRoot([]) again), so PHP exhausts memory_limit, 'Allowed memory size exhausted' (exit 255). `>= 1` runs once more on one leaf: k = 1, idx 0 < 1, and array_slice($seg, 1) is empty."
+ },
+ {
+  "file": "src/Actions.php",
+  "line": "$k = 1;",
+  "occurrence": 2,
+  "mutant": "IncrementInteger: $k = 2;",
+  "reason": "[infinite recursion, memory] the mutated split leaves an empty right segment, and subRoot([]) has no base case (count 0 is not 1, k stays 1, it calls subRoot([]) again), so PHP exhausts memory_limit, 'Allowed memory size exhausted' (exit 255). `$k = 2` on two leaves: k stays 2, idx < 2, and array_slice($seg, 2) is empty."
+ },
+ {
+  "file": "src/Actions.php",
+  "line": "while ($k * 2 < count($seg)) {",
+  "occurrence": 1,
+  "mutant": "DecrementInteger: while ($k * 1 < count($seg)) {",
+  "reason": "[infinite recursion, memory] the mutated split leaves an empty right segment, and subRoot([]) has no base case (count 0 is not 1, k stays 1, it calls subRoot([]) again), so PHP exhausts memory_limit, 'Allowed memory size exhausted' (exit 255). `$k * 1 <` on two leaves ends with k = 2, idx < 2, and array_slice($seg, 2) is empty."
+ },
+ {
+  "file": "src/Actions.php",
+  "line": "while ($k * 2 < count($seg)) {",
+  "occurrence": 1,
+  "mutant": "LessThan: while ($k * 2 <= count($seg)) {",
+  "reason": "[infinite recursion, memory] the mutated split leaves an empty right segment, and subRoot([]) has no base case (count 0 is not 1, k stays 1, it calls subRoot([]) again), so PHP exhausts memory_limit, 'Allowed memory size exhausted' (exit 255). `$k * 2 <=` on two leaves ends with k = 2, idx < 2, and array_slice($seg, 2) is empty."
+ },
+ {
+  "file": "src/Actions.php",
+  "line": "while ($k * 2 < count($seg)) {",
+  "occurrence": 1,
+  "mutant": "Multiplication: while ($k / 2 < count($seg)) {",
+  "reason": "[infinite recursion, memory] the mutated split leaves an empty right segment, and subRoot([]) has no base case (count 0 is not 1, k stays 1, it calls subRoot([]) again), so PHP exhausts memory_limit, 'Allowed memory size exhausted' (exit 255). `$k / 2 <` on two leaves ends with k = 4, idx < 4, and array_slice($seg, 4) is empty."
+ },
+ {
+  "file": "src/Actions.php",
+  "line": "$k *= 2;",
+  "occurrence": 2,
+  "mutant": "IncrementInteger: $k *= 3;",
+  "reason": "[infinite recursion, memory] the mutated split leaves an empty right segment, and subRoot([]) has no base case (count 0 is not 1, k stays 1, it calls subRoot([]) again), so PHP exhausts memory_limit, 'Allowed memory size exhausted' (exit 255). `$k *= 3` on three leaves ends with k = 3, idx < 3, and array_slice($seg, 3) is empty."
+ },
+ {
+  "file": "src/Actions.php",
+  "line": "$seg = array_slice($seg, 0, $k);",
+  "occurrence": 1,
+  "mutant": "UnwrapArraySlice: $seg = $seg;",
+  "reason": "[non-terminating loop, memory] with idx < k the segment never shrinks, so `while (count($seg) > 1)` never ends and each pass appends to $path, until the memory_limit fatal 'Allowed memory size exhausted' (exit 255)."
+ },
+ {
+  "file": "src/Predicates.php",
+  "line": "throw new \\RuntimeException('value nested too deeply');",
+  "occurrence": 1,
+  "mutant": "Throw_: new \\RuntimeException('value nested too deeply');",
+  "reason": "[unbounded recursion, crash] without the throw the depth bound does nothing: K05KillPredicatesTest::testAnErrorWhileExplainingIsAFailClosedDenial passes a self-referencing array as the verb, so jsStr recurses until the process dies (stack overflow or memory_limit). No assertion decides it."
+ },
+ {
+  "file": "src/Predicates.php",
+  "line": "return implode(',', array_map(static fn(mixed $x): string => $x === null ? '' : self::jsStr($x, $depth + 1), $v));",
+  "occurrence": 1,
+  "mutant": "DecrementInteger: return implode(',', array_map(static fn(mixed $x): string => $x === null ? '' : self::jsStr($x, $depth + 0), $v));",
+  "reason": "[unbounded recursion, crash] $depth + 0 never reaches Json::MAX_DEPTH: K05KillPredicatesTest::testAnErrorWhileExplainingIsAFailClosedDenial passes a self-referencing array as the verb, so jsStr recurses until the process dies (stack overflow or memory_limit). No assertion decides it."
+ },
+ {
+  "file": "src/Predicates.php",
+  "line": "return implode(',', array_map(static fn(mixed $x): string => $x === null ? '' : self::jsStr($x, $depth + 1), $v));",
+  "occurrence": 1,
+  "mutant": "Plus: return implode(',', array_map(static fn(mixed $x): string => $x === null ? '' : self::jsStr($x, $depth - 1), $v));",
+  "reason": "[unbounded recursion, crash] $depth - 1 walks away from Json::MAX_DEPTH: K05KillPredicatesTest::testAnErrorWhileExplainingIsAFailClosedDenial passes a self-referencing array as the verb, so jsStr recurses until the process dies (stack overflow or memory_limit). No assertion decides it."
+ },
+ {
+  "file": "src/Pca.php",
+  "line": "while ($n > 1) {",
+  "occurrence": 1,
+  "mutant": "GreaterThanNegotiation: while ($n <= 1) {",
+  "reason": "[non-terminating loop, memory] `while ($n <= 1)` on a size-1 tree (Pca::pathShape, verifyMerkle tests): split(1)=1, so $n stays 1 and 'R' is appended to $out forever until the 1536M memory_limit fatal. No assertion decides it."
+ },
+ {
+  "file": "src/StoreConformance.php",
+  "line": "for ($i = 0; $i < $c['handles']; $i++) {",
+  "occurrence": 1,
+  "mutant": "Increment: for ($i = 0; $i < $c['handles']; $i--) {",
+  "reason": "[non-terminating loop, memory] `$i--` from 0 is always < $c['handles'] (default 4, min 1), so claimConcurrent calls $open() and appends a store handle to $handles forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: StoreConformanceTest::testMemoryStatePasses... (runStateStore with the memory store)."
+ },
+ {
+  "file": "src/SigstoreBundle.php",
+  "line": "for ($i = $t[2]; $i < $t[3]; $i++) {",
+  "occurrence": 1,
+  "mutant": "Increment: for ($i = $t[2]; $i < $t[3]; $i--) {",
+  "reason": "[non-terminating loop, memory] `$i--` walks backwards from the OID's first content byte through earlier DER bytes and then out of range (warning, ord '' = 0); every byte with the high bit clear -- and every out-of-range read -- appends an arc to $parts, so the array grows until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: the certificate OIDs parsed in K05KillSigstoreBundleTest / k05-sigstore. (A 0x80 byte preceded by a high-bit-clear byte in the backward scan would throw 'OID arc is not minimally encoded' instead -- a normal kill -- so the crash depends on the first OID scanned not hitting that pattern; the run's ERRORED result shows it did not.)"
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$ok = $len > 0 && $i + $len <= $n;",
+  "occurrence": 1,
+  "mutant": "GreaterThanNegotiation: $ok = $len <= 0 && $i + $len <= $n;",
+  "reason": "[non-terminating loop] Traced: a byte with no valid lead (len 0) now counts as ok, skips the `!$ok` branch and takes the 4-byte decode, and `$i += $len` adds 0, so the same byte appends to $out forever. Every non-ASCII input reaches it: a valid lead (len > 0) goes to U+FFFD and $i++, and the continuation byte after it has len 0. First such case in SafeRegexKillTest::testUnits is \"\\xC2\\x80\", where the reads past the end warn and ord('') = 0. No assertion can run because the function never returns. Observed errored in runs 41945251132 and 42112842882 (no test completed in the latter) and timed out in 42065518320. The memory_limit as the fatal is inferred: the log shows no message."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "if (!$ok) {",
+  "occurrence": 1,
+  "mutant": "LogicalNot: if ($ok) {",
+  "reason": "[non-terminating loop] Traced: an ok sequence goes to U+FFFD with $i++, and a not-ok byte falls through to the decode. A byte with len 0 takes the 4-byte branch and `$i += $len` adds 0, so it appends to $out forever. Every non-ASCII input reaches it: the valid lead steps one byte, and the continuation byte after it has len 0 and is not ok. First such case in SafeRegexKillTest::testUnits is \"\\xC2\\x80\". No assertion can run because the function never returns. Observed errored in runs 41945251132 and 42112842882 (no test completed in the latter) and timed out in 42065518320. The memory_limit as the fatal is inferred: the log shows no message."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$this->i += $m[3];",
+  "occurrence": 1,
+  "mutant": "Assignment: $this->i = $m[3];",
+  "reason": "[non-terminating loop, memory] `$this->i = $m[3]` sets the cursor to the brace's length (e.g. 5 for '(5, 70)'); for a brace at unit p >= that length parsing resumes before it, reaches the same brace and resets again, appending to $items forever until the 1536M memory_limit fatal 'Allowed memory size exhausted' (exit 255). Input: killRegex corpus patterns like 'a(1, 17)?|a(1, 2)?|a(1, 33)|...' / '[a-c](?:)(0, 1)'."
+ },
+ {
+  "file": "src/Json.php",
+  "line": "$this->i++;",
+  "occurrence": 10,
+  "mutant": "Increment: $this->i--;",
+  "reason": "[non-terminating loop] Json string parser: `$this->i--` before peek makes $e the character before the backslash, and the next `$this->i++` returns the cursor to the backslash. When that character is the opening quote or an escape letter, the switch accepts it and appends to $out, the cursor has not moved, and the loop repeats forever. Any other character is refused as a bad escape, a normal kill, so the fate depends on which input runs first. Observed errored in run 42171011109 with no assertion failing; the exit cause (memory limit or another fatal) is inferred, since the log shows no message."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$this->i++;",
+  "occurrence": 5,
+  "mutant": "Increment: $this->i--;",
+  "reason": "[unbounded recursion] SafeRegex parser, atom() on '(': `$this->i--` moves the cursor back instead of past the '('. alt() then parses from before the group and reaches the same '(', so atom() -> alt() -> cat() -> atom() recurses without end. Any pattern with a group (SafeRegexKillTest, killRegex corpus). Observed errored in run 42171011109 with no assertion failing; the exit cause (memory limit or another fatal) is inferred, since the log shows no message."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$this->i += 2;",
+  "occurrence": 1,
+  "mutant": "PlusEqual: $this->i -= 2;",
+  "reason": "[unbounded recursion] SafeRegex parser, atom() on '(?:': `$this->i -= 2` leaves the cursor one unit before the '(' instead of past '?:'. alt() reaches the same '(' again, so atom() -> alt() -> cat() -> atom() recurses without end. Any pattern with a non-capturing group that has a unit before it (killRegex corpus). Observed errored in run 42171011109 with no assertion failing; the exit cause (memory limit or another fatal) is inferred, since the log shows no message."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$this->i += 4;",
+  "occurrence": 1,
+  "mutant": "Assignment: $this->i = 4;",
+  "reason": "[non-terminating loop] SafeRegex parser, \\uXXXX escape: `$this->i = 4` sets the cursor to unit 4 instead of past the escape. For an escape starting at unit 4 or later, parsing resumes before it, reaches the same escape and resets again, appending to the items list forever. An escape earlier than unit 4 just misparses and fails an assertion, so the fate depends on which input runs first. Observed errored in run 42171011109 with no assertion failing; the exit cause (memory limit or another fatal) is inferred, since the log shows no message."
+ },
+ {
+  "file": "src/Agent.php",
+  "line": "if (count($hs) === 1) {",
+  "occurrence": 2,
+  "mutant": "Identical: if (count($hs) !== 1) {",
+  "reason": "[unbounded recursion] Agent::prove: with `!== 1` a 1-element list skips the base case, split(1) = 1, and prove recurses on array_slice($hs, 0, 1), the same list, forever. Reached by a single-leaf plan (K05KillAgentTest, AgentProducerTest). Observed errored in run 42171011109 with no assertion failing; the exit cause (memory limit or another fatal) is inferred, since the log shows no message."
+ },
+ {
+  "file": "src/Agent.php",
+  "line": "if (count($hs) === 1) {",
+  "occurrence": 2,
+  "mutant": "IncrementInteger: if (count($hs) === 2) {",
+  "reason": "[unbounded recursion] Agent::prove: the base case fires at 2, so a 1-element list (a single-leaf plan, or the 1-leaf side of a 3-leaf plan) gets split(1) = 1 and prove recurses on the same list forever. Observed errored in run 42171011109 with no assertion failing; the exit cause (memory limit or another fatal) is inferred, since the log shows no message."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$ok = $len > 0 && $i + $len <= $n;",
+  "occurrence": 1,
+  "mutant": "GreaterThan: $ok = $len >= 0 && $i + $len <= $n;",
+  "reason": "[non-terminating loop] `$len >= 0` makes a byte with len 0 (a continuation byte or invalid lead) count as ok when it fits: it takes the 4-byte decode and `$i += 0`, so the same byte appends to $out forever. Input: \"\\x80\" in SafeRegexKillTest::testUnits. Observed timed out in run 42171011109, never errored so far. Listed in advance because this loop grows memory, so it can reach the memory limit first (cause inferred; the same class has moved between errored and timed out on unchanged tests)."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$ok = $len > 0 && $i + $len <= $n;",
+  "occurrence": 1,
+  "mutant": "LogicalAnd: $ok = $len > 0 || $i + $len <= $n;",
+  "reason": "[non-terminating loop] with `||`, a byte with len 0 is ok because `$i + 0 <= $n`: it takes the 4-byte decode and `$i += 0`, so the same byte appends to $out forever. Input: \"\\x80\" in SafeRegexKillTest::testUnits. Observed timed out in run 42171011109, never errored so far. Listed in advance because this loop grows memory, so it can reach the memory limit first (cause inferred; the same class has moved between errored and timed out on unchanged tests)."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$ok = $len > 0 && $i + $len <= $n;",
+  "occurrence": 1,
+  "mutant": "LogicalAndNegation: $ok = !($len > 0 && $i + $len <= $n);",
+  "reason": "[non-terminating loop] the negation makes a byte with len 0 ok: it takes the 4-byte decode and `$i += 0`, so the same byte appends to $out forever. A valid lead becomes U+FFFD and its continuation byte then has len 0, so every non-ASCII input reaches it. Input: \"\\xC2\\x80\" in SafeRegexKillTest::testUnits. Observed timed out in run 42171011109, never errored so far. Listed in advance because this loop grows memory, so it can reach the memory limit first (cause inferred; the same class has moved between errored and timed out on unchanged tests)."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$i += 3;",
+  "occurrence": 1,
+  "mutant": "PlusEqual: $i -= 3;",
+  "reason": "[non-terminating loop] SafeRegex balance scan on '(?:': `$i -= 3` moves back instead of past the opener, and the opener pushes onto $stack each time it is reached, so the scan returns to the same '(?:' and $stack grows forever. Any pattern with a non-capturing group in the scan's input. Observed timed out in run 42171011109, never errored so far. Listed in advance because this loop grows memory, so it can reach the memory limit first (cause inferred; the same class has moved between errored and timed out on unchanged tests)."
+ },
+ {
+  "file": "src/SafeRegex.php",
+  "line": "$i += 1;",
+  "occurrence": 1,
+  "mutant": "PlusEqual: $i -= 1;",
+  "reason": "[non-terminating loop] SafeRegex balance scan on '(': `$i -= 1` moves back instead of past it, and the opener pushes onto $stack each time it is reached, so the scan returns to the same '(' and $stack grows forever. Any pattern with a capturing group in the scan's input. Observed timed out in run 42171011109, never errored so far. Listed in advance because this loop grows memory, so it can reach the memory limit first (cause inferred; the same class has moved between errored and timed out on unchanged tests)."
+ }
+]

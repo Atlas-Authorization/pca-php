@@ -1,0 +1,1 @@
+{"id":"fn-polarity-prov-world","kind":"fn","fn":"polarity","input":[{"k":"cmp","op":"eq","l":{"k":"param","path":"env.prov.src","ty":{"k":"s"}},"r":{"k":"lit","v":{"k":"s","s":"a"}}},{"k":"cmp","op":"eq","l":{"k":"param","path":"env.world.stock","ty":{"k":"s"}},"r":{"k":"lit","v":{"k":"s","s":"b"}}}],"expect":["env.prov.src","env.world.stock"]}

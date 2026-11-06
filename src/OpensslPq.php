@@ -24,6 +24,12 @@ final class OpensslPq
         'SLH-DSA-SHA2-256s' => [64, 29792],
     ];
 
+    /**
+     * TEST SEAM: called with 'md_ctx_new' / 'verify_init' / 'keygen' / 'raw_public_key'; returning true makes that libcrypto step report
+     * failure, so the tests can prove the fail-closed branches libcrypto never takes on its own. Always null in production.
+     */
+    public static ?\Closure $faultHook = null;
+
     private static ?\FFI $ffi = null;
     private static bool $tried = false;
     /** @var array<string,bool> */
@@ -72,6 +78,13 @@ final class OpensslPq
             int EVP_DigestVerify(void* ctx, const unsigned char* sig, size_t siglen, const unsigned char* tbs, size_t tbslen);
             void EVP_PKEY_free(void* pkey);
             void EVP_MD_CTX_free(void* ctx);
+            void* EVP_PKEY_CTX_new_from_name(void* libctx, const char* name, const char* propq);
+            int EVP_PKEY_keygen_init(void* ctx);
+            int EVP_PKEY_generate(void* ctx, void** ppkey);
+            void EVP_PKEY_CTX_free(void* ctx);
+            int EVP_PKEY_get_raw_public_key(const void* pkey, unsigned char* pub, size_t* len);
+            int EVP_DigestSignInit_ex(void* ctx, void** pctx, const char* mdname, void* libctx, const char* props, void* pkey, void* params);
+            int EVP_DigestSign(void* ctx, unsigned char* sigret, size_t* siglen, const unsigned char* tbs, size_t tbslen);
             CDEF;
         foreach (self::candidates() as $path) {
             try {
@@ -96,8 +109,7 @@ final class OpensslPq
     {
         try {
             $n = self::KEY_TYPES[$type][0];
-            $buf = $f->new('unsigned char[' . $n . ']');
-            \FFI::memset($buf, 0, $n);
+            $buf = $f->new('unsigned char[' . $n . ']'); // FFI::new zero-fills; every byte pattern is a valid raw public key
             $k = $f->EVP_PKEY_new_raw_public_key_ex(null, $type, null, $buf, $n);
             if ($k === null || \FFI::isNull($k)) {
                 return false;
@@ -144,21 +156,19 @@ final class OpensslPq
                 return false;
             }
             try {
-                $ctx = $ffi->EVP_MD_CTX_new();
+                $ctx = self::$faultHook?->__invoke('md_ctx_new') === true ? null : $ffi->EVP_MD_CTX_new();
                 if ($ctx === null || \FFI::isNull($ctx)) {
                     return false;
                 }
                 try {
-                    if ($ffi->EVP_DigestVerifyInit_ex($ctx, null, null, null, null, $pkey, null) !== 1) {
+                    if ($ffi->EVP_DigestVerifyInit_ex($ctx, null, null, null, null, $pkey, null) !== 1 || self::$faultHook?->__invoke('verify_init') === true) {
                         return false;
                     }
                     $sigBuf = $ffi->new('unsigned char[' . strlen($sig) . ']');
                     \FFI::memcpy($sigBuf, $sig, strlen($sig));
                     $mlen = strlen($msg);
                     $msgBuf = $ffi->new('unsigned char[' . max(1, $mlen) . ']');
-                    if ($mlen > 0) {
-                        \FFI::memcpy($msgBuf, $msg, $mlen);
-                    }
+                    \FFI::memcpy($msgBuf, $msg, $mlen); // zero bytes for an empty message: a no-op
                     return $ffi->EVP_DigestVerify($ctx, $sigBuf, strlen($sig), $msgBuf, $mlen) === 1;
                 } finally {
                     $ffi->EVP_MD_CTX_free($ctx);
@@ -168,6 +178,88 @@ final class OpensslPq
             }
         } catch (\Throwable) {
             return false;
+        }
+    }
+
+    /**
+     * SIGNING (the producer side, see {@see Sign}): a fresh `$type` key pair through libcrypto. Returns `[pkey, publicKeyBytes]`
+     * where `pkey` is an opaque FFI handle (free it with {@see free}); null when the loaded library cannot generate `$type`.
+     * @return array{0:\FFI\CData,1:string}|null
+     */
+    public static function generate(string $type): ?array
+    {
+        if (!self::available($type)) {
+            return null;
+        }
+        $ffi = self::ffi();
+        try {
+            $ctx = $ffi->EVP_PKEY_CTX_new_from_name(null, $type, null);
+            if ($ctx === null || \FFI::isNull($ctx)) {
+                return null;
+            }
+            try {
+                if (self::$faultHook?->__invoke('keygen') === true) {
+                    return null;
+                }
+                $pp = $ffi->new('void*[1]');
+                if ($ffi->EVP_PKEY_keygen_init($ctx) !== 1 || $ffi->EVP_PKEY_generate($ctx, \FFI::addr($pp[0])) !== 1 || \FFI::isNull($pp[0])) {
+                    return null;
+                }
+            } finally {
+                $ffi->EVP_PKEY_CTX_free($ctx);
+            }
+            $pkey = $pp[0];
+            $n = self::KEY_TYPES[$type][0];
+            $buf = $ffi->new('unsigned char[' . $n . ']');
+            $len = $ffi->new('size_t[1]');
+            $len[0] = $n;
+            if ($ffi->EVP_PKEY_get_raw_public_key($pkey, $buf, \FFI::addr($len[0])) !== 1 || self::$faultHook?->__invoke('raw_public_key') === true) {
+                $ffi->EVP_PKEY_free($pkey);
+                return null;
+            }
+            return [$pkey, \FFI::string($buf, $n)];
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    public static function free(\FFI\CData $pkey): void
+    {
+        self::ffi()?->EVP_PKEY_free($pkey);
+    }
+
+    /** Sign `$msg` (pure, empty context; hedged by the provider's default) with a key from {@see generate}. Null on failure. */
+    public static function sign(string $type, \FFI\CData $pkey, string $msg): ?string
+    {
+        $ffi = self::ffi();
+        if ($ffi === null || !isset(self::KEY_TYPES[$type])) {
+            return null;
+        }
+        try {
+            $ctx = $ffi->EVP_MD_CTX_new();
+            if ($ctx === null || \FFI::isNull($ctx)) {
+                return null;
+            }
+            try {
+                if ($ffi->EVP_DigestSignInit_ex($ctx, null, null, null, null, $pkey, null) !== 1) {
+                    return null;
+                }
+                $mlen = strlen($msg);
+                $msgBuf = $ffi->new('unsigned char[' . max(1, $mlen) . ']');
+                \FFI::memcpy($msgBuf, $msg, $mlen); // zero bytes for an empty message: a no-op
+                $max = self::KEY_TYPES[$type][1];
+                $sig = $ffi->new('unsigned char[' . $max . ']');
+                $len = $ffi->new('size_t[1]');
+                $len[0] = $max;
+                if ($ffi->EVP_DigestSign($ctx, $sig, \FFI::addr($len[0]), $msgBuf, $mlen) !== 1) {
+                    return null;
+                }
+                return \FFI::string($sig, (int)$len[0]);
+            } finally {
+                $ffi->EVP_MD_CTX_free($ctx);
+            }
+        } catch (\Throwable) {
+            return null;
         }
     }
 }

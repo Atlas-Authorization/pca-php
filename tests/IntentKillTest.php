@@ -26,7 +26,7 @@ final class IntentKillTest extends TestCase
     private const OPEN = "intent ref / map_digest / goal_salt do not open the root grant's goal commitment";
     private const ERR = 'intent binding error (fail closed): ';
     private const BASE = ['wire', 'version', 'audience', 'validity', 'chain', 'grant_ref_bound', 'plan_inclusion',
-        'leaf_signature', 'counter'];
+        'leaf_signature', 'counter_format'];
 
     // ---- fixtures ---------------------------------------------------------------------------------------------------
 
@@ -455,18 +455,24 @@ final class IntentKillTest extends TestCase
 
     // ---- verifyPcactnCore / verifyJson: the `intent` check in the verdict -------------------------------------------
 
+    /** @param array<string,bool> $checks */
+    private static function verdict(bool $allow, array $checks, string $reason): array
+    {
+        return ['allow' => $allow, 'checks' => $checks, 'reason' => $reason, 'reasons' => $reason === '' ? [] : [$reason]];
+    }
+
     public function testVerifyBoundReportsIntentLast(): void
     {
         $g = self::grant();
         $p = self::build($g, self::intent());
         foreach ([null, ['require' => true], ['min_fidelity_ppm' => 950000, 'max_residual_risk_ppm' => 4310000]] as $i => $pol) {
             $r = self::verify($p, $g, $pol);
-            $this->assertSame(['allow' => true, 'checks' => self::withIntent(), 'reason' => ''], $r, "policy $i");
+            $this->assertSame(self::verdict(true, self::withIntent(), ''), $r, "policy $i");
         }
         $ctx = self::vector()->get('context');
         $j = Pca::verifyJson(Json::canonicalizeStrict($p), $g, $ctx->get('now')->int(), $ctx->get('aud'), null, ['min_fidelity_ppm' => 950001]);
-        $this->assertSame(['allow' => false, 'checks' => self::withIntent(false),
-            'reason' => 'intent: intent fidelity 950000 ppm is below the policy minimum 950001'], $j);
+        $this->assertSame(self::verdict(false, self::withIntent(false),
+            'intent: intent fidelity 950000 ppm is below the policy minimum 950001'), $j);
     }
 
     public function testVerifyAbsentIsPreM2AndActiveFails(): void
@@ -474,12 +480,12 @@ final class IntentKillTest extends TestCase
         $g = self::grant();
         $p = self::build($g, null, false);
         foreach ([null, [], ['require' => false], ['require' => 1], 'x'] as $i => $pol) {
-            $this->assertSame(['allow' => true, 'checks' => self::allOk(), 'reason' => ''], self::verify($p, $g, $pol), "inactive $i");
+            $this->assertSame(self::verdict(true, self::allOk(), ''), self::verify($p, $g, $pol), "inactive $i");
         }
         $ctx = self::vector()->get('context');
         $this->assertSame(self::allOk(), Pca::verifyPcactnCore($p, $g, $ctx->get('now')->int(), $ctx->get('aud'))['checks']);
         foreach ([['require' => true], ['min_fidelity_ppm' => 1], self::o(['max_residual_risk_ppm' => 5])] as $i => $pol) {
-            $this->assertSame(['allow' => false, 'checks' => self::withIntent(false), 'reason' => 'intent: ' . self::REQ],
+            $this->assertSame(self::verdict(false, self::withIntent(false), 'intent: ' . self::REQ),
                 self::verify($p, $g, $pol), "active $i");
         }
     }
@@ -488,16 +494,16 @@ final class IntentKillTest extends TestCase
     {
         $g = self::grant();
         $p = self::build($g, self::intent());
-        $this->assertSame(['allow' => false, 'checks' => self::withIntent(false), 'reason' => 'intent: ' . self::MIS],
+        $this->assertSame(self::verdict(false, self::withIntent(false), 'intent: ' . self::MIS),
             self::verify($p, $g, ['max_residual_risk_ppm' => -1]));
         $g3 = self::root([['type' => 'envelope', 'goal_commit' => 'decoy'], self::env()]);
-        $this->assertSame(['allow' => false, 'checks' => self::withIntent(false), 'reason' => 'intent: ' . self::OPEN],
+        $this->assertSame(self::verdict(false, self::withIntent(false), 'intent: ' . self::OPEN),
             self::verify(self::build($g3, self::intent()), $g3));
         $g4 = self::root([['type' => 'envelope', 'goal_commit' => 7]]);
-        $this->assertSame(['allow' => false, 'checks' => self::withIntent(false), 'reason' => 'intent: ' . self::NOENV],
+        $this->assertSame(self::verdict(false, self::withIntent(false), 'intent: ' . self::NOENV),
             self::verify(self::build($g4, self::intent()), $g4));
         $g5 = self::root([['type' => 'max_spend', 'usd' => 1], ['type' => 'note', 'n' => 1], self::env()]);
-        $this->assertSame(['allow' => true, 'checks' => self::withIntent(), 'reason' => ''], self::verify(self::build($g5, self::intent()), $g5));
+        $this->assertSame(self::verdict(true, self::withIntent(), ''), self::verify(self::build($g5, self::intent()), $g5));
     }
 
     public function testVerifyTamperAndFirstReason(): void
@@ -519,12 +525,12 @@ final class IntentKillTest extends TestCase
     {
         $g = self::grant();
         foreach ([['fidelity_ppm' => 0], ['fidelity_ppm' => 1000000], ['residual_risk_ppm' => 0], ['residual_risk_ppm' => self::MAX_SAFE]] as $i => $over) {
-            $this->assertSame(['allow' => true, 'checks' => self::withIntent(), 'reason' => ''],
+            $this->assertSame(self::verdict(true, self::withIntent(), ''),
                 self::verify(self::build($g, self::intent($over)), $g), "edge $i");
         }
         $salt = str_repeat("\u{e9}", 64);
         $g2 = self::root([self::env($salt)]);
-        $this->assertSame(['allow' => true, 'checks' => self::withIntent(), 'reason' => ''],
+        $this->assertSame(self::verdict(true, self::withIntent(), ''),
             self::verify(self::build($g2, self::intent(['goal_salt' => $salt])), $g2));
     }
 }
