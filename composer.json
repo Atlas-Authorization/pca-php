@@ -7,6 +7,7 @@
     "homepage": "https://atlasauth.net",
     "require": {
         "php": ">=8.1",
+        "ext-intl": "*",
         "ext-json": "*",
         "ext-sodium": "*"
     },
@@ -19,6 +20,8 @@
         "guzzlehttp/psr7": "^2.6"
     },
     "suggest": {
+        "ext-openssl": "Needed by the hardware attestation verifiers (Atlas\\Pca\\Attest), offline Sigstore bundle verification (Atlas\\Pca\\SigstoreBundle) and the ML-DSA FFI path.",
+        "ext-gmp": "Needed by the hardware attestation verifiers (u64 policy values are held as GMP integers).",
         "psr/http-server-middleware": "To use the framework-agnostic PSR-15 middleware (Atlas\\Pca\\PcaMiddleware) in Slim, Mezzio, Laminas, etc.",
         "psr/http-factory": "Required by PcaMiddleware to build its error responses (any PSR-17 factory).",
         "guzzlehttp/psr7": "A PSR-7/PSR-17 implementation PcaMiddleware can auto-discover for its error responses; nyholm/psr7 also works."
@@ -36,6 +39,9 @@
     },
     "config": {
         "sort-packages": true
+    },
+    "extra": {
+        "maturity": "stable"
     },
     "scripts": {
         "test": "phpunit"

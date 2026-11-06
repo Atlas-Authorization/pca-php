@@ -169,7 +169,7 @@ final class InjectionKillTest extends TestCase
                 public function createStreamFromResource($resource): StreamInterface { return $this->g->createStreamFromResource($resource); }
             }');
         self::shadowClassExists(['GuzzleHttp\Psr7\HttpFactory']);
-        $r = (new PcaMiddleware('aud', fn() => null))->process(new ServerRequest('GET', '/'), new class implements \Psr\Http\Server\RequestHandlerInterface {
+        $r = (new PcaMiddleware('aud', fn() => null, signatureOnly: true))->process(new ServerRequest('GET', '/'), new class implements \Psr\Http\Server\RequestHandlerInterface {
             public function handle(\Psr\Http\Message\ServerRequestInterface $request): \Psr\Http\Message\ResponseInterface
             {
                 throw new \LogicException('must not run');
