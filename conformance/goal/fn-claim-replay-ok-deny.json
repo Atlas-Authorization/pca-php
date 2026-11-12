@@ -1,0 +1,1 @@
+{"id":"fn-claim-replay-ok-deny","kind":"fn","fn":"claim","input":{"base":"deny","min_ppm":900000,"claimed_ppm":0,"replayed_ppm":950000},"expect":"deny"}

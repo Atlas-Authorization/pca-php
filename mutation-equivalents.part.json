@@ -38,92 +38,11 @@
  {
   "crate": "php-pca",
   "file": "src/Pca.php",
-  "mutant": "LogicalOr: if ($pkRaw === null && !self::pqSigOk($sig, $keyType)) {",
-  "line": "if ($pkRaw === null || !self::pqSigOk($sig, $keyType)) {",
-  "occurrence": 1,
-  "lineno": 393,
-  "reason": "With && a bad key with a good-length sig reaches LessFfi::verify / OpensslPq::verify with null (a TypeError) and a good key with a bad sig reaches them with a wrong length (both re-check exact lengths: false). Every caller (verifyPinnedSuite, verifyArtifact, verifyThresholdShare, verifyChain, the leaf check) catches Throwable into the same refusal, and on the chain / leaf paths the resolved key is a wire-validated exact-length pq_pk, so the verdict and reason are unchanged."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Pca.php",
-  "mutant": "CastString: $sgRaw = self::unb64u($sig);",
-  "line": "$sgRaw = (string)self::unb64u($sig);",
-  "occurrence": 1,
-  "lineno": 396,
-  "reason": "pqSigOk($sig) just returned true, which needs unb64u($sig) !== null: the value is already a string and the (string) cast is the identity."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Pca.php",
-  "mutant": "FalseValue: return true;",
-  "line": "return false;",
-  "occurrence": 17,
-  "lineno": 462,
-  "reason": "Unreachable: verifyB64u($holder, $msg, $sig) just accepted $sig, which requires canonical base64url of exactly 64 bytes, so unb64u($sig, 64) cannot be null here."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Pca.php",
   "mutant": "RoundingFamily: if (is_float($x) && ceil($x) === $x && $x >= 0 && $x <= self::MAX_SAFE && (string) $x !== '-0') {",
   "line": "if (is_float($x) && floor($x) === $x && $x >= 0 && $x <= self::MAX_SAFE && (string)$x !== '-0') {",
   "occurrence": 1,
   "lineno": 1176,
   "reason": "For a float x, floor(x) === x and ceil(x) === x both hold exactly when x is integral or +-INF (both false for NaN and every fraction); INF is then refused by $x <= MAX_SAFE, so the accepted set is identical."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Pca.php",
-  "mutant": "FalseValue: $ok = true;",
-  "line": "$ok = false;",
-  "occurrence": 1,
-  "lineno": 1735,
-  "reason": "Unreachable never-throws backstop: caveatSatisfied only reads Obj members (Obj is final), compares strings / floats from finite() (an explicit (float) cast of a Num lexeme never throws) and calls IntentV2::intentSessionCaveatError, which is total; no input makes it throw, so the catch body never runs."
- },
- {
-  "crate": "php-pca",
-  "file": "src/OpensslPq.php",
-  "mutant": "DecrementInteger: \\FFI::memset($buf, -1, $n);",
-  "line": "\\FFI::memset($buf, 0, $n);",
-  "occurrence": 1,
-  "lineno": 100,
-  "reason": "The probe only asks whether the provider can build a raw key of the type: FFI::new returns zero-filled memory already, and ML-DSA / SLH-DSA raw public keys import from ANY byte string of the right length (rho||t1 with 10-bit t1 fields, PK.seed||PK.root), so 0x00, 0x01 or 0xFF fill builds the same."
- },
- {
-  "crate": "php-pca",
-  "file": "src/OpensslPq.php",
-  "mutant": "IncrementInteger: \\FFI::memset($buf, 1, $n);",
-  "line": "\\FFI::memset($buf, 0, $n);",
-  "occurrence": 1,
-  "lineno": 100,
-  "reason": "The probe only asks whether the provider can build a raw key of the type: FFI::new returns zero-filled memory already, and ML-DSA / SLH-DSA raw public keys import from ANY byte string of the right length (rho||t1 with 10-bit t1 fields, PK.seed||PK.root), so 0x00, 0x01 or 0xFF fill builds the same."
- },
- {
-  "crate": "php-pca",
-  "file": "src/OpensslPq.php",
-  "mutant": "MethodCallRemoval: ",
-  "line": "\\FFI::memset($buf, 0, $n);",
-  "occurrence": 1,
-  "lineno": 100,
-  "reason": "FFI::new returns zero-filled memory, so the explicit memset to 0 changes nothing."
- },
- {
-  "crate": "php-pca",
-  "file": "src/OpensslPq.php",
-  "mutant": "LogicalOr: if ((strlen($pk) !== $pkLen || strlen($sig) !== $sigLen) && !self::available($type)) {",
-  "line": "if (strlen($pk) !== $pkLen || strlen($sig) !== $sigLen || !self::available($type)) {",
-  "occurrence": 1,
-  "lineno": 132,
-  "reason": "On an available key type a wrong length goes on to OpenSSL, which refuses it the same way: EVP_PKEY_new_raw_public_key_ex fails on a raw ML-DSA / SLH-DSA key of the wrong length (-> false) and EVP_DigestVerify fails on a signature of the wrong length (-> false); on an unavailable type the result is false either way."
- },
- {
-  "crate": "php-pca",
-  "file": "src/OpensslPq.php",
-  "mutant": "LogicalOr: if (strlen($pk) !== $pkLen && strlen($sig) !== $sigLen || !self::available($type)) {",
-  "line": "if (strlen($pk) !== $pkLen || strlen($sig) !== $sigLen || !self::available($type)) {",
-  "occurrence": 1,
-  "lineno": 132,
-  "reason": "On an available key type a wrong length goes on to OpenSSL, which refuses it the same way: EVP_PKEY_new_raw_public_key_ex fails on a raw ML-DSA / SLH-DSA key of the wrong length (-> false) and EVP_DigestVerify fails on a signature of the wrong length (-> false); on an unavailable type the result is false either way."
  },
  {
   "crate": "php-pca",
@@ -133,15 +52,6 @@
   "occurrence": 1,
   "lineno": 89,
   "reason": "libatlas_less re-checks both lengths exactly as here (atlas_less.c: pk_len != CRYPTO_PUBLICKEYBYTES -> 0; sig_len outside SIG_MIN..SIG_MAX or off the 16-byte step -> 0), and without a library verify returns false at the null-handle check: the result is false either way."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "CastFloat: return $v;",
-  "line": "return (float)$v;",
-  "occurrence": 1,
-  "lineno": 121,
-  "reason": "Under strict_types an int returned through a ?float return type is widened to float (the one implicit conversion strict mode allows), so the explicit (float) cast is the identity."
  },
  {
   "crate": "php-pca",
@@ -173,96 +83,6 @@
  {
   "crate": "php-pca",
   "file": "src/IntentWb.php",
-  "mutant": "LogicalOr: if ($fa !== null && $fb !== null) {",
-  "line": "if ($fa !== null || $fb !== null) {",
-  "occurrence": 1,
-  "lineno": 172,
-  "reason": "When exactly one side is a number the original returns false; the mutant falls through to the array test (false) or $a === $b, which is false across a number and a non-number (types differ; an Obj is compared by identity)."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "LogicalAnd: return ($fa !== null || $fb !== null) && $fa === $fb;",
-  "line": "return $fa !== null && $fb !== null && $fa === $fb;",
-  "occurrence": 1,
-  "lineno": 173,
-  "reason": "Inside this branch at least one side is a number, so the first conjunct is always true; when only one side is a number $fa === $fb compares a float with null: false, as the original."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "LogicalOr: if (is_array($a) && is_array($b)) {",
-  "line": "if (is_array($a) || is_array($b)) {",
-  "occurrence": 1,
-  "lineno": 175,
-  "reason": "Both arrays: false either way; exactly one array: the mutant goes on to $a === $b, false between an array and a non-array."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "CastInt: if (preg_match('/^(?:0|[1-9][0-9]{0,9})$/D', $k) === 1 && $k <= 4294967294) {",
-  "line": "if (preg_match('/^(?:0|[1-9][0-9]{0,9})$/D', $k) === 1 && (int)$k <= 4294967294) {",
-  "occurrence": 1,
-  "lineno": 193,
-  "reason": "$k matched ^(0|[1-9][0-9]{0,9})$, a numeric string: PHP 8 compares a numeric string with an int numerically, so (int) changes nothing."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "CastInt: usort($idx, static fn(string $a, string $b): int => $a <=> (int) $b);",
-  "line": "usort($idx, static fn(string $a, string $b): int => (int)$a <=> (int)$b);",
-  "occurrence": 1,
-  "lineno": 199,
-  "reason": "Both are canonical decimal index strings: a numeric string compared with an int (or with another numeric string) is compared numerically, the same order as (int) <=> (int)."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "CastInt: usort($idx, static fn(string $a, string $b): int => (int) $a <=> $b);",
-  "line": "usort($idx, static fn(string $a, string $b): int => (int)$a <=> (int)$b);",
-  "occurrence": 1,
-  "lineno": 199,
-  "reason": "Both are canonical decimal index strings: a numeric string compared with an int (or with another numeric string) is compared numerically, the same order as (int) <=> (int)."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "Concat: $k = (is_string($x) ? $x : serialize($x)) . 'k';",
-  "line": "$k = 'k' . (is_string($x) ? $x : serialize($x));",
-  "occurrence": 1,
-  "lineno": 208,
-  "reason": "distinct() is only called on lists already checked to hold strings only; 'x'.'k' (a constant suffix) is as injective as 'k'.'x'."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "ConcatOperandRemoval: $k = is_string($x) ? $x : serialize($x);",
-  "line": "$k = 'k' . (is_string($x) ? $x : serialize($x));",
-  "occurrence": 1,
-  "lineno": 208,
-  "reason": "distinct() is only called on lists already checked to hold strings only; 'x'.'k' (a constant suffix) is as injective as 'k'.'x'."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "Ternary: $k = 'k' . (is_string($x) ? serialize($x) : $x);",
-  "line": "$k = 'k' . (is_string($x) ? $x : serialize($x));",
-  "occurrence": 1,
-  "lineno": 208,
-  "reason": "distinct() is only called on lists already checked to hold strings only (the classifier labels and keys), and serialize() of a string is injective: the duplicate test is unchanged."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "TrueValue: $seen[$k] = false;",
-  "line": "$seen[$k] = true;",
-  "occurrence": 1,
-  "lineno": 212,
-  "reason": "Membership only: every read of this map is isset(), and isset() is true for a stored false as for true, so the stored value is never observed."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
   "mutant": "GreaterThan: return $v >= 0 ? 'Infinity' : '-Infinity';",
   "line": "return $v > 0 ? 'Infinity' : '-Infinity';",
   "occurrence": 1,
@@ -281,24 +101,6 @@
  {
   "crate": "php-pca",
   "file": "src/IntentWb.php",
-  "mutant": "UnwrapRtrim: $digits = str_replace('.', '', $mant);",
-  "line": "$digits = rtrim(str_replace('.', '', $mant), '0');",
-  "occurrence": 1,
-  "lineno": 239,
-  "reason": "The shortest round-tripping mantissa never ends in 0 (dropping that 0 would be a shorter round-tripping form), except '0' itself, which is restored just below."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "CastInt: $n = $exp + 1;",
-  "line": "$n = (int)$exp + 1; // value = 0.digits * 10^n",
-  "occurrence": 1,
-  "lineno": 244,
-  "reason": "$exp is the exponent part of sprintf('%e') ('+02', '-07'): a leading-sign numeric string, so $exp + 1 is the same int with or without the cast."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
   "mutant": "LessThanOrEqualTo: if (0 < $n && $n < 21) {",
   "line": "if (0 < $n && $n <= 21) {",
   "occurrence": 1,
@@ -313,87 +115,6 @@
   "occurrence": 1,
   "lineno": 255,
   "reason": "The exponent form is reached only for n <= -6 or n > 21, so e = n - 1 is never 0: > 0 and >= 0 agree."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "LessThanOrEqualTo: return new Num(floor($f) === $f && abs($f) < self::MAX_SAFE ? sprintf('%.0f', $f) : self::jsNumStr($f));",
-  "line": "return new Num(floor($f) === $f && abs($f) <= self::MAX_SAFE ? sprintf('%.0f', $f) : self::jsNumStr($f));",
-  "occurrence": 1,
-  "lineno": 297,
-  "reason": "At abs(f) == 2^53-1 the mutant takes jsNumStr, which renders an integral value below 1e21 as its exact decimal digits: the same lexeme as sprintf('%.0f')."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "LogicalAndAllSubExprNegation: return new Num(!(floor($f) === $f) && !(abs($f) <= self::MAX_SAFE) ? sprintf('%.0f', $f) : self::jsNumStr($f));",
-  "line": "return new Num(floor($f) === $f && abs($f) <= self::MAX_SAFE ? sprintf('%.0f', $f) : self::jsNumStr($f));",
-  "occurrence": 1,
-  "lineno": 297,
-  "reason": "A non-integral double above 2^53-1 does not exist, so the mutant always takes jsNumStr, which renders every integral value of magnitude <= 2^53-1 as its exact decimal digits, as sprintf('%.0f')."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "RoundingFamily: return new Num(ceil($f) === $f && abs($f) <= self::MAX_SAFE ? sprintf('%.0f', $f) : self::jsNumStr($f));",
-  "line": "return new Num(floor($f) === $f && abs($f) <= self::MAX_SAFE ? sprintf('%.0f', $f) : self::jsNumStr($f));",
-  "occurrence": 1,
-  "lineno": 297,
-  "reason": "$f is finite here: floor(f) === f and ceil(f) === f both mean f is integral."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "RoundingFamily: return new Num(round($f) === $f && abs($f) <= self::MAX_SAFE ? sprintf('%.0f', $f) : self::jsNumStr($f));",
-  "line": "return new Num(floor($f) === $f && abs($f) <= self::MAX_SAFE ? sprintf('%.0f', $f) : self::jsNumStr($f));",
-  "occurrence": 1,
-  "lineno": 297,
-  "reason": "$f is finite here: floor(f) === f and round(f) === f both mean f is integral."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "FalseValue: return true;",
-  "line": "return false;",
-  "occurrence": 6,
-  "lineno": 386,
-  "reason": "Unreachable: the env paths are set in UTF-8 byte order, so a path always comes before its extensions; a later path can only collide through a non-object intermediate (refused above), and two equal paths do not exist (labels keys are unique)."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "InstanceOf_: $pinPq = true ? self::g($pin, 'pq_pk') : JsUndefined::U;",
-  "line": "$pinPq = $pin instanceof Obj ? self::g($pin, 'pq_pk') : JsUndefined::U;",
-  "occurrence": 1,
-  "lineno": 462,
-  "reason": "For a non-Obj pin, g() returns JsUndefined::U anyway (it reads own members of an Obj only), the same value as the else branch."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "InstanceOf_: if (!true || !is_string(self::g($artifact, 'sig')) || !is_string($pk)) {",
-  "line": "if (!($artifact instanceof Obj) || !is_string(self::g($artifact, 'sig')) || !is_string($pk)) {",
-  "occurrence": 1,
-  "lineno": 463,
-  "reason": "For a non-Obj artifact, g($artifact, 'sig') is JsUndefined::U, so !is_string() is true and the same early false is returned."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "LogicalOr: if (!$artifact instanceof Obj && !is_string(self::g($artifact, 'sig')) || !is_string($pk)) {",
-  "line": "if (!($artifact instanceof Obj) || !is_string(self::g($artifact, 'sig')) || !is_string($pk)) {",
-  "occurrence": 1,
-  "lineno": 463,
-  "reason": "Every input the original refuses here is refused later as well: a non-Obj artifact still hits !is_string(sig); an Obj with a non-string sig reaches verifyPinnedSuite, whose ed25519 / PQ / hybrid paths all refuse a non-string signature (false)."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "LogicalOr: if ((!$artifact instanceof Obj || !is_string(self::g($artifact, 'sig'))) && !is_string($pk)) {",
-  "line": "if (!($artifact instanceof Obj) || !is_string(self::g($artifact, 'sig')) || !is_string($pk)) {",
-  "occurrence": 1,
-  "lineno": 463,
-  "reason": "Every input the original refuses here is refused later as well: a non-string pin key or a non-Obj artifact makes verifyPinnedSuite / artifactMessage throw a TypeError, caught just below into false; an Obj with a non-string sig is refused by verifyPinnedSuite."
  },
  {
   "crate": "php-pca",
@@ -479,33 +200,6 @@
  {
   "crate": "php-pca",
   "file": "src/IntentWb.php",
-  "mutant": "Concat: return $fail($e->getMessage() . 'evaluation error (fail closed): ');",
-  "line": "return $fail('evaluation error (fail closed): ' . $e->getMessage());",
-  "occurrence": 1,
-  "lineno": 985,
-  "reason": "Unreachable never-throws backstop: after validateWorldPolicy every member read is typed (Obj / list / safe integer), lowerMedian is given >= min_oracles >= 1 values, factRef and decideOfferSet catch their own errors and verifyArtifactSig is total, so nothing in the try throws."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "ConcatOperandRemoval: return $fail($e->getMessage());",
-  "line": "return $fail('evaluation error (fail closed): ' . $e->getMessage());",
-  "occurrence": 1,
-  "lineno": 985,
-  "reason": "Unreachable never-throws backstop: after validateWorldPolicy every member read is typed (Obj / list / safe integer), lowerMedian is given >= min_oracles >= 1 values, factRef and decideOfferSet catch their own errors and verifyArtifactSig is total, so nothing in the try throws."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "ConcatOperandRemoval: return $fail('evaluation error (fail closed): ');",
-  "line": "return $fail('evaluation error (fail closed): ' . $e->getMessage());",
-  "occurrence": 1,
-  "lineno": 985,
-  "reason": "Unreachable never-throws backstop: after validateWorldPolicy every member read is typed (Obj / list / safe integer), lowerMedian is given >= min_oracles >= 1 values, factRef and decideOfferSet catch their own errors and verifyArtifactSig is total, so nothing in the try throws."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
   "mutant": "TrueValue: $ids['k' . $oid] = false;",
   "line": "$ids['k' . $oid] = true;",
   "occurrence": 1,
@@ -520,78 +214,6 @@
   "occurrence": 1,
   "lineno": 1046,
   "reason": "$attrs is only counted and iterated by value (the message names the key VALUE $k), so the array's keys never matter."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "ArrayItemRemoval: return ['reason' => \"offers: policy misconfigured (fail closed): {$pe}\"];",
-  "line": "return ['ok' => false, 'reason' => \"offers: policy misconfigured (fail closed): $pe\"];",
-  "occurrence": 1,
-  "lineno": 1106,
-  "reason": "Unreachable: decideOfferSet is only called from decideIntentWorld after validateWorldPolicy accepted the same offers policy (validateOfferPolicy), so this re-check never fails."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "FalseValue: return ['ok' => true, 'reason' => \"offers: policy misconfigured (fail closed): {$pe}\"];",
-  "line": "return ['ok' => false, 'reason' => \"offers: policy misconfigured (fail closed): $pe\"];",
-  "occurrence": 1,
-  "lineno": 1106,
-  "reason": "Unreachable: decideOfferSet is only called from decideIntentWorld after validateWorldPolicy accepted the same offers policy (validateOfferPolicy), so this re-check never fails."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "ArrayItemRemoval: return ['reason' => 'offers: evaluation error (fail closed): ' . $e->getMessage()];",
-  "line": "return ['ok' => false, 'reason' => 'offers: evaluation error (fail closed): ' . $e->getMessage()];",
-  "occurrence": 1,
-  "lineno": 1110,
-  "reason": "Unreachable never-throws backstop: decideOfferSetInner reads only members validated by validateOfferPolicy / validateOfferSetWire, offerSetRef is wrapped in its own try and verifyArtifactSig is total, so nothing in it throws."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "Concat: return ['ok' => false, 'reason' => $e->getMessage() . 'offers: evaluation error (fail closed): '];",
-  "line": "return ['ok' => false, 'reason' => 'offers: evaluation error (fail closed): ' . $e->getMessage()];",
-  "occurrence": 1,
-  "lineno": 1110,
-  "reason": "Unreachable never-throws backstop: decideOfferSetInner reads only members validated by validateOfferPolicy / validateOfferSetWire, offerSetRef is wrapped in its own try and verifyArtifactSig is total, so nothing in it throws."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "ConcatOperandRemoval: return ['ok' => false, 'reason' => $e->getMessage()];",
-  "line": "return ['ok' => false, 'reason' => 'offers: evaluation error (fail closed): ' . $e->getMessage()];",
-  "occurrence": 1,
-  "lineno": 1110,
-  "reason": "Unreachable never-throws backstop: decideOfferSetInner reads only members validated by validateOfferPolicy / validateOfferSetWire, offerSetRef is wrapped in its own try and verifyArtifactSig is total, so nothing in it throws."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "ConcatOperandRemoval: return ['ok' => false, 'reason' => 'offers: evaluation error (fail closed): '];",
-  "line": "return ['ok' => false, 'reason' => 'offers: evaluation error (fail closed): ' . $e->getMessage()];",
-  "occurrence": 1,
-  "lineno": 1110,
-  "reason": "Unreachable never-throws backstop: decideOfferSetInner reads only members validated by validateOfferPolicy / validateOfferSetWire, offerSetRef is wrapped in its own try and verifyArtifactSig is total, so nothing in it throws."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "FalseValue: return ['ok' => true, 'reason' => 'offers: evaluation error (fail closed): ' . $e->getMessage()];",
-  "line": "return ['ok' => false, 'reason' => 'offers: evaluation error (fail closed): ' . $e->getMessage()];",
-  "occurrence": 1,
-  "lineno": 1110,
-  "reason": "Unreachable never-throws backstop: decideOfferSetInner reads only members validated by validateOfferPolicy / validateOfferSetWire, offerSetRef is wrapped in its own try and verifyArtifactSig is total, so nothing in it throws."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "Break_: continue;",
-  "line": "break;",
-  "occurrence": 4,
-  "lineno": 1144,
-  "reason": "Site key kids are unique (validateOfferPolicy), so at most one key matches and scanning on changes nothing."
  },
  {
   "crate": "php-pca",
@@ -619,24 +241,6 @@
   "occurrence": 1,
   "lineno": 1310,
   "reason": "Two different matching patterns are both prefixes of the same class, so they cannot have the same UTF-16 length: > and >= pick the same best."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "Minus: return strlen($s) + preg_match_all('/[\\x80-\\xBF]/', $s) + preg_match_all('/[\\xF0-\\xF7]/', $s);",
-  "line": "return strlen($s) - preg_match_all('/[\\x80-\\xBF]/', $s) + preg_match_all('/[\\xF0-\\xF7]/', $s);",
-  "occurrence": 1,
-  "lineno": 1323,
-  "reason": "Only compared between patterns that are both prefixes of the same class, i.e. one extends the other by at least one ASCII '.' plus characters; this measure grows strictly with every such extension too, so the longest-prefix choice is unchanged."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "Plus: return strlen($s) - preg_match_all('/[\\x80-\\xBF]/', $s) - preg_match_all('/[\\xF0-\\xF7]/', $s);",
-  "line": "return strlen($s) - preg_match_all('/[\\x80-\\xBF]/', $s) + preg_match_all('/[\\xF0-\\xF7]/', $s);",
-  "occurrence": 1,
-  "lineno": 1323,
-  "reason": "Only compared between patterns that are both prefixes of the same class, i.e. one extends the other by at least one ASCII '.' (+1 here) plus characters (each >= 0 here), so this measure still grows strictly and the longest-prefix choice is unchanged."
  },
  {
   "crate": "php-pca",
@@ -803,33 +407,6 @@
  {
   "crate": "php-pca",
   "file": "src/IntentWb.php",
-  "mutant": "Concat: return $deny($e->getMessage() . 'evaluation error (fail closed): ');",
-  "line": "return $deny('evaluation error (fail closed): ' . $e->getMessage());",
-  "occurrence": 1,
-  "lineno": 1825,
-  "reason": "Unreachable never-throws backstop: after validateProvenancePolicy / validateProvWire every member read is typed, the one strict hash is wrapped in its own try, verifyLabels is total and flows are validated, so nothing in the try throws."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "ConcatOperandRemoval: return $deny($e->getMessage());",
-  "line": "return $deny('evaluation error (fail closed): ' . $e->getMessage());",
-  "occurrence": 1,
-  "lineno": 1825,
-  "reason": "Unreachable never-throws backstop: after validateProvenancePolicy / validateProvWire every member read is typed, the one strict hash is wrapped in its own try, verifyLabels is total and flows are validated, so nothing in the try throws."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "ConcatOperandRemoval: return $deny('evaluation error (fail closed): ');",
-  "line": "return $deny('evaluation error (fail closed): ' . $e->getMessage());",
-  "occurrence": 1,
-  "lineno": 1825,
-  "reason": "Unreachable never-throws backstop: after validateProvenancePolicy / validateProvWire every member read is typed, the one strict hash is wrapped in its own try, verifyLabels is total and flows are validated, so nothing in the try throws."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
   "mutant": "InstanceOf_: if (!true || !is_array(self::g($p, 'classifiers'))) {",
   "line": "if (!($p instanceof Obj) || !is_array(self::g($p, 'classifiers'))) {",
   "occurrence": 1,
@@ -955,51 +532,6 @@
  },
  {
   "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "ArrayItemRemoval: return ['checks' => ['facts' => 'fail'], 'env' => [], 'reason' => 'facts: evaluation error (fail closed): ' . $e->getMessage()];",
-  "line": "return ['outcome' => 'deny', 'checks' => ['facts' => 'fail'], 'env' => [], 'reason' => 'facts: evaluation error (fail closed): ' . $e->getMessage()];",
-  "occurrence": 1,
-  "lineno": 2306,
-  "reason": "Unreachable never-throws backstop: intentWbContextError types every container first and decideIntentWorld / decideParamProvenance / decideClassifierDimensions never throw (each catches its own errors), so nothing in the try throws."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "ArrayItemRemoval: return ['outcome' => 'deny', 'checks' => [], 'env' => [], 'reason' => 'facts: evaluation error (fail closed): ' . $e->getMessage()];",
-  "line": "return ['outcome' => 'deny', 'checks' => ['facts' => 'fail'], 'env' => [], 'reason' => 'facts: evaluation error (fail closed): ' . $e->getMessage()];",
-  "occurrence": 1,
-  "lineno": 2306,
-  "reason": "Unreachable never-throws backstop: intentWbContextError types every container first and decideIntentWorld / decideParamProvenance / decideClassifierDimensions never throw (each catches its own errors), so nothing in the try throws."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "Concat: return ['outcome' => 'deny', 'checks' => ['facts' => 'fail'], 'env' => [], 'reason' => $e->getMessage() . 'facts: evaluation error (fail closed): '];",
-  "line": "return ['outcome' => 'deny', 'checks' => ['facts' => 'fail'], 'env' => [], 'reason' => 'facts: evaluation error (fail closed): ' . $e->getMessage()];",
-  "occurrence": 1,
-  "lineno": 2306,
-  "reason": "Unreachable never-throws backstop: intentWbContextError types every container first and decideIntentWorld / decideParamProvenance / decideClassifierDimensions never throw (each catches its own errors), so nothing in the try throws."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "ConcatOperandRemoval: return ['outcome' => 'deny', 'checks' => ['facts' => 'fail'], 'env' => [], 'reason' => $e->getMessage()];",
-  "line": "return ['outcome' => 'deny', 'checks' => ['facts' => 'fail'], 'env' => [], 'reason' => 'facts: evaluation error (fail closed): ' . $e->getMessage()];",
-  "occurrence": 1,
-  "lineno": 2306,
-  "reason": "Unreachable never-throws backstop: intentWbContextError types every container first and decideIntentWorld / decideParamProvenance / decideClassifierDimensions never throw (each catches its own errors), so nothing in the try throws."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentWb.php",
-  "mutant": "ConcatOperandRemoval: return ['outcome' => 'deny', 'checks' => ['facts' => 'fail'], 'env' => [], 'reason' => 'facts: evaluation error (fail closed): '];",
-  "line": "return ['outcome' => 'deny', 'checks' => ['facts' => 'fail'], 'env' => [], 'reason' => 'facts: evaluation error (fail closed): ' . $e->getMessage()];",
-  "occurrence": 1,
-  "lineno": 2306,
-  "reason": "Unreachable never-throws backstop: intentWbContextError types every container first and decideIntentWorld / decideParamProvenance / decideClassifierDimensions never throw (each catches its own errors), so nothing in the try throws."
- },
- {
-  "crate": "php-pca",
   "file": "src/OpensslPq.php",
   "mutant": "LogicalOr: if ($k === null && \\FFI::isNull($k)) {",
   "line": "if ($k === null || \\FFI::isNull($k)) {",
@@ -1010,47 +542,11 @@
  {
   "crate": "php-pca",
   "file": "src/OpensslPq.php",
-  "mutant": "MethodCallRemoval: ",
-  "line": "$f->EVP_PKEY_free($k);",
-  "occurrence": 1,
-  "lineno": 105,
-  "reason": "Releasing the probe key (EVP_PKEY_free) only frees native memory; the probe result is computed before it and nothing in PHP observes the leak."
- },
- {
-  "crate": "php-pca",
-  "file": "src/OpensslPq.php",
-  "mutant": "LogicalOr: if ($pkey === null && \\FFI::isNull($pkey)) {",
-  "line": "if ($pkey === null || \\FFI::isNull($pkey)) {",
-  "occurrence": 1,
-  "lineno": 143,
-  "reason": "FFI converts a NULL pointer return to PHP null, so `$pkey === null` already covers the failure. With `&&` a null `$pkey` makes FFI::isNull(null) throw a TypeError, caught by the surrounding catch (Throwable) -> false, the same result; a non-null key gives false either way."
- },
- {
-  "crate": "php-pca",
-  "file": "src/OpensslPq.php",
-  "mutant": "UnwrapFinally: $ctx = $ffi->EVP_MD_CTX_new();",
-  "line": "try {",
-  "occurrence": 4,
-  "lineno": 146,
-  "reason": "The `finally` only guarantees EVP_PKEY_free on every exit; without it the native key leaks, nothing in PHP observes that."
- },
- {
-  "crate": "php-pca",
-  "file": "src/OpensslPq.php",
   "mutant": "LogicalOr: if ($ctx === null && \\FFI::isNull($ctx)) {",
   "line": "if ($ctx === null || \\FFI::isNull($ctx)) {",
-  "occurrence": 1,
+  "occurrence": 2,
   "lineno": 148,
   "reason": "FFI converts a NULL pointer return to PHP null, so `$ctx === null` already covers the failure. With `&&` a null `$ctx` makes FFI::isNull(null) throw a TypeError, caught by the outer catch (Throwable) -> false (the finally blocks still release), the same result; a non-null context gives false either way."
- },
- {
-  "crate": "php-pca",
-  "file": "src/OpensslPq.php",
-  "mutant": "UnwrapFinally: if ($ffi->EVP_DigestVerifyInit_ex($ctx, null, null, null, null, $pkey, null) !== 1) {",
-  "line": "try {",
-  "occurrence": 5,
-  "lineno": 151,
-  "reason": "The `finally` only guarantees EVP_MD_CTX_free on every exit; without it the native context leaks, nothing in PHP observes that."
  },
  {
   "crate": "php-pca",
@@ -1063,66 +559,12 @@
  },
  {
   "crate": "php-pca",
-  "file": "src/OpensslPq.php",
-  "mutant": "GreaterThan: if ($mlen >= 0) {",
-  "line": "if ($mlen > 0) {",
-  "occurrence": 1,
-  "lineno": 159,
-  "reason": "For `$mlen == 0` FFI::memcpy of zero bytes is a no-op, so `>= 0` copies nothing extra."
- },
- {
-  "crate": "php-pca",
-  "file": "src/OpensslPq.php",
-  "mutant": "MethodCallRemoval: ",
-  "line": "$ffi->EVP_MD_CTX_free($ctx);",
-  "occurrence": 1,
-  "lineno": 164,
-  "reason": "EVP_MD_CTX_free only releases native memory after the verdict is computed; nothing in PHP observes the leak."
- },
- {
-  "crate": "php-pca",
-  "file": "src/OpensslPq.php",
-  "mutant": "MethodCallRemoval: ",
-  "line": "$ffi->EVP_PKEY_free($pkey);",
-  "occurrence": 1,
-  "lineno": 167,
-  "reason": "EVP_PKEY_free only releases native memory after the verdict is computed; nothing in PHP observes the leak."
- },
- {
-  "crate": "php-pca",
   "file": "src/Pca.php",
   "mutant": "IncrementInteger: $caller = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 3)[1]['class'] ?? null;",
   "line": "$caller = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['class'] ?? null;",
   "occurrence": 1,
   "lineno": 30,
   "reason": "debug_backtrace's limit only truncates frames beyond index 1; [1] (the caller of mint) is the same frame at limit 2 or 3."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Pca.php",
-  "mutant": "LogicalOr: if (!is_array($path) && !array_is_list($path)) {",
-  "line": "if (!is_array($path) || !array_is_list($path)) {",
-  "occurrence": 1,
-  "lineno": 216,
-  "reason": "A parsed proof path is a PHP list or an Obj. For a list both operators give the same result; for an Obj, `!is_array` is true and array_is_list(Obj) throws a TypeError, caught by the function's own try -> false, the same as the original's early return false."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Pca.php",
-  "mutant": "InstanceOf_: if (!true || self::get($step, 'side') !== $shape[$i]) {",
-  "line": "if (!($step instanceof Obj) || self::get($step, 'side') !== $shape[$i]) {",
-  "occurrence": 1,
-  "lineno": 235,
-  "reason": "self::get() returns null for a non-Obj step, and null !== $shape[$i] (a string) is true, so the next condition returns false exactly as the instanceof check did."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Pca.php",
-  "mutant": "FalseValue: return true;",
-  "line": "return false;",
-  "occurrence": 11,
-  "lineno": 301,
-  "reason": "The catch is unreachable: sodium_crypto_sign_verify_detached throws only on wrong key / signature lengths and both are fixed to 32 / 64 bytes by unb64u above, so it returns a bool and never throws."
  },
  {
   "crate": "php-pca",
@@ -1141,24 +583,6 @@
   "occurrence": 1,
   "lineno": 1565,
   "reason": "The pattern ends in `\\z`, which matches only at the very end of the subject, so the /D (dollar-end-only) flag has no effect."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Pca.php",
-  "mutant": "InstanceOf_: if (!true) {",
-  "line": "if (!($s instanceof Obj)) {",
-  "occurrence": 1,
-  "lineno": 1574,
-  "reason": "A non-Obj $s makes the next `$s->get('role')` throw an Error, caught by the enclosing try/catch (Throwable) -> false, the same verdict as the early return false."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Pca.php",
-  "mutant": "InstanceOf_: if (!true) {",
-  "line": "if (!($share instanceof Obj)) {",
-  "occurrence": 1,
-  "lineno": 1599,
-  "reason": "A non-Obj $share makes the next `$share->get('role')` throw an Error, caught by the enclosing try/catch (Throwable) -> false, the same verdict as the early return false."
  },
  {
   "crate": "php-pca",
@@ -1226,33 +650,6 @@
  {
   "crate": "php-pca",
   "file": "src/IntentV2.php",
-  "mutant": "LogicalOr: if (self::isU($a) && self::isU($b)) {",
-  "line": "if (self::isU($a) || self::isU($b)) {",
-  "occurrence": 1,
-  "lineno": 270,
-  "reason": "with exactly one operand absent the remaining branches all return false (an absent marker equals nothing but itself), as the early `$a === $b` does."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2.php",
-  "mutant": "LogicalOr: if ($fa !== null && $fb !== null) {",
-  "line": "if ($fa !== null || $fb !== null) {",
-  "occurrence": 1,
-  "lineno": 275,
-  "reason": "if only one operand is a number every later branch returns false (different JSON types are never equal), as the early return does."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2.php",
-  "mutant": "LogicalOr: if (is_string($a) && is_string($b) || is_bool($a) || is_bool($b) || $a === null || $b === null) {",
-  "line": "if (is_string($a) || is_string($b) || is_bool($a) || is_bool($b) || $a === null || $b === null) {",
-  "occurrence": 1,
-  "lineno": 278,
-  "reason": "for operands of different JSON kinds the final `is_object($a) && $a === $b` is false, as `$a === $b` is: both return false."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2.php",
   "mutant": "CastInt: return preg_match('/\\A(?:0|[1-9][0-9]{0,9})\\z/', $k) === 1 && $k <= 4294967294;",
   "line": "return preg_match('/\\A(?:0|[1-9][0-9]{0,9})\\z/', $k) === 1 && (int)$k <= 4294967294;",
   "occurrence": 1,
@@ -1280,24 +677,6 @@
  {
   "crate": "php-pca",
   "file": "src/IntentV2.php",
-  "mutant": "CastString: $x = preg_replace('/\\xED[\\xA0-\\xBF][\\x80-\\xBF]/', \"�\", $a);",
-  "line": "$x = (string)preg_replace('/\\xED[\\xA0-\\xBF][\\x80-\\xBF]/', \"\\xEF\\xBF\\xBD\", $a);",
-  "occurrence": 1,
-  "lineno": 326,
-  "reason": "preg_replace without the /u flag returns a string for any subject (null only on a PCRE error, which this pattern cannot raise)."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2.php",
-  "mutant": "CastString: $y = preg_replace('/\\xED[\\xA0-\\xBF][\\x80-\\xBF]/', \"�\", $b);",
-  "line": "$y = (string)preg_replace('/\\xED[\\xA0-\\xBF][\\x80-\\xBF]/', \"\\xEF\\xBF\\xBD\", $b);",
-  "occurrence": 1,
-  "lineno": 327,
-  "reason": "preg_replace without the /u flag returns a string for any subject (null only on a PCRE error, which this pattern cannot raise)."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2.php",
   "mutant": "GreaterThan: return $f >= 0 ? 'Infinity' : '-Infinity';",
   "line": "return $f > 0 ? 'Infinity' : '-Infinity';",
   "occurrence": 1,
@@ -1312,24 +691,6 @@
   "occurrence": 1,
   "lineno": 357,
   "reason": "$f == 0.0 returned '0' above, so $f is never 0 at this test and `< 0` and `<= 0` agree."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2.php",
-  "mutant": "UnwrapRtrim: $digits = $m[1] . ($m[2] ?? '');",
-  "line": "$digits = rtrim($m[1] . ($m[2] ?? ''), '0');",
-  "occurrence": 1,
-  "lineno": 370,
-  "reason": "the shortest round-trip digit string (smallest precision that round-trips) has no trailing zero except for the single digit 0, so the rtrim removes nothing."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2.php",
-  "mutant": "CastInt: $n = $m[3] + 1;",
-  "line": "$n = (int)$m[3] + 1;",
-  "occurrence": 1,
-  "lineno": 372,
-  "reason": "$m[3] is a signed integer string; `+ 1` on a numeric string is numeric addition, so the (int) cast changes nothing."
  },
  {
   "crate": "php-pca",
@@ -1370,15 +731,6 @@
  {
   "crate": "php-pca",
   "file": "src/IntentV2.php",
-  "mutant": "CastString: return self::isU($alg) ? 'ed25519' : $alg;",
-  "line": "return self::isU($alg) ? 'ed25519' : (string)$alg;",
-  "occurrence": 1,
-  "lineno": 549,
-  "reason": "$alg has passed suiteError, so it is a string and the (string) cast changes nothing."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2.php",
   "mutant": "InstanceOf_: if (!true || !self::isList(self::m($v, 'predicates'))) {",
   "line": "if (!($v instanceof Obj) || !self::isList(self::m($v, 'predicates'))) {",
   "occurrence": 1,
@@ -1408,45 +760,9 @@
   "file": "src/IntentV2.php",
   "mutant": "Break_: continue;",
   "line": "break;",
-  "occurrence": 2,
-  "lineno": 856,
-  "reason": "two schema documents with the same digest have the same canonical content, so taking the first or the last match selects an identical document."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2.php",
-  "mutant": "Break_: continue;",
-  "line": "break;",
-  "occurrence": 3,
-  "lineno": 1051,
-  "reason": "accumulator ids are distinct in a shape-checked session root, so at most one accumulator matches a claim id and break / continue agree."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2.php",
-  "mutant": "Break_: continue;",
-  "line": "break;",
   "occurrence": 4,
   "lineno": 1066,
   "reason": "two schema documents with the same digest have the same canonical content, so taking the first or the last match selects an identical document."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2.php",
-  "mutant": "Break_: continue;",
-  "line": "break;",
-  "occurrence": 6,
-  "lineno": 1155,
-  "reason": "two receipts with the same digest have the same canonical content, so taking the first or the last match selects an identical receipt."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2.php",
-  "mutant": "Coalesce: if (($ce = self::schemaCtxError($ctx) ?? self::accCtxError($ctx)) !== null) {",
-  "line": "if (($ce = self::accCtxError($ctx) ?? self::schemaCtxError($ctx)) !== null) {",
-  "occurrence": 1,
-  "lineno": 1040,
-  "reason": "accStep is called only from decideIntentV2 after intentV2ContextError accepted the whole context, so neither schemaCtxError nor accCtxError can return an error there; the order of the two is unobservable."
  },
  {
   "crate": "php-pca",
@@ -1456,33 +772,6 @@
   "occurrence": 1,
   "lineno": 1167,
   "reason": "$holder->get('root') is a string in a shape-checked session root, so the (string) cast changes nothing."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2.php",
-  "mutant": "CastString: return ($d['status'] ?? null) === 'pass' ? ['ok' => true] : self::bad($d['reason'] ?? 'rejected');",
-  "line": "return ($d['status'] ?? null) === 'pass' ? ['ok' => true] : self::bad((string)($d['reason'] ?? 'rejected'));",
-  "occurrence": 1,
-  "lineno": 1282,
-  "reason": "decideLayerCeilings gives a string reason on every failure, so the (string) cast changes nothing."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2.php",
-  "mutant": "Break_: continue;",
-  "line": "break;",
-  "occurrence": 5,
-  "lineno": 1093,
-  "reason": "claim ids are distinct (wire check: intent_session.acc ids must be distinct), so at most one claim matches and break / continue agree."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Predicates.php",
-  "mutant": "InstanceOf_: return true;",
-  "line": "return $x instanceof Obj;",
-  "occurrence": 1,
-  "lineno": 58,
-  "reason": "isObj is used only by member_of on the resolved collection; a non-Obj collection that passed would reach memberClosure(string, Obj) with a TypeError, which evaluateConditionTri catches and reports as 'unknown', the same verdict the guard returns."
  },
  {
   "crate": "php-pca",
@@ -1523,42 +812,6 @@
  {
   "crate": "php-pca",
   "file": "src/Predicates.php",
-  "mutant": "LogicalAnd: if (is_array($a) || is_array($b)) {",
-  "line": "if (is_array($a) && is_array($b)) {",
-  "occurrence": 1,
-  "lineno": 191,
-  "reason": "jeq with an array against an Obj: the mutant enters the array branch and calls count() on the Obj, a TypeError that deepEq catches and turns into false, the verdict the original's final `return false` gives."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Predicates.php",
-  "mutant": "InstanceOf_: if ($a instanceof Obj && true) {",
-  "line": "if ($a instanceof Obj && $b instanceof Obj) {",
-  "occurrence": 1,
-  "lineno": 202,
-  "reason": "jeq reaches the Obj branch only when the other operand is an array or an Obj (every scalar type returned earlier); with an array there, ->keys() on it is an Error that deepEq catches (false), as the original's `return false` for array-vs-object does."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Predicates.php",
-  "mutant": "InstanceOf_: if (true && $b instanceof Obj) {",
-  "line": "if ($a instanceof Obj && $b instanceof Obj) {",
-  "occurrence": 1,
-  "lineno": 202,
-  "reason": "jeq reaches the Obj branch only when the other operand is an array or an Obj (every scalar type returned earlier); with an array there, ->keys() on it is an Error that deepEq catches (false), as the original's `return false` for array-vs-object does."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Predicates.php",
-  "mutant": "LogicalAnd: if ($a instanceof Obj || $b instanceof Obj) {",
-  "line": "if ($a instanceof Obj && $b instanceof Obj) {",
-  "occurrence": 1,
-  "lineno": 202,
-  "reason": "jeq reaches the Obj branch only when the other operand is an array or an Obj (every scalar type returned earlier); with an array there, ->keys() on it is an Error that deepEq catches (false), as the original's `return false` for array-vs-object does."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Predicates.php",
   "mutant": "DecrementInteger: $starTi = -2;",
   "line": "$starTi = -1;",
   "occurrence": 1,
@@ -1586,15 +839,6 @@
  {
   "crate": "php-pca",
   "file": "src/Predicates.php",
-  "mutant": "InstanceOf_: if (true) {",
-  "line": "if ($v instanceof Obj) {",
-  "occurrence": 2,
-  "lineno": 326,
-  "reason": "typeTagMatch with a non-string, non-Obj value (array, number, bool, null): the mutant enters the Obj branch and calls ->has on it, an Error that evaluateConditionTri catches and reports as 'unknown', the same verdict as the original's null."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Predicates.php",
   "mutant": "Break_: continue;",
   "line": "break;",
   "occurrence": 1,
@@ -1604,47 +848,11 @@
  {
   "crate": "php-pca",
   "file": "src/Predicates.php",
-  "mutant": "UnwrapArrayValues: return array_filter($raw, 'is_string');",
-  "line": "return array_values(array_filter($raw, 'is_string'));",
-  "occurrence": 1,
-  "lineno": 366,
-  "reason": "neighboursOf's result is only iterated with foreach, never indexed, so the preserved keys of array_filter are not observed."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Predicates.php",
-  "mutant": "TrueValue: $seen = ['k' . $start => false];",
-  "line": "$seen = ['k' . $start => true];",
-  "occurrence": 1,
-  "lineno": 374,
-  "reason": "The closure set is only read with isset() ('k'.id keys), and isset() is true for a stored false as for true; the stored value is never observed."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Predicates.php",
-  "mutant": "TrueValue: $seen['k' . $nb] = false;",
-  "line": "$seen['k' . $nb] = true;",
-  "occurrence": 1,
-  "lineno": 383,
-  "reason": "The closure set is only read with isset() ('k'.id keys), and isset() is true for a stored false as for true; the stored value is never observed."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Predicates.php",
   "mutant": "LogicalOr: if (!is_string($collPath) && $collPath === '') {",
   "line": "if (!is_string($collPath) || $collPath === '') {",
   "occurrence": 1,
   "lineno": 427,
   "reason": "A non-string or empty collection path makes resolve() return not-found (an empty string names no root, a non-string is refused), so the next guard returns 'unknown' just the same."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Predicates.php",
-  "mutant": "LogicalOr: if (!$cf && !self::isObj($coll)) {",
-  "line": "if (!$cf || !self::isObj($coll)) {",
-  "occurrence": 1,
-  "lineno": 431,
-  "reason": "When the collection resolves but is not an Obj the mutant goes on to memberClosure(string, Obj) and a TypeError that evaluateConditionTri catches as 'unknown'; when it does not resolve, $coll is null and !isObj holds, so both forms return 'unknown'."
  },
  {
   "crate": "php-pca",
@@ -1667,92 +875,11 @@
  {
   "crate": "php-pca",
   "file": "src/Predicates.php",
-  "mutant": "LogicalOr: if (!is_string($v) && !is_string($operand)) {",
-  "line": "if (!is_string($v) || !is_string($operand)) {",
-  "occurrence": 1,
-  "lineno": 500,
-  "reason": "prefix with exactly one non-string operand: startsWithUnits(string, string) throws a TypeError for it, which evaluateConditionTri catches and reports as 'unknown', the same verdict as the guard."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Predicates.php",
-  "mutant": "LogicalOr: if (!is_string($v) && !is_string($operand)) {",
-  "line": "if (!is_string($v) || !is_string($operand)) {",
-  "occurrence": 2,
-  "lineno": 505,
-  "reason": "like with exactly one non-string operand: utf16Len(string) throws a TypeError for it, which evaluateConditionTri catches and reports as 'unknown', the same verdict as the guard."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Predicates.php",
-  "mutant": "LogicalOr: if (!is_string($v) && !is_string($operand)) {",
-  "line": "if (!is_string($v) || !is_string($operand)) {",
-  "occurrence": 3,
-  "lineno": 518,
-  "reason": "matches with exactly one non-string operand: utf16Len(string) throws a TypeError for it, which evaluateConditionTri catches and reports as 'unknown', the same verdict as the guard."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Predicates.php",
-  "mutant": "FalseValue: return true;",
-  "line": "return false;",
-  "occurrence": 15,
-  "lineno": 683,
-  "reason": "Proof the catch is dead: its try body is only `SafeRegex::withBudget(static fn(): bool => self::predicateMatchesInner($p, $ctx))`. predicateMatchesInner wraps its whole body in `try { } catch (\\Throwable) { return false; }`, so the closure cannot throw, and withBudget runs the closure directly (open document scope) or through SafeRegexBudget::run, whose statements are a typed static swap, the closure call and a finally swap; none of them can throw. No input, state or host error handler reaches this catch."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Predicates.php",
   "mutant": "LogicalOr: if (!$a->has('verb') && !is_string($verb) || !$a->has('resource') || !is_string($resource)) {",
   "line": "if (!$a->has('verb') || !is_string($verb) || !$a->has('resource') || !is_string($resource)) {",
   "occurrence": 1,
   "lineno": 699,
   "reason": "A present-but-non-string verb: the mutant passes it on to verbMatches(mixed, string), a TypeError that predicateMatchesInner's own catch turns into false, the verdict the guard returns."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Predicates.php",
-  "mutant": "FalseValue: return true;",
-  "line": "return false;",
-  "occurrence": 22,
-  "lineno": 721,
-  "reason": "Proof the catch is dead, statement by statement for every type that reaches it ($p is an Obj and $ctx an Obj by the guards/signature): own() and Obj::has/get are total; `$verb`/`$resource` are strings (is_string guard), so verbMatches(mixed, string) and resourceMatches(bool, mixed, string) get their declared types; verbMatches only does is_string/in-loop comparisons; resourceMatches does str_starts_with/substr/str_ends_with on strings, SafeRegex::utf16Len(string) (two preg_match_all over a fixed byte class, int arithmetic), isSafeRegexSource (own catch-all), charge (progLen -> compileCached -> compile has a catch-all; SafeRegexBudget::charge is int arithmetic that returns before any assignment that could overflow an int property), fullMatch (own catch-all), startsWithUnits(string, string) (units() loops over string bytes); `where` is iterated only when is_array; evaluateCondition -> evaluateConditionTri has its own catch-all. Nothing can throw, so the catch is dead."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Predicates.php",
-  "mutant": "ArrayItemRemoval: return ['reason' => 'predicate evaluation error (fail closed)'];",
-  "line": "return ['allowed' => false, 'reason' => 'predicate evaluation error (fail closed)'];",
-  "occurrence": 1,
-  "lineno": 735,
-  "reason": "Proof the catch is dead: its try body is only `SafeRegex::withBudget(static fn(): array => self::evaluatePredicatesInner($predicates, $ctx))`; evaluatePredicatesInner wraps its whole body in a catch-all that returns the same fail-closed array, so the closure cannot throw, and withBudget runs the closure directly (open document scope) or through SafeRegexBudget::run, whose statements are a typed static swap, the closure call and a finally swap; none of them can throw."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Predicates.php",
-  "mutant": "FalseValue: return ['allowed' => true, 'reason' => 'predicate evaluation error (fail closed)'];",
-  "line": "return ['allowed' => false, 'reason' => 'predicate evaluation error (fail closed)'];",
-  "occurrence": 1,
-  "lineno": 735,
-  "reason": "Proof the catch is dead: its try body is only `SafeRegex::withBudget(static fn(): array => self::evaluatePredicatesInner($predicates, $ctx))`; evaluatePredicatesInner wraps its whole body in a catch-all that returns the same fail-closed array, so the closure cannot throw, and withBudget runs the closure directly (open document scope) or through SafeRegexBudget::run, whose statements are a typed static swap, the closure call and a finally swap; none of them can throw."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Predicates.php",
-  "mutant": "ArrayItemRemoval: return ['reason' => 'predicate evaluation error (fail closed)'];",
-  "line": "return ['allowed' => false, 'reason' => 'predicate evaluation error (fail closed)'];",
-  "occurrence": 2,
-  "lineno": 756,
-  "reason": "Proof the catch is dead for every type that reaches it: `is_array($predicates)` guards the foreach; predicateMatches never throws (two catch-alls, see line 683/721); own() is total; jsString -> jsStr handles every PHP type without a throw (null/bool/string returned, numbers through numVal -> jsNumStr, which only calls sprintf('%.Ne') on a finite non-zero float, explode on its always-present 'e', (int) casts and str_repeat/substr with non-negative lengths inside the branch guards; arrays recurse through array_map/implode; everything else is '[object Object]'); the rest is string concatenation. Nothing can throw, so the catch is dead."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Predicates.php",
-  "mutant": "FalseValue: return ['allowed' => true, 'reason' => 'predicate evaluation error (fail closed)'];",
-  "line": "return ['allowed' => false, 'reason' => 'predicate evaluation error (fail closed)'];",
-  "occurrence": 2,
-  "lineno": 756,
-  "reason": "Proof the catch is dead for every type that reaches it: `is_array($predicates)` guards the foreach; predicateMatches never throws (two catch-alls, see line 683/721); own() is total; jsString -> jsStr handles every PHP type without a throw (null/bool/string returned, numbers through numVal -> jsNumStr, which only calls sprintf('%.Ne') on a finite non-zero float, explode on its always-present 'e', (int) casts and str_repeat/substr with non-negative lengths inside the branch guards; arrays recurse through array_map/implode; everything else is '[object Object]'); the rest is string concatenation. Nothing can throw, so the catch is dead."
  },
  {
   "crate": "php-pca",
@@ -1810,147 +937,12 @@
  },
  {
   "crate": "php-pca",
-  "file": "src/Predicates.php",
-  "mutant": "ArrayItemRemoval: return ['layer' => 'org', 'reason' => 'layers: evaluation error (fail closed): ' . $e->getMessage()];",
-  "line": "return ['status' => 'fail', 'layer' => 'org', 'reason' => 'layers: evaluation error (fail closed): ' . $e->getMessage()];",
-  "occurrence": 1,
-  "lineno": 894,
-  "reason": "Proof the catch is dead: ceilingsOf's body is `instanceof Obj`, a foreach over the LAYER_CEILINGS string constants, Obj::has/get, isLayerPolicy (instanceof, closedTo -> Obj::keys/in_array, has/get, is_array) and layerAdmits(Obj $l, Obj $ctx) - $l is an Obj because isLayerPolicy only accepts Obj - which reads `evaluatePredicates(...)['allowed']`, a key present in every return of evaluatePredicates, which never throws (see 735/756). The messages are string interpolations of constants. Nothing can throw."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Predicates.php",
-  "mutant": "Concat: return ['status' => 'fail', 'layer' => 'org', 'reason' => $e->getMessage() . 'layers: evaluation error (fail closed): '];",
-  "line": "return ['status' => 'fail', 'layer' => 'org', 'reason' => 'layers: evaluation error (fail closed): ' . $e->getMessage()];",
-  "occurrence": 1,
-  "lineno": 894,
-  "reason": "Proof the catch is dead: ceilingsOf's body is `instanceof Obj`, a foreach over the LAYER_CEILINGS string constants, Obj::has/get, isLayerPolicy (instanceof, closedTo -> Obj::keys/in_array, has/get, is_array) and layerAdmits(Obj $l, Obj $ctx) - $l is an Obj because isLayerPolicy only accepts Obj - which reads `evaluatePredicates(...)['allowed']`, a key present in every return of evaluatePredicates, which never throws (see 735/756). The messages are string interpolations of constants. Nothing can throw."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Predicates.php",
-  "mutant": "ConcatOperandRemoval: return ['status' => 'fail', 'layer' => 'org', 'reason' => $e->getMessage()];",
-  "line": "return ['status' => 'fail', 'layer' => 'org', 'reason' => 'layers: evaluation error (fail closed): ' . $e->getMessage()];",
-  "occurrence": 1,
-  "lineno": 894,
-  "reason": "Proof the catch is dead: ceilingsOf's body is `instanceof Obj`, a foreach over the LAYER_CEILINGS string constants, Obj::has/get, isLayerPolicy (instanceof, closedTo -> Obj::keys/in_array, has/get, is_array) and layerAdmits(Obj $l, Obj $ctx) - $l is an Obj because isLayerPolicy only accepts Obj - which reads `evaluatePredicates(...)['allowed']`, a key present in every return of evaluatePredicates, which never throws (see 735/756). The messages are string interpolations of constants. Nothing can throw."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Predicates.php",
-  "mutant": "ConcatOperandRemoval: return ['status' => 'fail', 'layer' => 'org', 'reason' => 'layers: evaluation error (fail closed): '];",
-  "line": "return ['status' => 'fail', 'layer' => 'org', 'reason' => 'layers: evaluation error (fail closed): ' . $e->getMessage()];",
-  "occurrence": 1,
-  "lineno": 894,
-  "reason": "Proof the catch is dead: ceilingsOf's body is `instanceof Obj`, a foreach over the LAYER_CEILINGS string constants, Obj::has/get, isLayerPolicy (instanceof, closedTo -> Obj::keys/in_array, has/get, is_array) and layerAdmits(Obj $l, Obj $ctx) - $l is an Obj because isLayerPolicy only accepts Obj - which reads `evaluatePredicates(...)['allowed']`, a key present in every return of evaluatePredicates, which never throws (see 735/756). The messages are string interpolations of constants. Nothing can throw."
- },
- {
-  "crate": "php-pca",
-  "file": "src/Predicates.php",
-  "mutant": "ArrayItemRemoval: return [];",
-  "line": "return ['decision' => 'intent_denied'];",
-  "occurrence": 5,
-  "lineno": 943,
-  "reason": "Proof the catch is dead: decideLayers' body is `instanceof Obj`/closedTo, ceilingsOf (never throws, see 894; every fail return carries the 'layer' key read here), own(), is_array, a foreach calling isLayerPolicy, and layerAdmits(Obj, Obj) on entries isLayerPolicy has already accepted as Obj ($g is an Obj here: a non-Obj returned 'fail' above). Nothing can throw."
- },
- {
-  "crate": "php-pca",
-  "file": "src/SafeRegex.php",
-  "mutant": "FalseValue: return true;",
-  "line": "return false;",
-  "occurrence": 4,
-  "lineno": 203,
-  "reason": "Proof the catch is dead: isSafeRegexSourceInner(string) only uses units() (byte loop), scanBrace (digit loops, `$u[$j] ?? null` reads, chr of digit units), float casts of digit strings (overflow gives INF, no error), array_pop/stack indexing guarded by `count($stack) < 2` and a non-empty initial frame, ceilLog2 (called only with a bounded repeat width <= 65), integer/float comparisons, and compileCached -> compile, which has its own catch-all. No statement can throw."
- },
- {
-  "crate": "php-pca",
-  "file": "src/SafeRegex.php",
-  "mutant": "Throw_: new SafeRegexRefuse('pattern too large');",
-  "line": "throw new SafeRegexRefuse('pattern too large');",
-  "occurrence": 2,
-  "lineno": 441,
-  "reason": "Redundant with the entry check of emit() (which throws 'pattern too large' as soon as the program is over MAX_NFA_INSTRUCTIONS) and the final size check of compile(): without this throw the oversized program is still refused by one of them and compile() returns null the same."
- },
- {
-  "crate": "php-pca",
-  "file": "src/SafeRegex.php",
-  "mutant": "Throw_: new SafeRegexRefuse('unknown node');",
-  "line": "throw new SafeRegexRefuse('unknown node');",
-  "occurrence": 1,
-  "lineno": 445,
-  "reason": "Unreachable: SafeRegexParser only builds the node kinds set, bol, eol, cat, alt and rep, each handled by a case that returns before this line."
- },
- {
-  "crate": "php-pca",
-  "file": "src/SafeRegex.php",
-  "mutant": "PublicVisibility: protected static function run(array $prog, array $subject): ?bool",
-  "line": "public static function run(array $prog, array $subject): ?bool",
-  "occurrence": 1,
-  "lineno": 477,
-  "reason": "NOT equivalent (public made protected). Infection reports it uncovered only because its coverage map is keyed by method name within a file: SafeRegexBudget::run in the same file replaces SafeRegex::run's range, so the signature line maps to no tests although the method is covered. Gated test R9SafeRegexKillTest::testRunAndChargeArePublic calls SafeRegex::run from outside the class (and asserts it is public); run once with the mutant applied it fails, and it passes on the original."
- },
- {
-  "crate": "php-pca",
-  "file": "src/SafeRegex.php",
-  "mutant": "PublicVisibility: protected static function charge(string $src, int $subjectLen): bool",
-  "line": "public static function charge(string $src, int $subjectLen): bool",
-  "occurrence": 1,
-  "lineno": 623,
-  "reason": "NOT equivalent (public made protected). Infection reports it uncovered only because its coverage map is keyed by method name within a file: SafeRegexBudget::charge in the same file replaces SafeRegex::charge's range, so the signature line maps to no tests although the method is covered. Gated test R9SafeRegexKillTest::testRunAndChargeArePublic calls SafeRegex::charge from outside the class (and asserts it is public); run once with the mutant applied it fails, and it passes on the original."
- },
- {
-  "crate": "php-pca",
   "file": "src/SafeRegex.php",
   "mutant": "TrueValue: return (self::$current ?? new SafeRegexBudget(1, null, false))->charge($src, $subjectLen);",
   "line": "return (self::$current ?? new SafeRegexBudget(1, null, true))->charge($src, $subjectLen);",
   "occurrence": 1,
   "lineno": 625,
   "reason": "The single-use budget created outside any scope is never installed as the open scope (only SafeRegexBudget::run does that), and isDocument is read only on the installed scope in withBudget, so its value is not observed."
- },
- {
-  "crate": "php-pca",
-  "file": "src/SafeRegex.php",
-  "mutant": "DecrementInteger: public function __construct(private readonly int $scale = 0, private readonly ?SafeRegexBudget $parent = null, public readonly bool $isDocument = true)",
-  "line": "private readonly int $scale = 1,",
-  "occurrence": 1,
-  "lineno": 639,
-  "reason": "Every SafeRegexBudget is built with an explicit scale argument (1 or REGEX_REQUEST_SCALE), so the parameter default is never used."
- },
- {
-  "crate": "php-pca",
-  "file": "src/SafeRegex.php",
-  "mutant": "IncrementInteger: public function __construct(private readonly int $scale = 2, private readonly ?SafeRegexBudget $parent = null, public readonly bool $isDocument = true)",
-  "line": "private readonly int $scale = 1,",
-  "occurrence": 1,
-  "lineno": 639,
-  "reason": "Every SafeRegexBudget is built with an explicit scale argument (1 or REGEX_REQUEST_SCALE), so the parameter default is never used."
- },
- {
-  "crate": "php-pca",
-  "file": "src/SafeRegex.php",
-  "mutant": "TrueValue: public function __construct(private readonly int $scale = 1, private readonly ?SafeRegexBudget $parent = null, public readonly bool $isDocument = false)",
-  "line": "public readonly bool $isDocument = true,",
-  "occurrence": 1,
-  "lineno": 641,
-  "reason": "Every SafeRegexBudget is built with an explicit isDocument argument, so the parameter default is never used."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2Acc.php",
-  "mutant": "InstanceOf_: if (!self::isU($ai) && true) {",
-  "line": "if (!self::isU($ai) && $schema instanceof Obj) {",
-  "occurrence": 1,
-  "lineno": 27,
-  "reason": "For a non-Obj schema schemaVerb() returns undefined (m() finds no verbs), so the branch returns false either way."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2Acc.php",
-  "mutant": "LogicalAnd: if (!self::isU($ai) || $schema instanceof Obj) {",
-  "line": "if (!self::isU($ai) && $schema instanceof Obj) {",
-  "occurrence": 1,
-  "lineno": 27,
-  "reason": "With accumulates_into undefined accumulationParams() finds no unit to match and returns [], and with a non-Obj schema schemaVerb() returns undefined: the branch returns false in both cases, as the original does."
  },
  {
   "crate": "php-pca",
@@ -1996,15 +988,6 @@
   "occurrence": 1,
   "lineno": 647,
   "reason": "Membership only: every read of the revoked map is isset(), true for a stored false as for true, so the stored value is never observed."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2Acc.php",
-  "mutant": "LogicalAndAllSubExprNegation: if (!(self::iv($ep->get('epoch')) === self::iv($le->get('epoch'))) && !($ep->get('root') !== $le->get('root'))) {",
-  "line": "if (self::iv($ep->get('epoch')) === self::iv($le->get('epoch')) && $ep->get('root') !== $le->get('root')) {",
-  "occurrence": 1,
-  "lineno": 664,
-  "reason": "Both the original and the mutant conditions are unsatisfiable here: each list's root is checked equal to revsetRoot(revoked) and its epoch to its size, and the earlier append-only test makes last.revoked a subset of revoked, so equal epochs mean equal sets and equal roots, and different epochs mean different sizes and different roots."
  },
  {
   "crate": "php-pca",
@@ -2279,74 +1262,11 @@
  {
   "crate": "php-pca",
   "file": "src/IntentV2Schema.php",
-  "mutant": "InstanceOf_: if (!true || !self::isStr(self::m($u, 'kind'), 64)) {",
-  "line": "if (!($u instanceof Obj) || !self::isStr(self::m($u, 'kind'), 64)) {",
-  "occurrence": 1,
-  "lineno": 262,
-  "reason": "m() returns undefined for a non-Obj and isStr(undefined, 64) is false, so the kind test already rejects every non-Obj unit."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2Schema.php",
   "mutant": "TrueValue: $seen['k' . $name] = false;",
   "line": "$seen['k' . $name] = true;",
   "occurrence": 1,
   "lineno": 295,
   "reason": "Membership only: every read of the seen map is isset(), true for a stored false as for true, so the stored value is never observed."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2Schema.php",
-  "mutant": "InstanceOf_: if (true && self::eq(self::m($k, 'kid'), $kid)) {",
-  "line": "if ($k instanceof Obj && self::eq(self::m($k, 'kid'), $kid)) {",
-  "occurrence": 1,
-  "lineno": 345,
-  "reason": "$kid is a validated non-empty string (the shape check ran first) and m() returns undefined for a non-Obj, so eq(undefined, string) is false for every non-Obj key entry."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2Schema.php",
-  "mutant": "Concat: return self::bad($e->getMessage() . 'schema verification error: ');",
-  "line": "return self::bad('schema verification error: ' . $e->getMessage());",
-  "occurrence": 1,
-  "lineno": 374,
-  "reason": "Proof the catch is dead: after actionSchemaShapeError (which canonicalized `$doc->without('sig')`, the only canonicalization here, on the same value) the try body is: Obj::get on shape-checked members; isList; `$k instanceof Obj && eq(m($k,'kid'), $kid)` where $kid is a validated string, so eq returns at `is_string` before any canonical comparison; unb64u(mixed) (total); suiteError/suiteOf on values suiteError has just proven strings; canonicalize of the already-canonicalized document; and verifyPinned -> Pca::verifyPinnedSuite, which never throws (see Pca.php:525). Nothing can throw."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2Schema.php",
-  "mutant": "ConcatOperandRemoval: return self::bad($e->getMessage());",
-  "line": "return self::bad('schema verification error: ' . $e->getMessage());",
-  "occurrence": 1,
-  "lineno": 374,
-  "reason": "Proof the catch is dead: after actionSchemaShapeError (which canonicalized `$doc->without('sig')`, the only canonicalization here, on the same value) the try body is: Obj::get on shape-checked members; isList; `$k instanceof Obj && eq(m($k,'kid'), $kid)` where $kid is a validated string, so eq returns at `is_string` before any canonical comparison; unb64u(mixed) (total); suiteError/suiteOf on values suiteError has just proven strings; canonicalize of the already-canonicalized document; and verifyPinned -> Pca::verifyPinnedSuite, which never throws (see Pca.php:525). Nothing can throw."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2Schema.php",
-  "mutant": "ConcatOperandRemoval: return self::bad('schema verification error: ');",
-  "line": "return self::bad('schema verification error: ' . $e->getMessage());",
-  "occurrence": 1,
-  "lineno": 374,
-  "reason": "Proof the catch is dead: after actionSchemaShapeError (which canonicalized `$doc->without('sig')`, the only canonicalization here, on the same value) the try body is: Obj::get on shape-checked members; isList; `$k instanceof Obj && eq(m($k,'kid'), $kid)` where $kid is a validated string, so eq returns at `is_string` before any canonical comparison; unb64u(mixed) (total); suiteError/suiteOf on values suiteError has just proven strings; canonicalize of the already-canonicalized document; and verifyPinned -> Pca::verifyPinnedSuite, which never throws (see Pca.php:525). Nothing can throw."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2Schema.php",
-  "mutant": "InstanceOf_: if (true && is_string($verb) && self::m($v, 'verb') === $verb) {",
-  "line": "if ($v instanceof Obj && is_string($verb) && self::m($v, 'verb') === $verb) {",
-  "occurrence": 1,
-  "lineno": 392,
-  "reason": "m() returns undefined for a non-Obj, which never equals the (string) verb, so the verb comparison already rejects every non-Obj entry."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2Schema.php",
-  "mutant": "LogicalAnd: if (($v instanceof Obj || is_string($verb)) && self::m($v, 'verb') === $verb) {",
-  "line": "if ($v instanceof Obj && is_string($verb) && self::m($v, 'verb') === $verb) {",
-  "occurrence": 1,
-  "lineno": 392,
-  "reason": "The third operand m($v,'verb') === $verb is true only when $verb is a string and $v an Obj, so (A || B) && C and A && B && C coincide."
  },
  {
   "crate": "php-pca",
@@ -2387,15 +1307,6 @@
  {
   "crate": "php-pca",
   "file": "src/IntentV2Schema.php",
-  "mutant": "CastFloat: $maxLen = self::bound($d, 'max_len', self::DEFAULT_MAX_LEN);",
-  "line": "$maxLen = self::bound($d, 'max_len', (float)self::DEFAULT_MAX_LEN);",
-  "occurrence": 1,
-  "lineno": 427,
-  "reason": "bound()'s third parameter is float: an int argument is widened to float by the engine under strict_types, so the value is identical."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2Schema.php",
   "mutant": "CastFloat: $n = count($x);",
   "line": "$n = (float)count($x);",
   "occurrence": 1,
@@ -2432,24 +1343,6 @@
  {
   "crate": "php-pca",
   "file": "src/IntentV2.php",
-  "mutant": "Throw_: new JsonError('number formatting failed');",
-  "line": "throw new JsonError('number formatting failed');",
-  "occurrence": 1,
-  "lineno": 368,
-  "reason": "Unreachable: sprintf('%.Ne') of a finite positive float always matches the pattern (one digit, optional fraction, signed exponent), so the guard never fires."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2.php",
-  "mutant": "Throw_: new JsonError('canonicalize: non-integer number needs an exponent form');",
-  "line": "throw new JsonError('canonicalize: non-integer number needs an exponent form');",
-  "occurrence": 1,
-  "lineno": 450,
-  "reason": "Unreachable: a non-integer binary64 below 1e21 never prints with an exponent (every double of magnitude >= 2^53 is an integer, and magnitudes below 1e-6 were refused on the line before), so the guard never fires."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2.php",
   "mutant": "InstanceOf_: $v = self::verifySessionRoot($S, true ? $pins : null);",
   "line": "$v = self::verifySessionRoot($S, $pins instanceof Obj ? $pins : null);",
   "occurrence": 1,
@@ -2458,65 +1351,20 @@
  },
  {
   "crate": "php-pca",
-  "file": "src/IntentV2.php",
-  "mutant": "ArrayOneItem: return count($s) > 1 ? array_slice($s, 0, 1, true) : $s;",
-  "line": "return $s;",
-  "occurrence": 2,
-  "lineno": 1252,
-  "reason": "The runner's return value is never used: every call site ignores it, so what it returns is not observed."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2.php",
-  "mutant": "ArrayItemRemoval: $checks[] = ['ok' => false, 'reason' => 'W-B error (fail closed): ' . $e->getMessage()];",
-  "line": "$checks[] = ['name' => 'facts', 'ok' => false, 'reason' => 'W-B error (fail closed): ' . $e->getMessage()];",
-  "occurrence": 1,
-  "lineno": 1310,
-  "reason": "Proof the catch is dead: its try body builds an Obj from `new Num((string)$now)` (an int), jsString(m(...)) -> IntentWb::jsStr (total on every type, see Predicates.php:756), Obj::of/set, cg/dflt (total) and IntentWb::decideIntentWb($in), whose entire body after a literal array assignment sits in its own `catch (\\Throwable)` returning a deny array. Nothing can throw, so no 'W-B error (fail closed)' entry is ever produced."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2.php",
-  "mutant": "Concat: $checks[] = ['name' => 'facts', 'ok' => false, 'reason' => $e->getMessage() . 'W-B error (fail closed): '];",
-  "line": "$checks[] = ['name' => 'facts', 'ok' => false, 'reason' => 'W-B error (fail closed): ' . $e->getMessage()];",
-  "occurrence": 1,
-  "lineno": 1310,
-  "reason": "Proof the catch is dead: its try body builds an Obj from `new Num((string)$now)` (an int), jsString(m(...)) -> IntentWb::jsStr (total on every type, see Predicates.php:756), Obj::of/set, cg/dflt (total) and IntentWb::decideIntentWb($in), whose entire body after a literal array assignment sits in its own `catch (\\Throwable)` returning a deny array. Nothing can throw, so no 'W-B error (fail closed)' entry is ever produced."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2.php",
-  "mutant": "ConcatOperandRemoval: $checks[] = ['name' => 'facts', 'ok' => false, 'reason' => $e->getMessage()];",
-  "line": "$checks[] = ['name' => 'facts', 'ok' => false, 'reason' => 'W-B error (fail closed): ' . $e->getMessage()];",
-  "occurrence": 1,
-  "lineno": 1310,
-  "reason": "Proof the catch is dead: its try body builds an Obj from `new Num((string)$now)` (an int), jsString(m(...)) -> IntentWb::jsStr (total on every type, see Predicates.php:756), Obj::of/set, cg/dflt (total) and IntentWb::decideIntentWb($in), whose entire body after a literal array assignment sits in its own `catch (\\Throwable)` returning a deny array. Nothing can throw, so no 'W-B error (fail closed)' entry is ever produced."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2.php",
-  "mutant": "ConcatOperandRemoval: $checks[] = ['name' => 'facts', 'ok' => false, 'reason' => 'W-B error (fail closed): '];",
-  "line": "$checks[] = ['name' => 'facts', 'ok' => false, 'reason' => 'W-B error (fail closed): ' . $e->getMessage()];",
-  "occurrence": 1,
-  "lineno": 1310,
-  "reason": "Proof the catch is dead: its try body builds an Obj from `new Num((string)$now)` (an int), jsString(m(...)) -> IntentWb::jsStr (total on every type, see Predicates.php:756), Obj::of/set, cg/dflt (total) and IntentWb::decideIntentWb($in), whose entire body after a literal array assignment sits in its own `catch (\\Throwable)` returning a deny array. Nothing can throw, so no 'W-B error (fail closed)' entry is ever produced."
- },
- {
-  "crate": "php-pca",
-  "file": "src/IntentV2.php",
-  "mutant": "FalseValue: $checks[] = ['name' => 'facts', 'ok' => true, 'reason' => 'W-B error (fail closed): ' . $e->getMessage()];",
-  "line": "$checks[] = ['name' => 'facts', 'ok' => false, 'reason' => 'W-B error (fail closed): ' . $e->getMessage()];",
-  "occurrence": 1,
-  "lineno": 1310,
-  "reason": "Proof the catch is dead: its try body builds an Obj from `new Num((string)$now)` (an int), jsString(m(...)) -> IntentWb::jsStr (total on every type, see Predicates.php:756), Obj::of/set, cg/dflt (total) and IntentWb::decideIntentWb($in), whose entire body after a literal array assignment sits in its own `catch (\\Throwable)` returning a deny array. Nothing can throw, so no 'W-B error (fail closed)' entry is ever produced."
- },
- {
-  "crate": "php-pca",
   "file": "src/Pca.php",
   "mutant": "FalseValue: return true;",
   "line": "return false;",
-  "occurrence": 20,
-  "lineno": 525,
-  "reason": "Proof the catch is dead: the try body is `$alg ?? 'ed25519'`/is_string; suiteAvailable (isset, OpensslPq::available/LessFfi::available - their FFI probing sits in per-candidate catch-alls and builds() has one); for ed25519 verifyB64u (unb64u is total on mixed input, primeOrderPoint and sodium verify each in a catch-all); otherwise resolvePqKey (is_string tests, Obj::has/get, PinnedPq::mint, which throws only when its caller is not Pca - it is Pca::resolvePqKey - and holderPqCommitment = b64u(sha256) of a string), Obj::of/set, and verifySuite, whose calls (verifyB64u, unb64u, pqVerifyB64u -> pqLens/pqSigOk, OpensslPq::verify and LessFfi::verify, each with a catch-all) are total. Nothing can throw."
+  "occurrence": 17,
+  "lineno": 474,
+  "reason": "[defence in depth, kept per BRIEF: a refusing guard stays] Unreachable: verifyB64u($holder, $msg, $sig) just accepted $sig, which requires canonical base64url of exactly 64 bytes, so unb64u($sig, 64) cannot be null here."
+ },
+ {
+  "crate": "php-pca",
+  "file": "src/IntentV2.php",
+  "mutant": "Throw_: new JsonError('canonicalize: non-integer number needs an exponent form');",
+  "line": "throw new JsonError('canonicalize: non-integer number needs an exponent form');",
+  "occurrence": 1,
+  "lineno": 473,
+  "reason": "[defence in depth, kept per BRIEF: a refusing guard stays] Unreachable: a non-integer binary64 below 1e21 never prints with an exponent (every double of magnitude >= 2^53 is an integer, and magnitudes below 1e-6 were refused on the line before), so the guard never fires."
  }
 ]

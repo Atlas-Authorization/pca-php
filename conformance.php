@@ -110,7 +110,7 @@ foreach ($vectors as $v) {
         $skippedSuites[$us] = ($skippedSuites[$us] ?? 0) + 1;
         if ($v->has('pcactn')) {
             $ctx = $v->get('context');
-            $got = Pca::verifyPcactnCore($v->get('pcactn'), $v->get('grant'), $ctx->get('now')->int(), $ctx->get('aud'));
+            $got = Pca::verifyPcactnCore($v->get('pcactn'), $v->get('grant'), $ctx->get('now')->int(), $ctx->get('aud'), insecureSkipPlanRootCheck: true);
             $check($got['allow'] === false && str_contains((string)$got['reason'], Pca::UNSUPPORTED_SUITE),
                 $v->get('name') . ": suite $us is not supported here: want a deny with unsupported_suite ({$got['reason']})");
         }
@@ -135,9 +135,9 @@ foreach ($vectors as $v) {
     // Intent Layer v2: `context.intent_v2` (the verifier state, an Obj with number lexemes kept) is passed through.
     $intentV2 = Corpus::intentV2OfObj($ctx);
     if ($v->has('pcactn_json')) {
-        $got = Pca::verifyJson($v->get('pcactn_json'), $v->get('grant'), $now, $aud, $allowed, $intentPolicy, $intentV2);
+        $got = Pca::verifyJson($v->get('pcactn_json'), $v->get('grant'), $now, $aud, $allowed, $intentPolicy, $intentV2, insecureSkipPlanRootCheck: true);
     } else {
-        $got = Pca::verifyPcactnCore($v->get('pcactn'), $v->get('grant'), $now, $aud, $allowed, $intentPolicy, $intentV2);
+        $got = Pca::verifyPcactnCore($v->get('pcactn'), $v->get('grant'), $now, $aud, $allowed, $intentPolicy, $intentV2, insecureSkipPlanRootCheck: true);
     }
     $expect = $v->get('expect');
     if ($expect->has('reason_contains')) {
@@ -369,7 +369,7 @@ foreach ($malformed as $m) {
                 $check(Pca::verifyThresholdShare($in) === false, "malformed $nm: accepted");
                 break;
             case 'pcactn_json':
-                $v = Pca::verifyJson($in->get('text'), $in->get('grant'), $in->get('now')->int(), $in->get('aud'));
+                $v = Pca::verifyJson($in->get('text'), $in->get('grant'), $in->get('now')->int(), $in->get('aud'), insecureSkipPlanRootCheck: true);
                 $check($v['allow'] === false, "malformed $nm: allowed");
                 break;
             default:

@@ -43,27 +43,61 @@ env:
   # distro OpenSSL 3.0 (the fallback) + a cached OpenSSL 3.5 (the PQ path) side by side: every PQ / probe test runs, none skips
   PCA_REQUIRE_MLDSA: '1'
   ATLAS_PCA_LIBCRYPTO: /opt/openssl35/lib/libcrypto.so.3
-  SHARDS: '9'
+  SHARDS: '32'
+  # each PHPUnit test gets this many seconds (tests/K05DeadlineExtension.php): a mutant that makes a loop stop advancing fails the test instead of hanging the run
+  PCA_TEST_DEADLINE: '100'
 
 jobs:
   shard:
-    name: shard ${{ matrix.shard }}/9 (${{ matrix.files }})
+    name: shard ${{ matrix.shard }}/32 (${{ matrix.files }}${{ matrix.slice && format(' {0}', matrix.slice) || '' }})
     runs-on: ubuntu-24.04
     timeout-minutes: 340
     strategy:
       fail-fast: false
+      # at most 10 shards at once, so the other languages' CI is not starved of org runners
+      max-parallel: 64 # Enterprise plan: 500 concurrent jobs org-wide; 9 lanes x 64 stays under it with room for CI and merge jobs
       matrix:
         include:
           - { shard: 1, files: 'src/Pca.php' }
           - { shard: 2, files: 'src/IntentV2.php' }
           - { shard: 3, files: 'src/IntentWb.php' }
-          - { shard: 4, files: 'src/SafeRegex.php,src/Predicates.php' }
-          - { shard: 5, files: 'src/Json.php,src/PcaMiddleware.php,src/OpensslPq.php,src/LessFfi.php,src/Mldsa.php' }
+          - { shard: 4, files: 'src/SafeRegex.php' }
+          - { shard: 5, files: 'src/Json.php,src/PcaMiddleware.php' }
           # IntentV2 is split into traits (same class, 3800 lines) so no shard runs for hours (the single-file shard was killed by a runner shutdown)
           - { shard: 6, files: 'src/IntentV2Schema.php' }
           - { shard: 7, files: 'src/IntentV2Session.php' }
           - { shard: 8, files: 'src/IntentV2Acc.php' }
           - { shard: 9, files: 'src/IntentV2Map.php' }
+          # the modules track mN added (and the other unlisted ones); the PHPUnit oracle already runs their tests
+          - { shard: 10, files: 'src/Authorize.php' }
+          - { shard: 11, files: 'src/Operations.php,src/Executor.php,src/AtomicKv.php,src/StateStore.php' }
+          - { shard: 12, files: 'src/PlanLifecycle.php,src/RevocationStaleness.php,src/Assurance.php,src/ArgProvenance.php' }
+          - { shard: 13, files: 'src/StepUp.php,src/StoreConformance.php' }
+          - { shard: 14, files: 'src/Mesh.php,src/Ledger.php,src/Optimistic.php' }
+          - { shard: 15, files: 'src/Passport.php,src/IntentHistory.php,src/Agent.php' }
+          # the action-kit module (digest, trait algebra, rule 22): killed by tests/ActionsOracle.php and the shared vectors
+          # Actions.php alone ran > 150 min once every mutant ran: three line slices (cut at method ends, so no node spans two)
+          - { shard: 16, files: 'src/Actions.php', slice: '1/3' }
+          # the K1-K3 modules (caveat language, forbid-wins certificate and policy links, consistency tokens and operational-plane artifacts)
+          - { shard: 17, files: 'src/CaveatLang.php,src/ForbidCertificate.php,src/PolicyLink.php' }
+          - { shard: 18, files: 'src/FreshAt.php,src/K3.php,src/K3Sig.php,src/PcaGrant.php,src/Blueprint.php,src/A2a.php,src/Workflow.php,src/ReadSide.php,src/ReadVault.php' }
+          - { shard: 19, files: 'src/K4.php,src/Lease.php,src/Obligations.php,src/BreakGlass.php,src/MissingContext.php,src/PolicyClasses.php,src/Undo.php' }
+          # 0.5 modules: approvals, protect()/refusal explanations, provenance gate, runtime claims, Sigstore bundles
+          - { shard: 20, files: 'src/Approval.php,src/Protect.php,src/ProvenanceGate.php,src/Refusals.php,src/RuntimeClaim.php,src/SigstoreBundle.php' }
+          # split out when every mutant started to run (timeout 600 s): the shards that time-skipped the most mutants at 60 s
+          - { shard: 21, files: 'src/Predicates.php' }
+          - { shard: 22, files: 'src/OpensslPq.php,src/LessFfi.php,src/Mldsa.php' }
+          - { shard: 23, files: 'src/ActionsRegistry.php' }
+          - { shard: 24, files: 'src/Decision.php,src/Escalation.php' }
+          - { shard: 25, files: 'src/Actions.php', slice: '2/3' }
+          - { shard: 26, files: 'src/Actions.php', slice: '3/3' }
+          # the hardware attestation verifiers and their parsers
+          - { shard: 27, files: 'src/Attest/Intel.php' }
+          - { shard: 28, files: 'src/Attest/Nvidia.php' }
+          - { shard: 29, files: 'src/Attest/Common.php,src/Attest/Cert.php' }
+          - { shard: 30, files: 'src/Attest/Ocsp.php,src/Attest/Xml.php' }
+          - { shard: 31, files: 'src/Attest/Der.php,src/Attest/JsJson.php,src/Attest/Factory.php,src/Attest/HardwareVerifier.php' }
+          - { shard: 32, files: 'src/Attest/Amd.php,src/Attest/Maa.php,src/Attest/Gcp.php' }
     steps:
       - uses: actions/checkout@v4
       - name: OpenSSL 3.5 (cached)
@@ -82,7 +116,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: sodium, json, mbstring, ffi
+          extensions: sodium, json, mbstring, intl, ffi
           ini-values: ffi.enable=true
           coverage: pcov
           tools: composer
@@ -94,7 +128,8 @@ jobs:
           LESS: '1'
         run: .github/scripts/mutation-layout.sh "$CRATE"
       - name: Baseline (targeted mode)
-        if: ${{ !inputs.full }}
+        # a sliced shard always mutates its whole slice (its baseline holds only the slice)
+        if: ${{ !inputs.full && !matrix.slice }}
         env:
           GH_TOKEN: ${{ github.token }}
           BASELINE: ${{ inputs.baseline_run }}
@@ -118,16 +153,53 @@ jobs:
         working-directory: ${{ env.MONO }}/sdks/php-pca
         env:
           FILES: ${{ matrix.files }}
+          SLICE: ${{ matrix.slice }}
+          FULL: ${{ inputs.full }}
         run: |
-          # every file of src/ belongs to exactly one shard
-          diff <(ls src/*.php | sort) <(tr ',' '\n' <<<"src/Pca.php,src/IntentV2.php,src/IntentV2Schema.php,src/IntentV2Session.php,src/IntentV2Acc.php,src/IntentV2Map.php,src/IntentWb.php,src/SafeRegex.php,src/Predicates.php,src/Json.php,src/PcaMiddleware.php,src/OpensslPq.php,src/LessFfi.php,src/Mldsa.php" | sort)
-          composer install --no-interaction --no-progress -q
+          # a full run (and a sliced shard) carries NOTHING from any baseline: no baseline is loaded, and none may be set here
+          if [ "$FULL" = true ] && [ -n "${INFECTION_BASELINE:-}" ]; then echo "::error::full run with a baseline set"; exit 1; fi
+          # every file of src/, subdirectories included, belongs to a shard of the matrix above and nothing else is listed
+          diff <(find src -name '*.php' | sort) <(grep -E '^ +- \{ shard:' "$GITHUB_WORKSPACE/.github/workflows/mutation.yml" | cut -d"'" -f2 | tr ',' '\n' | sort -u)
+          for n in 1 2 3 4; do composer install --prefer-dist --no-interaction --no-progress -q && break; [ "$n" = 4 ] && exit 1; echo "composer attempt $n failed (network); retrying"; sleep $((n * 15)); done
           # Infection is not a dev dependency of the package: added to this CI copy only
           composer config --no-interaction allow-plugins.infection/extension-installer true
-          composer require --dev --no-interaction --no-progress -q -W "infection/infection:^0.29"
-          vendor/bin/phpunit > "$RUNNER_TEMP/baseline.log" || { tail -60 "$RUNNER_TEMP/baseline.log"; echo "::error::the PHPUnit oracle fails on the unmutated source"; exit 1; }
+          for n in 1 2 3 4; do composer require --dev --no-interaction --no-progress -q -W "infection/infection:^0.29" && break; [ "$n" = 4 ] && exit 1; echo "composer attempt $n failed (network); retrying"; sleep $((n * 15)); done
+          # Infection keys a file's method line ranges by the bare method name, so in a multi-class file a later class's same-named
+          # method (run, charge, __construct, get, ...) overwrites an earlier one, whose signature mutants are then reported "not
+          # covered" and never run: key the ranges by position (the lookup scans every range for the line, the key is unused)
+          P=vendor/infection/infection/src/TestFramework/Coverage/XmlReport/XmlCoverageParser.php
+          grep -qF '$methodsCoverage[$methodName] = new SourceMethodLineRange(' "$P" || { echo "::error::the Infection method-range patch no longer applies ($P)"; exit 1; }
+          sed -i 's/\$methodsCoverage\[\$methodName\] = new SourceMethodLineRange(/$methodsCoverage[] = new SourceMethodLineRange(/' "$P"
+          grep -qF '$methodsCoverage[] = new SourceMethodLineRange(' "$P"
+          # --debug logs every test event: a crash (segfault) of the oracle names the test it died in
+          vendor/bin/phpunit --debug > "$RUNNER_TEMP/baseline.log" || { grep -vE '^Test (Prepared|Passed|Finished|Preparation Started|Preparation Finished|Triggered PHPUnit Deprecation)|^Assertion ' "$RUNNER_TEMP/baseline.log" | tail -60; echo "last test started:"; grep -E '^Test Preparation Started' "$RUNNER_TEMP/baseline.log" | tail -1; echo "::error::the PHPUnit oracle fails on the unmutated source"; exit 1; }
+          # a mutant that lets a forked child escape (StoreConformance race) must hit a process cap, not take the runner down
+          # (shard 13 lost its runner twice at ~60 min): at most 1000 more processes for this user under Infection
+          ulimit -u $(( $(ps -u "$(id -u)" --no-headers | wc -l) + 1000 ))
+          if [ -n "${SLICE:-}" ]; then
+            # mutate only the lines of slice k/n of the one file: a throwaway git base in which exactly those lines differ
+            # (a trailing comment), then --git-diff-lines; cuts fall on method-closing lines ("    }"), so no node spans two slices
+            mkdir -p "$RUNNER_TEMP/git-base"
+            python3 - "$FILES" "$SLICE" "$RUNNER_TEMP/git-base" <<'PY'
+          import os, sys
+          f, (k, n), out = sys.argv[1], map(int, sys.argv[2].split('/')), sys.argv[3]
+          L = open(f).read().split('\n')
+          ends = [i + 1 for i, l in enumerate(L) if l == '    }']
+          cut = lambda j: 0 if j == 0 else len(L) if j == n else min(ends, key=lambda e: abs(e - len(L) * j / n))
+          a, b = cut(k - 1), cut(k)
+          assert a < b, (a, b)
+          (p := os.path.join(out, os.path.relpath(f, 'src')), os.makedirs(os.path.dirname(p), exist_ok=True), open(p, 'w'))[2].write('\n'.join(l + ' // slice' if a < i + 1 <= b else l for i, l in enumerate(L)))
+          print(f'slice {k}/{n} of {f}: lines {a + 1}..{b} of {len(L)}')
+          PY
+            cp -R src "$RUNNER_TEMP/src-current"
+            cp -R "$RUNNER_TEMP"/git-base/. src/
+            git init -q . && git add src && git -c user.name=ci -c user.email=ci@localhost commit -qm "slice base"
+            cp -R "$RUNNER_TEMP"/src-current/. src/
+            set -o pipefail; vendor/bin/infection --threads=3 --no-progress --min-msi=0 --min-covered-msi=0 --git-diff-lines --git-diff-base=HEAD | tail -25
+            exit 0
+          fi
           if [ -z "${INFECTION_BASELINE:-}" ]; then
-            vendor/bin/infection --threads=3 --no-progress --min-msi=0 --min-covered-msi=0 --filter="$FILES" | tail -25
+            set -o pipefail; vendor/bin/infection --threads=3 --no-progress --min-msi=0 --min-covered-msi=0 --filter="$FILES" | tail -25
             exit 0
           fi
           T="$GITHUB_WORKSPACE/.github/scripts/infection-targeted.py"
@@ -137,19 +209,76 @@ jobs:
           [ "$n" -gt 0 ] || exit 0
           # a throwaway git base in which exactly the target lines differ: --git-diff-lines then mutates only those
           cp -R src "$RUNNER_TEMP/src-current"
-          cp "$RUNNER_TEMP"/git-base/*.php src/
+          cp -R "$RUNNER_TEMP"/git-base/. src/
           git init -q . && git add src && git -c user.name=ci -c user.email=ci@localhost commit -qm "infection base"
-          cp "$RUNNER_TEMP"/src-current/*.php src/
+          cp -R "$RUNNER_TEMP"/src-current/. src/
           git diff --stat HEAD -- src
-          vendor/bin/infection --threads=3 --no-progress --min-msi=0 --min-covered-msi=0 --git-diff-lines --git-diff-base=HEAD | tail -25
-      - name: Report
+          set -o pipefail; vendor/bin/infection --threads=3 --no-progress --min-msi=0 --min-covered-msi=0 --git-diff-lines --git-diff-base=HEAD | tail -25
+      - name: Re-run timed-out mutants at twice the timeout
+        working-directory: ${{ env.MONO }}/sdks/php-pca
         run: |
+          # a timeout is not a kill: each timed-out mutant runs once more at twice the limit, and only a second timeout counts
+          # (then the run-error gate needs a proof that the mutant itself never finishes)
+          [ -f infection-out/log.json ] || exit 0
+          R="$GITHUB_WORKSPACE/.github/scripts/infection-retime.py"
+          n="$(python3 "$R" plan --log infection-out/log.json --src src --base-dir "$RUNNER_TEMP/retime-base" --config infection.json5)"
+          echo "retime: $n line(s) with a timed-out mutant"
+          [ "$n" -gt 0 ] || exit 0
+          ulimit -u $(( $(ps -u "$(id -u)" --no-headers | wc -l) + 1000 ))
+          rm -rf "$RUNNER_TEMP/retime-current" && cp -R src "$RUNNER_TEMP/retime-current"
+          cp -R "$RUNNER_TEMP"/retime-base/. src/
+          git init -q . && git add src && git -c user.name=ci -c user.email=ci@localhost commit -qm "retime base"
+          cp -R "$RUNNER_TEMP"/retime-current/. src/
+          set -o pipefail; vendor/bin/infection --configuration=infection.retime.json5 --threads=3 --no-progress --min-msi=0 --min-covered-msi=0 \
+            --git-diff-lines --git-diff-base=HEAD | tail -25
+          python3 "$R" merge --log infection-out/log.json --retime infection-out/retime-log.json
+      - name: Re-run every errored or timed-out mutant alone
+        working-directory: ${{ env.MONO }}/sdks/php-pca
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          # A dead PHPUnit process (memory fatal, killed) or a timeout is not a kill. Each such mutant gets ONE solo pass: one thread
+          # (one mutant, one PHPUnit process), memory_limit raised to 4096M with the guard's watchdog trigger at 3000 MB (tests/bootstrap.php,
+          # PCA_TEST_MEMORY_MB) and its deadline (PCA_TEST_DEADLINE), and a hard wall-clock limit on the whole process group. The solo result
+          # decides: killed (a test failed, a guard throw included), survived (the ledger applies), or dead again (it needs a proof).
+          # infection-out/solo-report.json keeps both results of every re-run mutant (uploaded per shard).
+          echo '[]' > "$GITHUB_WORKSPACE/solo-report-$SHARD.json"
+          [ -f infection-out/log.json ] || exit 0
+          S="$GITHUB_WORKSPACE/.github/scripts/infection-solo.py"
+          n="$(python3 "$S" plan --log infection-out/log.json --src src --base-dir "$RUNNER_TEMP/solo-base" --config infection.json5)"
+          echo "solo: $n line(s) with an errored or timed-out mutant"
+          [ "$n" -gt 0 ] || exit 0
+          ulimit -u $(( $(ps -u "$(id -u)" --no-headers | wc -l) + 1000 ))
+          sed -i 's|<ini name="memory_limit" value="[^"]*"/>|<ini name="memory_limit" value="4096M"/>|' phpunit.xml
+          grep -q 'value="4096M"' phpunit.xml || { echo "::error::the memory_limit line of phpunit.xml was not found"; exit 1; }
+          rm -rf "$RUNNER_TEMP/solo-current" && cp -R src "$RUNNER_TEMP/solo-current"
+          cp -R "$RUNNER_TEMP"/solo-base/. src/
+          git init -q . && git add src && git -c user.name=ci -c user.email=ci@localhost commit -q --allow-empty -m "solo base"
+          cp -R "$RUNNER_TEMP"/solo-current/. src/
+          export PCA_TEST_MEMORY_MB=3000
+          setsid vendor/bin/infection --configuration=infection.solo.json5 --threads=1 --no-progress --min-msi=0 --min-covered-msi=0 \
+            --git-diff-lines --git-diff-base=HEAD > "$RUNNER_TEMP/solo.out" 2>&1 &
+          P=$!
+          ( sleep 5400; kill -TERM -- -$P 2>/dev/null; sleep 20; kill -KILL -- -$P 2>/dev/null ) &
+          W=$!
+          wait $P || true
+          kill $W 2>/dev/null || true
+          kill -KILL -- -$P 2>/dev/null || true
+          tail -25 "$RUNNER_TEMP/solo.out"
+          [ -f infection-out/solo-log.json ] || { echo "::error::the solo pass produced no log (it was killed at the wall-clock limit or failed to start)"; exit 1; }
+          python3 "$S" merge --log infection-out/log.json --solo infection-out/solo-log.json --report infection-out/solo-report.json
+          cp infection-out/solo-report.json "$GITHUB_WORKSPACE/solo-report-$SHARD.json"
+      - name: Report
+        env:
+          FULL: ${{ inputs.full }}
+        run: |
+          if [ "$FULL" = true ] && [ -e "$RUNNER_TEMP/carried.json" ]; then echo "::error::full run with carried mutants"; exit 1; fi
           D="$MONO/sdks/php-pca"; S="$D/infection-out/summary.json"
           A=(--src "$D/src" --files "${{ matrix.files }}" --summary "$S" --baseline infection-baseline.json --log "$D/infection-out/log.json")
           [ -f "$RUNNER_TEMP/carried.json" ] && A+=(--carried "$RUNNER_TEMP/carried.json")
           mkdir -p "$D/infection-out"
           python3 "$GITHUB_WORKSPACE/.github/scripts/infection-targeted.py" finish "${A[@]}"
-          python3 "$MONO/tools/pca-audit/native-mutation/php-survivors.py" "$S" "$D/src" survivors.json
+          python3 "$MONO/tools/pca-audit/native-mutation/php-survivors.py" "$S" "$D/src" survivors.json run-errors-${{ matrix.shard }}.json
           node -e '
             const st = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).stats;
             const pick = ["killedCount", "escapedCount", "errorCount", "syntaxErrorCount", "skippedCount", "ignoredCount", "timeOutCount", "notCoveredCount"];
@@ -161,12 +290,22 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: shard-${{ matrix.shard }}
-          path: shard-${{ matrix.shard }}.json
+          path: |
+            shard-${{ matrix.shard }}.json
+            run-errors-${{ matrix.shard }}.json
+            solo-report-${{ matrix.shard }}.json
       - uses: actions/upload-artifact@v4
         with:
           name: infection-baseline-${{ matrix.shard }}
           path: infection-baseline.json
           retention-days: 30
+      - name: Every mutant was run (none time-skipped)
+        run: |
+          # Infection does not run a mutant whose covering tests take longer than infection.json5 "timeout" and lists it nowhere
+          # (only skippedCount): such a mutant is neither killed nor a survivor the ledger can see, so the shard fails.
+          echo "timed out: $(node -p 'require("./counts.json").timeOut ?? 0'), errored (run errors, checked by the merge job): $(node -p 'require("./counts.json").error ?? 0')"
+          n="$(node -p 'require("./counts.json").skipped ?? 0')"
+          [ "$n" = 0 ] || { echo "::error::$n mutant(s) were time-skipped by Infection (never run): raise infection.json5 timeout or speed up the covering tests"; exit 1; }
 
   merge:
     needs: shard
@@ -187,6 +326,13 @@ jobs:
         run: >
           node .github/scripts/mutation-merge.mjs --crate="$CRATE" --shards="$SHARDS" --reports=reports
           --checker="$MONO/tools/pca-audit" --src="$GITHUB_WORKSPACE"
+      # gate honesty: every ERRORED mutant must be in mutation-run-errors.json with a per-mutant reason (scripts/run-error-gate.mjs).
+      # The control proves the gate refuses what it must, in the same job, before its result is trusted.
+      - name: Run errors (Infection errored mutants) are each listed with a reason
+        if: ${{ !cancelled() }}
+        run: |
+          node .github/scripts/run-error-gate-check.mjs
+          node .github/scripts/run-error-gate.mjs --reports=reports --ledger="$MONO/sdks/php-pca/mutation-run-errors.json" --src="$GITHUB_WORKSPACE" --shards="$SHARDS"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
