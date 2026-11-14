@@ -1,0 +1,1 @@
+{"id":"fn-canon-ints","kind":"fn","fn":"canon","input":[0,-1,9007199254740991,-9007199254740991],"expect":{"canon":"[0,-1,9007199254740991,-9007199254740991]","digest":"e4pVPjUgYKvpIWXfyIt_CUig2ad7Ix2t88wFqOJGfOY"}}

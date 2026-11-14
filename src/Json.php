@@ -12,7 +12,7 @@ final class Num
 
     public function isInt(): bool
     {
-        return preg_match('/\A-?(?:0|[1-9][0-9]*)\z/D', $this->lexeme) === 1;
+        return preg_match('/\A-?(?:0|[1-9][0-9]*)\z/', $this->lexeme) === 1;
     }
 
     /** Integer value; only meaningful for a strict-valid integer lexeme (|n| <= 2^53-1). */
@@ -45,7 +45,7 @@ final class Num
             if (strlen($digits) > 15) {
                 return 'more than 15 significant digits';
             }
-            [$ip, $fp] = explode('.', ltrim($l, '-'), 2);
+            [$ip, $fp] = explode('.', ltrim($l, '-'));
             if ($ip === '0' && strlen($fp) - strlen(ltrim($fp, '0')) >= 6) {
                 return 'non-integer magnitude below 1e-6';
             }
@@ -174,6 +174,64 @@ final class Json
         $out = '';
         self::ser($out, $v, 1);
         return $out;
+    }
+
+    /**
+     * LENIENT canonical JSON (the TypeScript `canonicalBytesLenient`): keys sorted bytewise over UTF-8, compact, every number
+     * as its ECMAScript `Number::toString` (so `1.0`, `1e3` and `1000` agree), lone surrogates escaped as \udXXX. SERVER-ONLY:
+     * it is not language-portable and never feeds a protocol digest; it is the form the optimistic-path signatures cover.
+     * Throws JsonError on an unsupported value.
+     */
+    public static function canonicalizeLenient(mixed $v): string
+    {
+        if ($v === null) {
+            return 'null';
+        }
+        if (is_bool($v)) {
+            return $v ? 'true' : 'false';
+        }
+        if (is_string($v)) {
+            return self::lenientStr($v);
+        }
+        if ($v instanceof Num || is_int($v) || is_float($v)) {
+            $f = $v instanceof Num ? $v->float() : $v;
+            if (!is_finite($f)) {
+                throw new JsonError('canonicalize: non-finite number');
+            }
+            return $f === 0.0 ? '0' : IntentWb::jsStr($f);
+        }
+        if (is_array($v) && array_is_list($v)) {
+            return '[' . implode(',', array_map(static fn(mixed $x): string => self::canonicalizeLenient($x), $v)) . ']';
+        }
+        if ($v instanceof Obj) {
+            $keys = $v->keys();
+            usort($keys, 'strcmp');
+            $parts = [];
+            foreach ($keys as $k) {
+                $parts[] = self::lenientStr($k) . ':' . self::canonicalizeLenient($v->get($k));
+            }
+            return '{' . implode(',', $parts) . '}';
+        }
+        throw new JsonError('canonicalize: unsupported type ' . get_debug_type($v));
+    }
+
+    private static function lenientStr(string $s): string
+    {
+        return '"' . preg_replace_callback(
+            '/["\\\\\x00-\x1f]|\xED[\xA0-\xBF][\x80-\xBF]/',
+            static function (array $m): string {
+                $c = $m[0];
+                if (strlen($c) === 3) { // a lone surrogate (WTF-8): JSON.stringify writes \udXXX
+                    return sprintf('\\u%04x', 0xD000 | ((ord($c[1]) & 0x3F) << 6) | (ord($c[2]) & 0x3F));
+                }
+                return match ($c) {
+                    '"' => '\\"', '\\' => '\\\\', "\x08" => '\\b', "\x0c" => '\\f',
+                    "\n" => '\\n', "\r" => '\\r', "\t" => '\\t',
+                    default => sprintf('\\u%04x', ord($c)),
+                };
+            },
+            $s
+        ) . '"';
     }
 
     public static function hasLoneSurrogate(string $s): bool
@@ -410,12 +468,8 @@ final class Parser
         $this->i++; // opening quote
         $out = '';
         while (true) {
-            if ($this->i >= $this->n) {
-                $this->err('unterminated string');
-            }
             // fast path: run of ordinary bytes
-            $len = strcspn($this->s, "\"\\\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f"
-                . "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f", $this->i);
+            $len = strcspn($this->s, "\"\\\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f", $this->i);
             $out .= substr($this->s, $this->i, $len);
             $this->i += $len;
             if ($this->i >= $this->n) {

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
-         bootstrap="vendor/autoload.php"
+         bootstrap="tests/bootstrap.php"
          colors="true"
          failOnWarning="true"
+         displayDetailsOnTestsThatTriggerWarnings="true"
          failOnRisky="true"
          beStrictAboutOutputDuringTests="true"
          cacheDirectory=".phpunit.cache">
@@ -14,8 +15,10 @@
     </testsuites>
     <php>
         <!-- a mutant that loops while growing an array must die at the limit instead of taking the CI runner down (shard 7 was
-             killed by a runner shutdown twice); the unmutated suite peaks at about 600 MB -->
-        <ini name="memory_limit" value="1536M"/>
+             killed by a runner shutdown twice); the unmutated suite peaks at about 600 MB (about 1.2 GB resident under Infection's coverage run) -->
+        <ini name="memory_limit" value="3072M"/>
+        <!-- per-test guard (tests/bootstrap.php): a test that runs over this many seconds, or holds over 2400 MB, throws and fails -->
+        <env name="PCA_TEST_DEADLINE" value="100"/>
     </php>
     <source>
         <include>

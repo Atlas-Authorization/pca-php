@@ -92,7 +92,7 @@ final class TotalityDepthTest extends TestCase
     public function testVerifyJsonDeepTextIsACleanWireDeny(): void
     {
         foreach ([33, 100000] as $n) {
-            $v = Pca::verifyJson('{"ver":2,"x":' . self::arr($n) . '}', null, 0, 'rs');
+            $v = Pca::verifyJson('{"ver":2,"x":' . self::arr($n) . '}', null, 0, 'rs', insecureSkipPlanRootCheck: true);
             $this->assertFalse($v['allow']);
             $this->assertSame(['wire' => false], $v['checks']);
             $this->assertStringContainsString('nesting too deep', $v['reason']);
@@ -103,7 +103,7 @@ final class TotalityDepthTest extends TestCase
     {
         foreach ([33, self::BUILT] as $n) {
             $deep = self::deepValue($n, true);
-            $this->assertFalse(Pca::verifyPcactnCore(Obj::of(['ver' => $deep]), null, 0, 'rs')['allow']);
+            $this->assertFalse(Pca::verifyPcactnCore(Obj::of(['ver' => $deep]), null, 0, 'rs', insecureSkipPlanRootCheck: true)['allow']);
             $this->assertIsString(Pca::validateWire(Obj::of(['action' => $deep])));
             [$why, $ok] = Pca::verifyChain([Obj::of(['caveats' => [Obj::of(['type' => 'x', 'v' => $deep])]])], 'x', true);
             $this->assertFalse($ok);

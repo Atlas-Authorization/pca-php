@@ -52,11 +52,11 @@ final class InjectionKillTest extends TestCase
         $ctx = $v->get('context');
         $grant = self::deepCopy($v->get('grant'));
         $grant->set('x', new Num('1e300'));
-        $r = Pca::verifyJson($v->get('pcactn_json'), $grant, $ctx->get('now')->int(), $ctx->get('aud'));
+        $r = Pca::verifyJson($v->get('pcactn_json'), $grant, $ctx->get('now')->int(), $ctx->get('aud'), insecureSkipPlanRootCheck: true);
         $this->assertFalse($r['allow']);
         $this->assertFalse($r['checks']['chain']);
         $this->assertSame('chain: malformed: exponent form is not allowed', $r['reason']);
-        $this->assertTrue(Pca::verifyJson($v->get('pcactn_json'), $v->get('grant'), $ctx->get('now')->int(), $ctx->get('aud'))['allow']);
+        $this->assertTrue(Pca::verifyJson($v->get('pcactn_json'), $v->get('grant'), $ctx->get('now')->int(), $ctx->get('aud'), insecureSkipPlanRootCheck: true)['allow']);
     }
 
     /**
@@ -169,7 +169,7 @@ final class InjectionKillTest extends TestCase
                 public function createStreamFromResource($resource): StreamInterface { return $this->g->createStreamFromResource($resource); }
             }');
         self::shadowClassExists(['GuzzleHttp\Psr7\HttpFactory']);
-        $r = (new PcaMiddleware('aud', fn() => null))->process(new ServerRequest('GET', '/'), new class implements \Psr\Http\Server\RequestHandlerInterface {
+        $r = (new PcaMiddleware('aud', fn() => null, signatureOnly: true))->process(new ServerRequest('GET', '/'), new class implements \Psr\Http\Server\RequestHandlerInterface {
             public function handle(\Psr\Http\Message\ServerRequestInterface $request): \Psr\Http\Message\ResponseInterface
             {
                 throw new \LogicException('must not run');

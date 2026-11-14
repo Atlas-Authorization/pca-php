@@ -69,6 +69,7 @@ final class PcaMiddlewareTest extends TestCase
             fn (): int => $this->now,
             $factory,
             $factory,
+            signatureOnly: true,
         );
     }
 
@@ -162,7 +163,7 @@ final class PcaMiddlewareTest extends TestCase
         $this->assertSame(401, $response->getStatusCode());
         $this->assertStringStartsWith('PCA realm="pca"', $response->getHeaderLine('WWW-Authenticate'));
         $body = json_decode((string)$response->getBody(), true);
-        $this->assertSame('invalid_request', $body['error']);
+        $this->assertSame('missing_pcactn', $body['error']);
     }
 
     public function testUndecodableHeaderIsUnauthorized(): void
@@ -174,7 +175,7 @@ final class PcaMiddlewareTest extends TestCase
 
         $this->assertFalse($handler->called);
         $this->assertSame(401, $response->getStatusCode());
-        $this->assertStringContainsString('error="invalid_request"', $response->getHeaderLine('WWW-Authenticate'));
+        $this->assertStringContainsString('error="invalid_pcactn"', $response->getHeaderLine('WWW-Authenticate'));
     }
 
     public function testUnknownGrantIsUnauthorized(): void

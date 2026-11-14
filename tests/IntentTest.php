@@ -112,7 +112,7 @@ final class IntentTest extends TestCase
     private static function verify(Obj $p, mixed $policy = null, ?Obj $grant = null): array
     {
         $ctx = self::vector()->get('context');
-        return Pca::verifyPcactnCore($p, $grant ?? self::grant(), $ctx->get('now')->int(), $ctx->get('aud'), null, $policy);
+        return Pca::verifyPcactnCore($p, $grant ?? self::grant(), $ctx->get('now')->int(), $ctx->get('aud'), null, $policy, insecureSkipPlanRootCheck: true);
     }
 
     public function testPositiveBinding(): void
