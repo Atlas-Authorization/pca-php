@@ -92,6 +92,12 @@ final class IntentWb
     /** The optional suite members every W-B artifact may carry. */
     public const SUITE_MEMBERS = ['alg', 'pq_pk', 'pq_sig'];
 
+    /**
+     * TEST SEAM: called with 'world' / 'offers' / 'provenance' / 'wb' at the start of each fail-closed evaluation; a test
+     * sets a closure that throws to prove the catch-all refuses. Always null in production.
+     */
+    public static ?\Closure $faultHook = null;
+
     // ---- JS value helpers ------------------------------------------------------------------------------------------
 
     /** `o?.[k]`: the own member, or JsUndefined::U (absent member, or `o` not an object). */
@@ -118,7 +124,7 @@ final class IntentWb
             return $v->float();
         }
         if (is_int($v)) {
-            return (float)$v;
+            return $v; // int widens to the ?float return type (the one coercion strict_types allows)
         }
         return is_float($v) ? $v : null;
     }
@@ -149,12 +155,12 @@ final class IntentWb
         return new Num((string)$i);
     }
 
-    private static function isBoundedString(mixed $v, int $max): bool
+    public static function isBoundedString(mixed $v, int $max): bool
     {
         return is_string($v) && $v !== '' && strlen($v) <= $max;
     }
 
-    private static function isDigest(mixed $v): bool
+    public static function isDigest(mixed $v): bool
     {
         return Pca::unb64u($v, 32) !== null;
     }
@@ -168,14 +174,11 @@ final class IntentWb
     public static function scalarEq(mixed $a, mixed $b): bool
     {
         $fa = self::numVal($a);
-        $fb = self::numVal($b);
-        if ($fa !== null || $fb !== null) {
-            return $fa !== null && $fb !== null && $fa === $fb;
+        if ($fa !== null) {
+            return $fa === self::numVal($b);
         }
-        if (is_array($a) || is_array($b)) {
-            return false; // distinct JS arrays are never ===
-        }
-        return $a === $b; // string, bool, null, Undef by value; Obj by identity
+        // a non-number $a never === a number $b; distinct JS arrays are never === (PHP compares arrays by value)
+        return !is_array($a) && $a === $b; // string, bool, null, Undef by value; Obj by identity
     }
 
     /** `v === 1` for a JSON number. */
@@ -190,28 +193,20 @@ final class IntentWb
         $idx = [];
         $rest = [];
         foreach ($o->keys() as $k) {
-            if (preg_match('/^(?:0|[1-9][0-9]{0,9})$/D', $k) === 1 && (int)$k <= 4294967294) {
+            if (preg_match('/^(?:0|[1-9][0-9]{0,9})$/D', $k) === 1 && $k <= 4294967294) { // numeric string vs int: compared as numbers
                 $idx[] = $k;
             } else {
                 $rest[] = $k;
             }
         }
-        usort($idx, static fn(string $a, string $b): int => (int)$a <=> (int)$b);
+        usort($idx, static fn(string $a, string $b): int => $a <=> $b); // two numeric strings compare as numbers
         return array_merge($idx, $rest);
     }
 
-    /** Distinct list (JS `new Set(xs).size === xs.length`) for a list of strings. */
+    /** Distinct list (JS `new Set(xs).size === xs.length`) for a list of strings (array_unique compares as strings: exact). */
     private static function distinct(array $xs): bool
     {
-        $seen = [];
-        foreach ($xs as $x) {
-            $k = 'k' . (is_string($x) ? $x : serialize($x));
-            if (isset($seen[$k])) {
-                return false;
-            }
-            $seen[$k] = true;
-        }
-        return true;
+        return count(array_unique($xs)) === count($xs);
     }
 
     /** ECMAScript Number::toString of a binary64. */
@@ -236,12 +231,12 @@ final class IntentWb
             }
         }
         [$mant, $exp] = explode('e', $s);
-        $digits = rtrim(str_replace('.', '', $mant), '0');
+        $digits = str_replace('.', '', $mant); // the SHORTEST mantissa never ends in 0 (p-1 digits would round-trip too)
         if ($digits === '') {
             $digits = '0';
         }
         $k = strlen($digits);
-        $n = (int)$exp + 1; // value = 0.digits * 10^n
+        $n = $exp + 1; // value = 0.digits * 10^n ("+05" / "-07" are numeric strings)
         if ($k <= $n && $n <= 21) {
             return $sign . $digits . str_repeat('0', $n - $k);
         }
@@ -254,6 +249,40 @@ final class IntentWb
         $e = $n - 1;
         $es = ($e > 0 ? '+' : '-') . abs($e);
         return $sign . ($k === 1 ? $digits : $digits[0] . '.' . substr($digits, 1)) . 'e' . $es;
+    }
+
+    /** One JS whitespace character (`\s`, StrWhiteSpaceChar) as a byte-wise PCRE alternation: never /u, a string may hold CESU-8 lone surrogates. */
+    public const JS_WS = '[ \t\n\r\x0B\x0C]|\xC2\xA0|\xE1\x9A\x80|\xE2\x80[\x80-\x8A\xA8\xA9\xAF]|\xE2\x81\x9F|\xE3\x80\x80|\xEF\xBB\xBF';
+
+    /**
+     * JS Number(string) (ECMA-262 StringToNumber), the one helper for every site the reference reads with Number().
+     * Byte-wise, never /u (a string may hold CESU-8 lone surrogates) and never trim(), whose char list is bytes: it would strip
+     * "©" (C2 A9) or "†" (E2 80 A0). JS StrWhiteSpaceChar around at most one token; anything else is NaN.
+     */
+    public static function jsNumber(string $s): float
+    {
+        $ws = '(?:' . self::JS_WS . ')*+';
+        if (preg_match('/\A' . $ws . '([0-9A-Za-z+.\-]*+)' . $ws . '\z/', $s, $m) !== 1) {
+            return NAN;
+        }
+        $t = $m[1];
+        if ($t === '') {
+            return 0.0;
+        }
+        // hexdec / octdec / bindec skip their own 0x / 0o / 0b prefix (PHP >= 7.4)
+        if (preg_match('/\A0[xX][0-9a-fA-F]+\z/', $t) === 1) {
+            return hexdec($t);
+        }
+        if (preg_match('/\A0[oO][0-7]+\z/', $t) === 1) {
+            return octdec($t);
+        }
+        if (preg_match('/\A0[bB][01]+\z/', $t) === 1) {
+            return bindec($t);
+        }
+        if (preg_match('/\A[+-]?Infinity\z/', $t) === 1) {
+            return $t[0] === '-' ? -INF : INF;
+        }
+        return preg_match('/\A[+-]?(?:[0-9]+\.?[0-9]*|\.[0-9]+)(?:[eE][+-]?[0-9]+)?\z/', $t) === 1 ? (float)$t : NAN;
     }
 
     /** ECMAScript String(v) for JSON values (template-literal interpolation in reasons). */
@@ -294,7 +323,7 @@ final class IntentWb
             if (self::isNegZero($f)) {
                 return new Num('-0'); // refused: negative zero
             }
-            return new Num(floor($f) === $f && abs($f) <= self::MAX_SAFE ? sprintf('%.0f', $f) : self::jsNumStr($f));
+            return new Num(self::jsNumStr($f)); // a safe integer renders as its plain decimal digits
         }
         if (is_array($v)) {
             return array_map([self::class, 'norm'], $v);
@@ -310,7 +339,7 @@ final class IntentWb
     }
 
     /** strictCanonical(value) of the JS value. Throws JsonError on any strict-profile violation. */
-    private static function canon(mixed $v): string
+    public static function canon(mixed $v): string
     {
         return Json::canonicalizeStrict(self::norm($v));
     }
@@ -390,7 +419,7 @@ final class IntentWb
     }
 
     /** Closed member set check: null when `o` has exactly the `required` members plus any of `optional`. */
-    private static function closedMembers(Obj $o, array $required, array $optional = [], string $where = 'object'): ?string
+    public static function closedMembers(Obj $o, array $required, array $optional = [], string $where = 'object'): ?string
     {
         foreach (self::jsKeys($o) as $k) {
             if (!in_array($k, $required, true) && !in_array($k, $optional, true)) {
@@ -406,7 +435,7 @@ final class IntentWb
     }
 
     /** Validate a pin's optional `pq_pk` (absent, or a non-empty string; JSON null is malformed). */
-    private static function pinPqOk(mixed $v): bool
+    public static function pinPqOk(mixed $v): bool
     {
         return $v === JsUndefined::U || (is_string($v) && $v !== '');
     }
@@ -459,8 +488,8 @@ final class IntentWb
     {
         try {
             $pk = $pin instanceof Obj ? self::g($pin, 'pk') : $pin;
-            $pinPq = $pin instanceof Obj ? self::g($pin, 'pq_pk') : JsUndefined::U;
-            if (!($artifact instanceof Obj) || !is_string(self::g($artifact, 'sig')) || !is_string($pk)) {
+            $pinPq = self::g($pin, 'pq_pk');
+            if (!is_string(self::g($artifact, 'sig')) || !is_string($pk)) { // g() is undefined on a non-Obj artifact
                 return false;
             }
             $alg = self::g($artifact, 'alg');
@@ -784,6 +813,7 @@ final class IntentWb
     {
         $fail = static fn(string $reason): array => ['ok' => false, 'reason' => "facts: $reason"];
         try {
+            self::$faultHook?->__invoke('world');
             if (!($input instanceof Obj)) {
                 return $fail('input must be an object');
             }
@@ -1101,6 +1131,7 @@ final class IntentWb
     private static function decideOfferSet(mixed $policy, mixed $committed, mixed $o, mixed $params, mixed $aud, mixed $session, mixed $now, mixed $skewMs): array
     {
         try {
+            self::$faultHook?->__invoke('offers');
             $pe = self::validateOfferPolicy($policy);
             if ($pe !== null) {
                 return ['ok' => false, 'reason' => "offers: policy misconfigured (fail closed): $pe"];
@@ -1647,6 +1678,7 @@ final class IntentWb
                 'classes' => self::toObj($classes), 'env' => new Obj()];
         };
         try {
+            self::$faultHook?->__invoke('provenance');
             if (!($input instanceof Obj)) {
                 return $deny('input must be an object');
             }
@@ -2224,6 +2256,7 @@ final class IntentWb
     {
         $out = ['outcome' => 'admit', 'checks' => [], 'env' => []];
         try {
+            self::$faultHook?->__invoke('wb');
             $ce = self::intentWbContextError($input);
             if ($ce !== null) {
                 return array_merge($out, ['outcome' => 'deny', 'checks' => ['facts' => 'fail'], 'reason' => "facts: the W-B context is malformed: $ce"]);

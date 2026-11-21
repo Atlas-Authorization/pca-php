@@ -1,0 +1,1 @@
+{"id":"fn-polarity-nested-ne","kind":"fn","fn":"polarity","input":[{"k":"and","a":{"k":"not","c":{"k":"cmp","op":"ne","l":{"k":"param","path":"env.judge.safe","ty":{"k":"s"}},"r":{"k":"lit","v":{"k":"s","s":"no"}}}},"b":{"k":"cmp","op":"eq","l":{"k":"param","path":"x","ty":{"k":"s"}},"r":{"k":"lit","v":{"k":"s","s":"y"}}}}],"expect":["env.judge.safe"]}
