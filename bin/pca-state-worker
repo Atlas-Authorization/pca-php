@@ -1,0 +1,12 @@
+#!/usr/bin/env php
+<?php
+declare(strict_types=1);
+
+// One client process of the pca-state profile: `pca-state-worker <json config>` (see StoreConformancePcaState::workerMain).
+foreach ([__DIR__ . '/../vendor/autoload.php', __DIR__ . '/../../../autoload.php'] as $autoload) {
+    if (is_file($autoload)) {
+        require $autoload;
+        break;
+    }
+}
+exit(Atlas\Pca\StoreConformancePcaState::workerMain($argv));

@@ -20,7 +20,7 @@ final class PredDifferentialKillTest extends TestCase
 {
     private static ?Obj $data = null;
 
-    private static function data(): Obj
+    private static function fixtureData(): Obj
     {
         return self::$data ??= OracleData::raw('killPred.json.gz', true);
     }
@@ -28,12 +28,12 @@ final class PredDifferentialKillTest extends TestCase
     /** @return list<array<int,mixed>> */
     private static function sec(string $k): array
     {
-        return self::data()->get($k);
+        return self::fixtureData()->get($k);
     }
 
     private static function ctx(mixed $i): ?Obj
     {
-        $c = self::data()->get('ctxs')[(int) $i->lexeme];
+        $c = self::fixtureData()->get('ctxs')[(int) $i->lexeme];
         return $c instanceof Obj ? $c : null;
     }
 

@@ -1,0 +1,2438 @@
+{
+ "format": "pca-limit-reasons/1",
+ "cases": [
+  {
+   "name": "lte scalar",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.amount",
+       "op": "lte",
+       "value": 100
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "amount": 400
+    }
+   },
+   "allowed": false,
+   "reason": "amount <= 100 not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "lt",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.amount",
+       "op": "lt",
+       "value": 100
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "amount": 400
+    }
+   },
+   "allowed": false,
+   "reason": "amount < 100 not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "gt",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.amount",
+       "op": "gt",
+       "value": 100
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "amount": 4
+    }
+   },
+   "allowed": false,
+   "reason": "amount > 100 not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "gte",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.amount",
+       "op": "gte",
+       "value": 100
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "amount": 4
+    }
+   },
+   "allowed": false,
+   "reason": "amount >= 100 not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "eq string",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.currency",
+       "op": "eq",
+       "value": "usd"
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "currency": "eur"
+    }
+   },
+   "allowed": false,
+   "reason": "currency == \"usd\" not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "ne bool",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.live",
+       "op": "ne",
+       "value": true
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "live": true
+    }
+   },
+   "allowed": false,
+   "reason": "live != true not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "eq null",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.x",
+       "op": "eq",
+       "value": null
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "x": 1
+    }
+   },
+   "allowed": false,
+   "reason": "x == null not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "in array",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.currency",
+       "op": "in",
+       "value": [
+        "usd",
+        "eur"
+       ]
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "currency": "gbp"
+    }
+   },
+   "allowed": false,
+   "reason": "currency in [\"usd\", \"eur\"] not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "nin array",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.currency",
+       "op": "nin",
+       "value": [
+        "usd",
+        "eur"
+       ]
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "currency": "usd"
+    }
+   },
+   "allowed": false,
+   "reason": "currency not in [\"usd\", \"eur\"] not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "in 9 items",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.c",
+       "op": "in",
+       "value": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+       ]
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "c": 0
+    }
+   },
+   "allowed": false,
+   "reason": "c in [...] not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "in 8 items",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.c",
+       "op": "in",
+       "value": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+       ]
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "c": 0
+    }
+   },
+   "allowed": false,
+   "reason": "c in [1, 2, 3, 4, 5, 6, 7, 8] not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "in nested array",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.c",
+       "op": "in",
+       "value": [
+        [
+         1
+        ],
+        2,
+        {
+         "a": 1
+        },
+        null,
+        true
+       ]
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "c": 0
+    }
+   },
+   "allowed": false,
+   "reason": "c in [<value>, 2, <value>, null, true] not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "exists true",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.memo",
+       "op": "exists",
+       "value": true
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {}
+   },
+   "allowed": false,
+   "reason": "memo present not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "exists false",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.memo",
+       "op": "exists",
+       "value": false
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "memo": "x"
+    }
+   },
+   "allowed": false,
+   "reason": "memo absent not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "exists no value",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.memo",
+       "op": "exists"
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {}
+   },
+   "allowed": false,
+   "reason": "memo present not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "prefix",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.to",
+       "op": "prefix",
+       "value": "acct_"
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "to": "x"
+    }
+   },
+   "allowed": false,
+   "reason": "to starts with \"acct_\" not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "like",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.to",
+       "op": "like",
+       "value": "a%"
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "to": "x"
+    }
+   },
+   "allowed": false,
+   "reason": "to like \"a%\" not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "matches",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.to",
+       "op": "matches",
+       "value": "^a+$"
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "to": "x"
+    }
+   },
+   "allowed": false,
+   "reason": "to matches \"^a+$\" not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "is_a",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.to",
+       "op": "is_a",
+       "value": "email"
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "to": "x"
+    }
+   },
+   "allowed": false,
+   "reason": "to is a \"email\" not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "member_of",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.to",
+       "op": "member_of",
+       "value": "team"
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "to": "x"
+    }
+   },
+   "allowed": false,
+   "reason": "to member of \"team\" not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "ref",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.amount",
+       "op": "lte",
+       "ref": "subject.limit"
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "amount": 4
+    }
+   },
+   "allowed": false,
+   "reason": "amount <= subject.limit not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "ref non-string",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.amount",
+       "op": "lte",
+       "ref": 5
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "amount": 4
+    }
+   },
+   "allowed": false,
+   "reason": "amount <= <ref> not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "field not params",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "subject.tier",
+       "op": "eq",
+       "value": "gold"
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {}
+   },
+   "allowed": false,
+   "reason": "subject.tier == \"gold\" not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "field bare action.",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.verb",
+       "op": "eq",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {}
+   },
+   "allowed": false,
+   "reason": "action.verb == \"x\" not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "unknown op",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.a",
+       "op": "zzz",
+       "value": 1
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 1
+    }
+   },
+   "allowed": false,
+   "reason": "a <condition> not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "non-string field",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": 5,
+       "op": "eq",
+       "value": 1
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {}
+   },
+   "allowed": false,
+   "reason": "<field> == 1 not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "long string",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.s",
+       "op": "eq",
+       "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "s": "y"
+    }
+   },
+   "allowed": false,
+   "reason": "s == \"...\" not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "64 string",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.s",
+       "op": "eq",
+       "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "s": "y"
+    }
+   },
+   "allowed": false,
+   "reason": "s == \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\" not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "quote string",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.s",
+       "op": "eq",
+       "value": "a\"b"
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "s": "y"
+    }
+   },
+   "allowed": false,
+   "reason": "s == \"...\" not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "backslash string",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.s",
+       "op": "eq",
+       "value": "a\\b"
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "s": "y"
+    }
+   },
+   "allowed": false,
+   "reason": "s == \"...\" not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "control string",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.s",
+       "op": "eq",
+       "value": "a\nb"
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "s": "y"
+    }
+   },
+   "allowed": false,
+   "reason": "s == \"...\" not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "astral string",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.s",
+       "op": "eq",
+       "value": "a😀b"
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "s": "y"
+    }
+   },
+   "allowed": false,
+   "reason": "s == \"...\" not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "bmp unicode string",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.s",
+       "op": "eq",
+       "value": "café"
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "s": "y"
+    }
+   },
+   "allowed": false,
+   "reason": "s == \"café\" not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "fraction",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.a",
+       "op": "lte",
+       "value": 0.5
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 4
+    }
+   },
+   "allowed": false,
+   "reason": "a <= <number> not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "negative int",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.a",
+       "op": "gte",
+       "value": -7
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": -9
+    }
+   },
+   "allowed": false,
+   "reason": "a >= -7 not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "unsafe int",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.a",
+       "op": "lte",
+       "value": 9007199254740992
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 9007199254740992
+    }
+   },
+   "allowed": true,
+   "reason": null
+  },
+  {
+   "name": "max safe int",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.a",
+       "op": "lte",
+       "value": 9007199254740991
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 9007199254740992
+    }
+   },
+   "allowed": false,
+   "reason": "a <= 9007199254740991 not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "object value",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.a",
+       "op": "eq",
+       "value": {
+        "k": 1
+       }
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 1
+    }
+   },
+   "allowed": false,
+   "reason": "a == <value> not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "missing value",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.a",
+       "op": "eq"
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 1
+    }
+   },
+   "allowed": false,
+   "reason": "a == <value> not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "all_of first unmet",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "all_of": [
+        {
+         "field": "action.params.a",
+         "op": "lte",
+         "value": 5
+        },
+        {
+         "field": "action.params.b",
+         "op": "lte",
+         "value": 6
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 1,
+     "b": 9
+    }
+   },
+   "allowed": false,
+   "reason": "b <= 6 not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "all_of nested 3",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "all_of": [
+        {
+         "all_of": [
+          {
+           "all_of": [
+            {
+             "field": "action.params.a",
+             "op": "lte",
+             "value": 5
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 9
+    }
+   },
+   "allowed": false,
+   "reason": "a <= 5 not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "all_of depth 4",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "all_of": [
+        {
+         "all_of": [
+          {
+           "all_of": [
+            {
+             "all_of": [
+              {
+               "field": "action.params.x",
+               "op": "eq",
+               "value": 1
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "x": 2
+    }
+   },
+   "allowed": false,
+   "reason": "x == 1 not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "all_of depth 5",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "all_of": [
+        {
+         "all_of": [
+          {
+           "all_of": [
+            {
+             "all_of": [
+              {
+               "all_of": [
+                {
+                 "field": "action.params.x",
+                 "op": "eq",
+                 "value": 1
+                }
+               ]
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "x": 2
+    }
+   },
+   "allowed": false,
+   "reason": "all of (x == 1) not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "any_of",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "any_of": [
+        {
+         "field": "action.params.a",
+         "op": "lte",
+         "value": 5
+        },
+        {
+         "field": "action.params.b",
+         "op": "eq",
+         "value": "q"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 9,
+     "b": "z"
+    }
+   },
+   "allowed": false,
+   "reason": "any of (a <= 5; b == \"q\") not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "any_of in all_of",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "all_of": [
+        {
+         "any_of": [
+          {
+           "field": "action.params.a",
+           "op": "lte",
+           "value": 5
+          },
+          {
+           "field": "action.params.b",
+           "op": "eq",
+           "value": "q"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 9,
+     "b": "z"
+    }
+   },
+   "allowed": false,
+   "reason": "any of (a <= 5; b == \"q\") not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "not",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "not": {
+        "field": "action.params.a",
+        "op": "eq",
+        "value": 1
+       }
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 1
+    }
+   },
+   "allowed": false,
+   "reason": "not (a == 1) not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "not nested group",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "not": {
+        "not": {
+         "not": {
+          "field": "action.params.a",
+          "op": "eq",
+          "value": 1
+         }
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 1
+    }
+   },
+   "allowed": false,
+   "reason": "not (not ((...))) not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "any_of 9 kids",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "any_of": [
+        {
+         "field": "action.params.a",
+         "op": "eq",
+         "value": 100
+        },
+        {
+         "field": "action.params.a",
+         "op": "eq",
+         "value": 101
+        },
+        {
+         "field": "action.params.a",
+         "op": "eq",
+         "value": 102
+        },
+        {
+         "field": "action.params.a",
+         "op": "eq",
+         "value": 103
+        },
+        {
+         "field": "action.params.a",
+         "op": "eq",
+         "value": 104
+        },
+        {
+         "field": "action.params.a",
+         "op": "eq",
+         "value": 105
+        },
+        {
+         "field": "action.params.a",
+         "op": "eq",
+         "value": 106
+        },
+        {
+         "field": "action.params.a",
+         "op": "eq",
+         "value": 107
+        },
+        {
+         "field": "action.params.a",
+         "op": "eq",
+         "value": 108
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 1
+    }
+   },
+   "allowed": false,
+   "reason": "any of (a == 100; a == 101; a == 102; a == 103; a == 104; a == 105; a == 106; a == 107) not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "group bad shape",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "all_of": 5,
+       "any_of": "x"
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {}
+   },
+   "allowed": false,
+   "reason": "<condition> not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "non-object cond",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      "nope"
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {}
+   },
+   "allowed": false,
+   "reason": "<condition> not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "second pred",
+   "predicates": [
+    {
+     "verb": "other.verb",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.a",
+       "op": "lte",
+       "value": 1
+      }
+     ]
+    },
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.a",
+       "op": "lte",
+       "value": 2
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 9
+    }
+   },
+   "allowed": false,
+   "reason": "a <= 2 not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "first of two in scope",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.a",
+       "op": "lte",
+       "value": 1
+      }
+     ]
+    },
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.a",
+       "op": "lte",
+       "value": 2
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 9
+    }
+   },
+   "allowed": false,
+   "reason": "a <= 1 not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "second cond unmet",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.a",
+       "op": "lte",
+       "value": 100
+      },
+      {
+       "field": "action.params.b",
+       "op": "eq",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 1,
+     "b": "y"
+    }
+   },
+   "allowed": false,
+   "reason": "b == \"x\" not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "unknown (missing param)",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.nope",
+       "op": "lte",
+       "value": 100
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {}
+   },
+   "allowed": false,
+   "reason": "nope <= 100 not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "wildcard verb",
+   "predicates": [
+    {
+     "verb": "*",
+     "resource": "payments/*",
+     "where": [
+      {
+       "field": "action.params.a",
+       "op": "lte",
+       "value": 1
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 5
+    }
+   },
+   "allowed": false,
+   "reason": "a <= 1 not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "array verb",
+   "predicates": [
+    {
+     "verb": [
+      "x",
+      "payments.send"
+     ],
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.a",
+       "op": "lte",
+       "value": 1
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 5
+    }
+   },
+   "allowed": false,
+   "reason": "a <= 1 not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "scope not matching verb",
+   "predicates": [
+    {
+     "verb": "payments.refund",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.a",
+       "op": "lte",
+       "value": 1
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 5
+    }
+   },
+   "allowed": false,
+   "reason": "no predicate permits payments.send on payments/acme"
+  },
+  {
+   "name": "scope not matching resource",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "other/x",
+     "where": [
+      {
+       "field": "action.params.a",
+       "op": "lte",
+       "value": 1
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 5
+    }
+   },
+   "allowed": false,
+   "reason": "no predicate permits payments.send on payments/acme"
+  },
+  {
+   "name": "in scope no where",
+   "predicates": [
+    {
+     "verb": "payments.refund",
+     "resource": "payments/acme"
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 5
+    }
+   },
+   "allowed": false,
+   "reason": "no predicate permits payments.send on payments/acme"
+  },
+  {
+   "name": "where not array",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": "x"
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 5
+    }
+   },
+   "allowed": false,
+   "reason": "no predicate permits payments.send on payments/acme"
+  },
+  {
+   "name": "empty list",
+   "predicates": [],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 5
+    }
+   },
+   "allowed": false,
+   "reason": "envelope grants no predicates"
+  },
+  {
+   "name": "regex budget 65 matches",
+   "predicates": [
+    {
+     "verb": "*",
+     "where": [
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "r",
+    "resource": "/",
+    "params": {}
+   },
+   "allowed": false,
+   "reason": "action.verb matches \"r\" not satisfied for r on /"
+  },
+  {
+   "name": "regex budget 64 matches",
+   "predicates": [
+    {
+     "verb": "*",
+     "where": [
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      },
+      {
+       "field": "action.verb",
+       "op": "matches",
+       "value": "r"
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "r",
+    "resource": "/",
+    "params": {}
+   },
+   "allowed": true,
+   "reason": null
+  },
+  {
+   "name": "2^53 value",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.a",
+       "op": "gte",
+       "value": 9007199254740992
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 1
+    }
+   },
+   "allowed": false,
+   "reason": "a >= <number> not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "negative max safe",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.a",
+       "op": "gte",
+       "value": -9007199254740991
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": -9007199254740992
+    }
+   },
+   "allowed": false,
+   "reason": "a >= -9007199254740991 not satisfied for payments.send on payments/acme"
+  },
+  {
+   "name": "allowed",
+   "predicates": [
+    {
+     "verb": "payments.send",
+     "resource": "payments/acme",
+     "where": [
+      {
+       "field": "action.params.a",
+       "op": "lte",
+       "value": 10
+      }
+     ]
+    }
+   ],
+   "action": {
+    "verb": "payments.send",
+    "resource": "payments/acme",
+    "params": {
+     "a": 5
+    }
+   },
+   "allowed": true,
+   "reason": null
+  }
+ ]
+}

@@ -1,0 +1,55 @@
+#!/usr/bin/env php
+<?php
+declare(strict_types=1);
+
+// One FROST signer as its own OS process: `pca-frost-signer <config.json>` (or FROST_SIGNER_CONFIG). The config holds identifier, share (base64url,
+// 32 bytes), groupPublicKey (base64url, 32 bytes), threshold, policyAuthorityPublicKey (base64url, 32 bytes) and optionally host and port.
+// It prints one machine-readable line `FROST_SIGNER_READY {"identifier":..,"url":..,"port":..}` and serves until it is terminated.
+foreach ([__DIR__ . '/../vendor/autoload.php', __DIR__ . '/../../../autoload.php'] as $autoload) {
+    if (is_file($autoload)) {
+        require $autoload;
+        break;
+    }
+}
+
+use Atlas\Pca\GuardianSignerService;
+use Atlas\Pca\Pca;
+use Atlas\Pca\SignerHttpServer;
+
+$path = $argv[1] ?? getenv('FROST_SIGNER_CONFIG');
+if (!is_string($path) || $path === '') {
+    fwrite(STDERR, "usage: pca-frost-signer <config.json>  (or set FROST_SIGNER_CONFIG)\n");
+    exit(2);
+}
+try {
+    $cfg = json_decode((string)file_get_contents($path), true, 8, JSON_THROW_ON_ERROR);
+    $bytes = static function (string $field) use ($cfg): string {
+        $raw = is_string($cfg[$field] ?? null) ? Pca::unb64u($cfg[$field], 32) : null;
+        if ($raw === null) {
+            throw new RuntimeException("pca-frost-signer: field '$field' is not 32-byte canonical base64url");
+        }
+        return $raw;
+    };
+    $service = new GuardianSignerService([
+        'identifier' => $cfg['identifier'] ?? null, 'share' => $bytes('share'), 'groupPublicKey' => $bytes('groupPublicKey'),
+        'threshold' => $cfg['threshold'] ?? null, 'policyAuthorityPublicKey' => $bytes('policyAuthorityPublicKey'),
+    ]);
+    $server = SignerHttpServer::bind($service, is_string($cfg['host'] ?? null) ? $cfg['host'] : '127.0.0.1', (int)($cfg['port'] ?? 0));
+} catch (Throwable $e) {
+    fwrite(STDERR, 'pca-frost-signer: ' . $e->getMessage() . "\n");
+    exit(1);
+}
+$run = true;
+if (function_exists('pcntl_async_signals')) {
+    pcntl_async_signals(true);
+    pcntl_signal(SIGTERM, static function () use (&$run): void {
+        $run = false;
+    });
+    pcntl_signal(SIGINT, static function () use (&$run): void {
+        $run = false;
+    });
+}
+fwrite(STDOUT, 'FROST_SIGNER_READY ' . json_encode(['identifier' => $service->identifier, 'url' => $server->url, 'port' => $server->port]) . "\n");
+fflush(STDOUT);
+$server->serve(static fn(): bool => $run);
+$server->close();

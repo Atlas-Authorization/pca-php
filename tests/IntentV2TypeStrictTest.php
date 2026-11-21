@@ -32,7 +32,7 @@ final class IntentV2TypeStrictTest extends TestCase
     public function testNonStringMonitorKindHasNoStates(): void
     {
         foreach ([true, 1, 0, null, [], new Num('1')] as $kind) {
-            $this->assertSame([], IntentV2::monitorStates(Obj::of(['kind' => $kind])), var_export($kind, true));
+            $this->assertNull(IntentV2::monitorStates(Obj::of(['kind' => $kind])), var_export($kind, true)); // the reference's switch falls through: undefined
         }
         $this->assertSame(['unmet', 'met'], IntentV2::monitorStates(Obj::of(['kind' => 'requires_prior'])));
     }

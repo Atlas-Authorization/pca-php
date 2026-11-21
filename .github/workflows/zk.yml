@@ -1,0 +1,44 @@
+name: Groth16 (libpcazk)
+
+# Atlas\Pca\ZkNative: the Groth16 pairing check and prover for snarkjs artifacts (BN254 and BLS12-381) through ext-ffi over libpcazk (arkworks behind a small C library, built here from the flagship crate): the verification cases of the shared reference corpus, in the default and the strict mode.
+on:
+  push:
+    branches: [main, 'ci/**']
+    tags: ['*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  zk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: sodium, json, mbstring, intl, gd, zip, ffi, openssl, gmp
+          ini-values: ffi.enable=true
+          coverage: none
+          tools: composer
+      - name: Source layout (full shared corpus and the Groth16 crate from the flagship)
+        shell: bash
+        run: .github/scripts/fetch-flagship-corpus.sh --mono php-pca --less
+      - uses: dtolnay/rust-toolchain@stable
+      - name: libpcazk (cargo build --features capi)
+        run: echo "ATLAS_PCA_LIBPCAZK=$(.github/scripts/build-libpcazk.sh "$RUNNER_TEMP/pcazk" "$RUNNER_TEMP/mono/packages/pca-zk/crate" | tail -1)/libpcazk.so" >> "$GITHUB_ENV"
+      - name: composer install
+        run: |
+          for n in 1 2 3 4; do composer install --no-interaction --no-progress --prefer-dist && break; [ "$n" = 4 ] && exit 1; echo "composer attempt $n failed (network); retrying"; sleep $((n * 15)); done
+      - name: Groth16 verification replay and the full zk compliance corpus (every pairing case decided)
+        env:
+          ATLAS_PCA_LIBPCAZK_REQUIRED: '1'
+        run: |
+          test -s test-data/ref-zk.json.gz
+          vendor/bin/phpunit --filter 'RefZkNativeDifferentialTest|RefZkDifferentialTest'
