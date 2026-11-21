@@ -1,0 +1,41 @@
+name: FN-DSA (libfndsa)
+
+# Atlas\Pca\FndsaNative: real FN-DSA through ext-ffi over libfndsa (Pornin fn-dsa 0.4.0, built here from the flagship crate): the 480-case corpus replay and the known-answer replay.
+on:
+  push:
+    branches: [main, 'ci/**']
+    tags: ['*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fndsa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: sodium, json, mbstring, intl, gd, zip, ffi, openssl, gmp
+          ini-values: ffi.enable=true
+          coverage: none
+          tools: composer
+      - name: Source layout (full adversarial corpus and the FN-DSA crate from the flagship)
+        shell: bash
+        run: .github/scripts/fetch-flagship-corpus.sh --mono php-pca --less
+      - name: libfndsa (cargo build --features capi)
+        run: echo "ATLAS_PCA_LIBFNDSA=$(.github/scripts/build-libfndsa.sh "$RUNNER_TEMP/fndsa" "$RUNNER_TEMP/mono/packages/pca-fndsa-wasm/crate" | tail -1)/libfndsa.so" >> "$GITHUB_ENV"
+      - name: composer install
+        run: |
+          for n in 1 2 3 4; do composer install --no-interaction --no-progress --prefer-dist && break; [ "$n" = 4 ] && exit 1; echo "composer attempt $n failed (network); retrying"; sleep $((n * 15)); done
+      - name: FN-DSA replay
+        env:
+          ATLAS_PCA_LIBFNDSA_REQUIRED: '1'
+        run: vendor/bin/phpunit --filter 'RefFndsaDifferentialTest|RefFndsaNativeTest|RefFndsaCoreTest|RefFndsaPcactnE2eTest|AgentProducerTest'

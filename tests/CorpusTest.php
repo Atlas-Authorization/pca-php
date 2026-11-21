@@ -165,6 +165,8 @@ final class CorpusTest extends TestCase
             $this->assertSame($b['valid'], Pca::unb64u($b['input'], isset($b['len']) ? (int)$b['len'] : null) !== null, json_encode($b['input']));
         }
         foreach ($advp['json_parse'] as $j) {
+            // a 200000-byte input must not become the assertion message (the debug printer hangs on a 400 KB line)
+            $label = strlen($j['input']) > 200 ? 'json_parse len ' . strlen($j['input']) . ' ' . substr($j['input'], 0, 40) : json_encode($j['input']);
             $ok = true;
             $out = null;
             try {
@@ -172,7 +174,7 @@ final class CorpusTest extends TestCase
             } catch (\Atlas\Pca\JsonError) {
                 $ok = false;
             }
-            $this->assertSame($j['accept'], $ok, json_encode($j['input']));
+            $this->assertSame($j['accept'], $ok, $label);
             if ($ok && isset($j['canonical'])) {
                 $this->assertSame($j['canonical'], $out);
             }

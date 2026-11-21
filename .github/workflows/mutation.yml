@@ -27,7 +27,7 @@ on:
         type: boolean
         default: false
   push:
-    branches: ['ci/**']
+    branches: ['ci/**', '!ci/build-**']
 
 permissions:
   contents: read
@@ -43,27 +43,163 @@ env:
   # distro OpenSSL 3.0 (the fallback) + a cached OpenSSL 3.5 (the PQ path) side by side: every PQ / probe test runs, none skips
   PCA_REQUIRE_MLDSA: '1'
   ATLAS_PCA_LIBCRYPTO: /opt/openssl35/lib/libcrypto.so.3
-  SHARDS: '9'
+  SHARDS: '96'
+  BLST_TAG: v0.3.16
+  BLST_COMMIT: e7f90de551e8df682f3cc99067d204d8b90d27ad
+  SEAL_TAG: v4.1.2
+  # each PHPUnit test gets this many seconds (tests/BaseDeadlineExtension.php): a mutant that makes a loop stop advancing fails the test instead of hanging the run
+  PCA_TEST_DEADLINE: '100'
 
 jobs:
+  reuse:
+    name: reuse check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      skip: ${{ steps.reuse.outputs.skip }}
+      hash: ${{ steps.reuse.outputs.hash }}
+      source: ${{ steps.reuse.outputs.source }}
+    steps:
+      - uses: actions/checkout@v4
+      # input-hash reuse (ci-reuse.mjs): when an earlier run recorded the same input hash, every other job of this run is skipped.
+      # continue-on-error: a failing check can only mean "no reuse"; FORCE_FULL / force_full / [force-full] bypass it.
+      - id: reuse
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE_FULL: ${{ inputs.force_full || inputs.full || vars.FORCE_FULL == '1' || contains(github.event.head_commit.message, '[force-full]') }}
+          GATE_FULL: ${{ inputs.full || (startsWith(github.ref_name, 'ci/') && endsWith(github.ref_name, '-rc') || startsWith(github.ref_name, 'ci/gate-')) || contains(github.event.head_commit.message, '[force-full]') }}
+          PARTIAL: ${{ false }}
+          EXTRA: ''
+        run: node .github/scripts/ci-reuse.mjs check --workflow=mutation --self=.github/workflows/mutation.yml --external=flagship --extra="$EXTRA"
   shard:
-    name: shard ${{ matrix.shard }}/9 (${{ matrix.files }})
+    if: ${{ needs.reuse.outputs.skip != 'true' }}
+    needs: reuse
+    name: shard ${{ matrix.shard }}/96 (${{ matrix.files }}${{ matrix.slice && format(' {0}', matrix.slice) || '' }})
     runs-on: ubuntu-24.04
     timeout-minutes: 340
     strategy:
       fail-fast: false
+      # at most 10 shards at once, so the other languages' CI is not starved of org runners
+      max-parallel: 256 # Enterprise plan: 500 concurrent jobs org-wide; GitHub queues anything above that
       matrix:
         include:
           - { shard: 1, files: 'src/Pca.php' }
           - { shard: 2, files: 'src/IntentV2.php' }
           - { shard: 3, files: 'src/IntentWb.php' }
-          - { shard: 4, files: 'src/SafeRegex.php,src/Predicates.php' }
-          - { shard: 5, files: 'src/Json.php,src/PcaMiddleware.php,src/OpensslPq.php,src/LessFfi.php,src/Mldsa.php' }
+          - { shard: 4, files: 'src/SafeRegex.php' }
+          - { shard: 5, files: 'src/Json.php,src/PcaMiddleware.php' }
           # IntentV2 is split into traits (same class, 3800 lines) so no shard runs for hours (the single-file shard was killed by a runner shutdown)
           - { shard: 6, files: 'src/IntentV2Schema.php' }
           - { shard: 7, files: 'src/IntentV2Session.php' }
           - { shard: 8, files: 'src/IntentV2Acc.php' }
           - { shard: 9, files: 'src/IntentV2Map.php' }
+          # the modules track mN added (and the other unlisted ones); the PHPUnit oracle already runs their tests
+          - { shard: 10, files: 'src/Authorize.php' }
+          - { shard: 11, files: 'src/Operations.php,src/Executor.php,src/AtomicKv.php,src/StateStore.php' }
+          - { shard: 12, files: 'src/PlanLifecycle.php,src/RevocationStaleness.php,src/Assurance.php,src/ArgProvenance.php' }
+          - { shard: 13, files: 'src/StepUp.php,src/StoreConformance.php' }
+          - { shard: 14, files: 'src/Mesh.php,src/Ledger.php,src/Optimistic.php' }
+          - { shard: 15, files: 'src/Passport.php,src/IntentHistory.php,src/Agent.php' }
+          # the action-kit module (digest, trait algebra, rule 22): killed by tests/ActionsOracle.php and the shared vectors
+          # Actions.php alone ran > 150 min once every mutant ran: three line slices (cut at method ends, so no node spans two)
+          - { shard: 16, files: 'src/Actions.php', slice: '1/3' }
+          # the K1-K3 modules (caveat language, forbid-wins certificate and policy links, consistency tokens and operational-plane artifacts)
+          - { shard: 17, files: 'src/CaveatLang.php,src/ForbidCertificate.php,src/PolicyLink.php' }
+          - { shard: 18, files: 'src/FreshAt.php,src/K3.php,src/K3Sig.php,src/PcaGrant.php,src/Blueprint.php,src/A2a.php,src/Workflow.php,src/ReadSide.php,src/ReadVault.php' }
+          - { shard: 19, files: 'src/K4.php,src/Lease.php,src/Obligations.php,src/BreakGlass.php,src/MissingContext.php,src/PolicyClasses.php,src/Undo.php' }
+          # 0.5 modules: approvals, protect()/refusal explanations, provenance gate, runtime claims, Sigstore bundles
+          - { shard: 20, files: 'src/Approval.php,src/Protect.php,src/ProvenanceGate.php,src/Refusals.php,src/RuntimeClaim.php,src/SigstoreBundle.php' }
+          # split out when every mutant started to run (timeout 600 s): the shards that time-skipped the most mutants at 60 s
+          - { shard: 21, files: 'src/Predicates.php' }
+          - { shard: 22, files: 'src/OpensslPq.php,src/LessFfi.php,src/Mldsa.php' }
+          - { shard: 23, files: 'src/ActionsRegistry.php' }
+          - { shard: 24, files: 'src/Decision.php,src/Escalation.php' }
+          - { shard: 25, files: 'src/Actions.php', slice: '2/3' }
+          - { shard: 26, files: 'src/Actions.php', slice: '3/3' }
+          # the hardware attestation verifiers and their parsers
+          - { shard: 27, files: 'src/Attest/Intel.php' }
+          - { shard: 28, files: 'src/Attest/Nvidia.php' }
+          - { shard: 29, files: 'src/Attest/Common.php,src/Attest/Cert.php' }
+          - { shard: 30, files: 'src/Attest/Ocsp.php,src/Attest/Xml.php' }
+          - { shard: 31, files: 'src/Attest/Der.php,src/Attest/JsJson.php,src/Attest/Factory.php,src/Attest/HardwareVerifier.php' }
+          - { shard: 32, files: 'src/Attest/Amd.php,src/Attest/Maa.php,src/Attest/Gcp.php,src/Attest/PolicyLists.php' }
+          # 0.5 hardening modules
+          - { shard: 33, files: 'src/Prohibitions.php' }
+          - { shard: 34, files: 'src/Contracts.php' }
+          - { shard: 35, files: 'src/Beacons.php,src/KvDoc.php,src/Risk.php,src/Taint.php' }
+          # the agent side: facade, built-in catalog and the remaining producer signers
+          - { shard: 36, files: 'src/Facade.php,src/SignersMore.php,src/Catalog.php' }
+          # the opt-in native modules, each mutated with the same native library its own workflow builds (so their tests run instead
+          # of skipping, and no mutant of these files is left uncovered): pairing (blst + the GT shim), FHE (libsealc + the node-seal
+          # corpus), endemic LWE base OT (liblweot). `native` selects the library steps below.
+          - { shard: 37, files: 'src/Aggsig.php,src/Bbs.php,src/BbsCredential.php,src/Bls12.php,src/Abe.php,src/AbePolicy.php,src/Fame.php', native: pairing }
+          - { shard: 38, files: 'src/FheSeal.php', native: fhe }
+          - { shard: 39, files: 'src/MpcEndemicOt.php,src/MpcEndemicOtAbort.php,src/MpcLweLattice.php', native: lwe-ot }
+          # FN-DSA (libfndsa) and the wasmtime sandbox host: the same builds as their replay workflows
+          - { shard: 40, files: 'src/Fndsa.php,src/FndsaNative.php,src/FnDsaBackendMissing.php,src/FnDsaSuite.php', native: fndsa }
+          - { shard: 41, files: 'src/SandboxWasmHost.php', native: sandbox-wasm }
+          # every other file of src/, generated: scripts/mutation-plan.py (the plan guard in the Mutate step fails when one is missing)
+          # BEGIN generated plan (scripts/mutation-plan.py)
+          - { shard: 42, files: 'src/Acp.php,src/AnalyzerExposure.php,src/MpcNetClock.php' }
+          - { shard: 43, files: 'src/ActionSchemaDraft.php,src/Frost.php,src/MpcSpdzEngine.php,src/Revoke.php,src/Vdf.php' }
+          - { shard: 44, files: 'src/ActionsAuthor.php,src/ActionsImportSuggest.php,src/BondSettlement.php,src/Kem.php' }
+          - { shard: 45, files: 'src/ActionsBuild.php,src/AnalyzerJs.php,src/ApprovalChannels.php,src/GoalRoundtrip.php,src/IntentJit.php,src/IntentUx.php,src/MpcOt.php,src/TxnTokens.php,src/WalletDelivery.php' }
+          - { shard: 46, files: 'src/ActionsBuiltin.php,src/AttestVendors.php,src/ChainCompact.php,src/Dlp.php,src/GoalOntologies.php,src/HybridThreshold.php,src/IntentEffects.php,src/IntentMisc.php,src/IntentStatement.php,src/MpcNetWire.php,src/UndoServer.php,src/ZkCeremony.php' }
+          - { shard: 47, files: 'src/ActionsBuiltinData.php,src/FrostDkg.php,src/GoalDigests.php,src/IntentOmega.php,src/Siem.php' }
+          - { shard: 48, files: 'src/ActionsCompat.php,src/ActionsEffective.php,src/ActionsPack.php,src/Attest/SevSnp.php,src/Execution.php,src/GoalCrc.php,src/GoalLegacy.php,src/IntentMap.php,src/IntentMetrics.php,src/IntentObservation.php,src/IntentWitnesses.php,src/MpcNetPartyMain.php,src/MpcOtExtSender.php,src/MpcSpdzRunner.php,src/ObjectiveBinding.php,src/OpensslEd448.php,src/PolicySim.php' }
+          - { shard: 49, files: 'src/ActionsDerive.php,src/ActionsTestRunner.php,src/ConnectVault.php,src/IntentMapKit.php,src/StoreConformancePcaState.php' }
+          - { shard: 50, files: 'src/ActionsDiff.php,src/AnalyzerNarrowing.php,src/ControlEvals.php,src/Dpop.php,src/IntentRender.php' }
+          - { shard: 51, files: 'src/ActionsEvolve.php,src/AdaUrl.php,src/AttestMaaPins.php,src/CoreSmall.php,src/FrostNonceStore.php,src/GoalCompiler.php,src/GoalDriftMonitor.php,src/GoalJs.php,src/GoalPrecedent.php,src/IntentMapCommit.php,src/IntentPolicy.php,src/Invariants.php,src/MpcHybridOt.php,src/MpcNetCerts.php,src/MpcNetGadget.php,src/MpcNetLoop.php,src/MpcOtExtReceiver.php,src/MpcRunner.php,src/PolicyTemplates.php,src/PqThresholdExperimental.php' }
+          - { shard: 52, files: 'src/ActionsHosted.php,src/GoalNversion.php,src/IntentCompilers.php,src/MpcHybridOtAbort.php,src/PqQuorum.php,src/Webauthn.php' }
+          - { shard: 53, files: 'src/ActionsImport.php,src/Connectors.php,src/ModelHttpResponse.php,src/NativeDir.php' }
+          - { shard: 54, files: 'src/ActionsImportGraphql.php,src/Evidence.php,src/InvariantsProps.php,src/Oauth.php' }
+          - { shard: 55, files: 'src/ActionsImportGrpc.php,src/EvidenceVerify.php,src/MpcNetAbort.php' }
+          - { shard: 56, files: 'src/ActionsImportModel.php,src/AttestCosign.php,src/FrostHttp.php,src/GoalCard.php,src/GroupDescriptor.php,src/Laravel/PcaServiceProvider.php,src/MpcMacCheckAbort.php,src/MpcMlKem768.php,src/MpcOtx.php,src/Otel.php,src/PcaSchema.php,src/PolicyDebug.php' }
+          - { shard: 57, files: 'src/ActionsImportRulesData.php,src/Approvals.php,src/AttestAllowlistAnchor.php,src/BondStore.php,src/FdLibmPow.php,src/IntentLayersWallet.php,src/MpcEc.php,src/MpcParty.php,src/Rotate.php,src/Shadow.php' }
+          - { shard: 58, files: 'src/ActionsLint.php,src/AttestAllowlist.php,src/Immune.php,src/PqThreshold.php,src/Vc.php' }
+          - { shard: 59, files: 'src/ActionsRender.php,src/ActionsUndoEngine.php,src/Analyzer.php,src/AttestNvidia.php,src/Console.php,src/EvidenceCli.php,src/GoalIrError.php,src/IntentRegion.php,src/IntentWorld.php,src/KvStateStore.php,src/ListAuthorized.php,src/MpcNetLaunch.php,src/MpcNetOt.php,src/MpcNetPa.php,src/SandboxHandles.php,src/ZkNative.php' }
+          - { shard: 60, files: 'src/ActionsReview.php,src/ActionsYamlLoad.php,src/ConnectorsProviders.php,src/IntentProvenance.php,src/MpcMascot.php,src/Notary.php,src/OptimisticAdjudication.php' }
+          - { shard: 61, files: 'src/ActionsRules.php,src/ActionsYaml.php,src/PolicyBridgeCel.php' }
+          - { shard: 62, files: 'src/ActionsRulesValidate.php,src/FrostService.php,src/LedgerStore.php,src/MeshWitness.php,src/Pq.php' }
+          - { shard: 63, files: 'src/ActionsSelector.php,src/Decide.php,src/IntentFrames.php,src/IntentRuntime.php,src/IntentSchema.php,src/IntentTrajectory.php,src/NlApproval.php,src/WhatwgUrl.php' }
+          - { shard: 64, files: 'src/ActionsSync.php,src/Adapters.php,src/Erc7715.php,src/FheOrigin.php,src/IntentMulti.php,src/InvariantsArbitraries.php,src/MpcKemOt.php,src/MpcNetFaults.php,src/Reputation.php,src/WalletPricing.php' }
+          - { shard: 65, files: 'src/ActionsTemplates.php,src/ActionsTransparency.php,src/Anthropic/ToolDispatch.php,src/AttestEatProvenance.php,src/BudgetForecast.php,src/CatalogRisk.php,src/FrontierSignals.php,src/GoalBinding.php,src/GoalFmt.php,src/GoalNormalize.php,src/GoalSign.php,src/GuardedTool.php,src/HttpFoundationGuard.php,src/IntentExtensions.php,src/IntentRevocation.php,src/IntentSessionStore.php,src/IntentSlots.php,src/InvariantsRng.php,src/LlPhant/PcaToolProxy.php,src/MpcBeaver.php,src/MpcCompose.php,src/MpcEnc.php,src/MpcField.php,src/MpcFieldRng.php,src/MpcGf128.php,src/MpcKemBaseOtAbort.php,src/MpcNetCodec.php,src/MpcOtChannel.php,src/MpcOtRandom.php,src/MpcShake256.php,src/OpenAi/ToolDispatch.php,src/Receipts.php,src/Session.php,src/StoreErrors.php,src/Symfony/PcaRequestSubscriber.php' }
+          - { shard: 66, files: 'src/ActionsTemplatesData.php,src/Gateway.php,src/MpcThermometer.php,src/Spiffe.php' }
+          - { shard: 67, files: 'src/AgentNative.php,src/Explain.php,src/GoalDrift.php' }
+          - { shard: 68, files: 'src/Agentcard.php,src/IntentLearner.php,src/ModelEnvConfig.php,src/YamlSeq.php' }
+          - { shard: 69, files: 'src/AnalyzerCore.php,src/Laravel/PcaGuard.php,src/MpcPointError.php,src/Scitt.php' }
+          - { shard: 70, files: 'src/AnalyzerCoverage.php,src/MpcOfflineProvider.php,src/Webbotauth.php' }
+          - { shard: 71, files: 'src/AnalyzerFilter.php,src/Authzen.php,src/RatchetAccumulator.php,src/SandboxEgress.php' }
+          - { shard: 72, files: 'src/AnalyzerResidual.php,src/AnalyzerValidate.php,src/AttestMaaKeys.php,src/ControlEvalsExample.php' }
+          - { shard: 73, files: 'src/Ap2.php' }
+          - { shard: 74, files: 'src/AttestEat.php,src/AttestMaaPinsData.php,src/GoalOntology.php' }
+          - { shard: 75, files: 'src/AttestPuf.php,src/BudgetLedger.php,src/Oprf.php,src/PqSoftware.php,src/SsfManage.php' }
+          - { shard: 76, files: 'src/Attestation.php,src/MpcOfflineCheatingAbort.php,src/Sandbox.php,src/VerifyVerdict.php' }
+          - { shard: 77, files: 'src/BondLedger.php,src/MeshIssue.php,src/Scim.php,src/Signals.php' }
+          - { shard: 78, files: 'src/BudgetTree.php,src/Fetch.php,src/Harness.php,src/IntentClassifier.php,src/MpcSpdz.php,src/OpensslMlKem.php,src/SafetyCertificate.php,src/WalletPopulation.php' }
+          - { shard: 79, files: 'src/Ciba.php,src/ObjectiveRisk.php' }
+          - { shard: 80, files: 'src/Compliance.php,src/Conformance.php,src/Wallet.php' }
+          - { shard: 81, files: 'src/Connect.php,src/FrostDkgChannel.php,src/Oidc.php' }
+          - { shard: 82, files: 'src/ConnectReplay.php,src/FheRisk.php,src/FrostPq.php,src/GoalDisambiguate.php,src/GoalOntologiesData.php,src/GoalPrecedentLog.php,src/IntentAttest.php,src/Js.php,src/Jsx.php,src/LedgerLog.php,src/MpcNetForensics.php,src/UndoStore.php' }
+          - { shard: 83, files: 'src/Dataflow.php,src/Doctor.php,src/FalconBackend.php' }
+          - { shard: 84, files: 'src/Entropy.php,src/MpcBaseOtAbort.php,src/MpcNetOffline.php,src/ScittLog.php,src/WalletOmega.php' }
+          - { shard: 85, files: 'src/Events.php,src/FrostDkgTls.php,src/FrostNet.php,src/GoalRefsem.php,src/Rag.php,src/SemanticThreshold.php,src/SsfStream.php' }
+          - { shard: 86, files: 'src/Gnap.php,src/MpcSharing.php,src/Progress.php' }
+          - { shard: 87, files: 'src/GoalBench.php,src/Idjag.php,src/Ratchet.php,src/Sdjwt.php' }
+          - { shard: 88, files: 'src/GoalCodec.php,src/MpcNetMesh.php,src/OpenAiAgents.php' }
+          - { shard: 89, files: 'src/GoalExamples.php,src/Grants.php,src/IntentMultiAgg.php,src/UndoCoordinator.php' }
+          - { shard: 90, files: 'src/GoalInterpret.php,src/ModelAdapter.php,src/MpcMalOtAbort.php,src/Payments.php' }
+          - { shard: 91, files: 'src/GoalKernel.php,src/GrantService.php' }
+          - { shard: 92, files: 'src/GoalReview.php,src/IntentClopper.php,src/WalletCard.php,src/WalletChannel.php' }
+          - { shard: 93, files: 'src/GoalSelectors.php,src/Jose.php,src/MpcNetProtocol.php' }
+          - { shard: 94, files: 'src/Ha.php,src/IntentProfile.php,src/IntentRamp.php,src/IntentRefine.php,src/JsRe.php,src/PcaTesting.php' }
+          - { shard: 95, files: 'src/Mcp.php,src/PolicyBridge.php' }
+          - { shard: 96, files: 'src/PcaCall.php,src/PolicyCi.php,src/Zk.php' }
+          # END generated plan
     steps:
       - uses: actions/checkout@v4
       - name: OpenSSL 3.5 (cached)
@@ -82,10 +218,12 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: sodium, json, mbstring, ffi
+          extensions: sodium, json, mbstring, intl, gd, zip, ffi, openssl, gmp
           ini-values: ffi.enable=true
           coverage: pcov
           tools: composer
+      - name: libyaml (the YAML authoring loader parses with libyaml over ext-ffi)
+        run: sudo apt-get update -q && sudo apt-get install -y -q libyaml-dev
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -93,8 +231,35 @@ jobs:
         env:
           LESS: '1'
         run: .github/scripts/mutation-layout.sh "$CRATE"
+      - name: blst + the GT shim (pairing module; same build as the pairing workflow)
+        if: ${{ matrix.native == 'pairing' }}
+        run: |
+          git clone --quiet --depth 1 --branch "$BLST_TAG" https://github.com/supranational/blst "$RUNNER_TEMP/blst"
+          test "$(git -C "$RUNNER_TEMP/blst" rev-parse HEAD)" = "$BLST_COMMIT"
+          D="$MONO/sdks/php-pca/native"; mkdir -p "$D/build"
+          cc -O2 -fPIC -shared -D__BLST_PORTABLE__ -I"$RUNNER_TEMP/blst/bindings" \
+            -o "$D/build/libblst.so" \
+            "$D/pca_gt.c" "$RUNNER_TEMP/blst/src/server.c" "$RUNNER_TEMP/blst/build/assembly.S"
+          echo "PCA_BLST_LIB=$D/build/libblst.so" >> "$GITHUB_ENV"
+      - name: node-seal reference corpus + libsealc (FHE module; same build as the FHE workflow)
+        if: ${{ matrix.native == 'fhe' }}
+        run: |
+          .github/scripts/fhe-seal-corpus.sh "$RUNNER_TEMP/fhe-seal.json.gz" "$MONO/tools/pca-audit/oracles/fhe-seal.mts"
+          echo "ATLAS_PCA_LIBSEALC=$(.github/scripts/build-libsealc.sh "$SEAL_TAG" "$RUNNER_TEMP/seal")/libsealc.so" >> "$GITHUB_ENV"
+          echo "PCA_FHE_SEAL_CORPUS=$RUNNER_TEMP/fhe-seal.json.gz" >> "$GITHUB_ENV"
+          echo "PCA_FHE_SEAL_REQUIRED=1" >> "$GITHUB_ENV"
+      - name: liblweot (endemic OT module; same build as the lwe-ot workflow)
+        if: ${{ matrix.native == 'lwe-ot' }}
+        run: |
+          echo "ATLAS_PCA_LIBLWEOT=$(.github/scripts/build-liblweot.sh "$RUNNER_TEMP/lweot" "$MONO/packages/pca-mpc-lwe-ot-wasm/crate" | tail -1)/liblweot.so" >> "$GITHUB_ENV"
+          echo "ATLAS_PCA_LIBLWEOT_REQUIRED=1" >> "$GITHUB_ENV"
+      - name: RSA DPoP oracle corpus (generated, never committed)
+        run: .github/scripts/dpop-rsa-corpus.sh "$MONO/sdks/php-pca/test-data/ref-dpop-rsa.json.gz"
+      - name: Oracle cases that carry private keys (generated, never committed)
+        run: .github/scripts/gen-secret-corpus.sh "$MONO/sdks/php-pca/test-data" oprf:oprf core-frost-swift:frost mpc-ot:mpc-ot attest-eat:attest-eat abe-go:abe frost-dkg:frost-dkg
       - name: Baseline (targeted mode)
-        if: ${{ !inputs.full }}
+        # a sliced shard always mutates its whole slice (its baseline holds only the slice)
+        if: ${{ !(inputs.full || (startsWith(github.ref_name, 'ci/') && endsWith(github.ref_name, '-rc') || startsWith(github.ref_name, 'ci/gate-')) || contains(github.event.head_commit.message, '[force-full]')) && !matrix.slice }}
         env:
           GH_TOKEN: ${{ github.token }}
           BASELINE: ${{ inputs.baseline_run }}
@@ -118,16 +283,53 @@ jobs:
         working-directory: ${{ env.MONO }}/sdks/php-pca
         env:
           FILES: ${{ matrix.files }}
+          SLICE: ${{ matrix.slice }}
+          FULL: ${{ (inputs.full || (startsWith(github.ref_name, 'ci/') && endsWith(github.ref_name, '-rc') || startsWith(github.ref_name, 'ci/gate-')) || contains(github.event.head_commit.message, '[force-full]')) }}
         run: |
-          # every file of src/ belongs to exactly one shard
-          diff <(ls src/*.php | sort) <(tr ',' '\n' <<<"src/Pca.php,src/IntentV2.php,src/IntentV2Schema.php,src/IntentV2Session.php,src/IntentV2Acc.php,src/IntentV2Map.php,src/IntentWb.php,src/SafeRegex.php,src/Predicates.php,src/Json.php,src/PcaMiddleware.php,src/OpensslPq.php,src/LessFfi.php,src/Mldsa.php" | sort)
-          composer install --no-interaction --no-progress -q
+          # a full run (and a sliced shard) carries NOTHING from any baseline: no baseline is loaded, and none may be set here
+          if [ "$FULL" = true ] && [ -n "${INFECTION_BASELINE:-}" ]; then echo "::error::full run with a baseline set"; exit 1; fi
+          # every file of src/, subdirectories included, belongs to a shard of the matrix above and nothing else is listed
+          diff <(find src -name '*.php' | sort) <(grep -E '^ +- \{ shard:' "$GITHUB_WORKSPACE/.github/workflows/mutation.yml" | cut -d"'" -f2 | tr ',' '\n' | sort -u)
+          for n in 1 2 3 4; do composer install --prefer-dist --no-interaction --no-progress -q && break; [ "$n" = 4 ] && exit 1; echo "composer attempt $n failed (network); retrying"; sleep $((n * 15)); done
           # Infection is not a dev dependency of the package: added to this CI copy only
           composer config --no-interaction allow-plugins.infection/extension-installer true
-          composer require --dev --no-interaction --no-progress -q -W "infection/infection:^0.29"
-          vendor/bin/phpunit > "$RUNNER_TEMP/baseline.log" || { tail -60 "$RUNNER_TEMP/baseline.log"; echo "::error::the PHPUnit oracle fails on the unmutated source"; exit 1; }
+          for n in 1 2 3 4; do composer require --dev --no-interaction --no-progress -q -W "infection/infection:^0.29" && break; [ "$n" = 4 ] && exit 1; echo "composer attempt $n failed (network); retrying"; sleep $((n * 15)); done
+          # Infection keys a file's method line ranges by the bare method name, so in a multi-class file a later class's same-named
+          # method (run, charge, __construct, get, ...) overwrites an earlier one, whose signature mutants are then reported "not
+          # covered" and never run: key the ranges by position (the lookup scans every range for the line, the key is unused)
+          P=vendor/infection/infection/src/TestFramework/Coverage/XmlReport/XmlCoverageParser.php
+          grep -qF '$methodsCoverage[$methodName] = new SourceMethodLineRange(' "$P" || { echo "::error::the Infection method-range patch no longer applies ($P)"; exit 1; }
+          sed -i 's/\$methodsCoverage\[\$methodName\] = new SourceMethodLineRange(/$methodsCoverage[] = new SourceMethodLineRange(/' "$P"
+          grep -qF '$methodsCoverage[] = new SourceMethodLineRange(' "$P"
+          # --debug logs every test event: a crash (segfault) of the oracle names the test it died in
+          vendor/bin/phpunit --debug > "$RUNNER_TEMP/baseline.log" || { grep -vE '^Test (Prepared|Passed|Finished|Preparation Started|Preparation Finished|Triggered PHPUnit Deprecation)|^Assertion ' "$RUNNER_TEMP/baseline.log" | tail -60; echo "last test started:"; grep -E '^Test Preparation Started' "$RUNNER_TEMP/baseline.log" | tail -1; echo "::error::the PHPUnit oracle fails on the unmutated source"; exit 1; }
+          # a mutant that lets a forked child escape (StoreConformance race) must hit a process cap, not take the runner down
+          # (shard 13 lost its runner twice at ~60 min): at most 1000 more processes for this user under Infection
+          ulimit -u $(( $(ps -u "$(id -u)" --no-headers | wc -l) + 1000 ))
+          if [ -n "${SLICE:-}" ]; then
+            # mutate only the lines of slice k/n of the one file: a throwaway git base in which exactly those lines differ
+            # (a trailing comment), then --git-diff-lines; cuts fall on method-closing lines ("    }"), so no node spans two slices
+            mkdir -p "$RUNNER_TEMP/git-base"
+            python3 - "$FILES" "$SLICE" "$RUNNER_TEMP/git-base" <<'PY'
+          import os, sys
+          f, (k, n), out = sys.argv[1], map(int, sys.argv[2].split('/')), sys.argv[3]
+          L = open(f).read().split('\n')
+          ends = [i + 1 for i, l in enumerate(L) if l == '    }']
+          cut = lambda j: 0 if j == 0 else len(L) if j == n else min(ends, key=lambda e: abs(e - len(L) * j / n))
+          a, b = cut(k - 1), cut(k)
+          assert a < b, (a, b)
+          (p := os.path.join(out, os.path.relpath(f, 'src')), os.makedirs(os.path.dirname(p), exist_ok=True), open(p, 'w'))[2].write('\n'.join(l + ' // slice' if a < i + 1 <= b else l for i, l in enumerate(L)))
+          print(f'slice {k}/{n} of {f}: lines {a + 1}..{b} of {len(L)}')
+          PY
+            cp -R src "$RUNNER_TEMP/src-current"
+            cp -R "$RUNNER_TEMP"/git-base/. src/
+            git init -q . && git add src && git -c user.name=ci -c user.email=ci@localhost commit -qm "slice base"
+            cp -R "$RUNNER_TEMP"/src-current/. src/
+            set -o pipefail; vendor/bin/infection --threads=3 --no-progress --min-msi=0 --min-covered-msi=0 --git-diff-lines --git-diff-base=HEAD | tail -25
+            exit 0
+          fi
           if [ -z "${INFECTION_BASELINE:-}" ]; then
-            vendor/bin/infection --threads=3 --no-progress --min-msi=0 --min-covered-msi=0 --filter="$FILES" | tail -25
+            set -o pipefail; vendor/bin/infection --threads=3 --no-progress --min-msi=0 --min-covered-msi=0 --filter="$FILES" | tail -25
             exit 0
           fi
           T="$GITHUB_WORKSPACE/.github/scripts/infection-targeted.py"
@@ -137,19 +339,76 @@ jobs:
           [ "$n" -gt 0 ] || exit 0
           # a throwaway git base in which exactly the target lines differ: --git-diff-lines then mutates only those
           cp -R src "$RUNNER_TEMP/src-current"
-          cp "$RUNNER_TEMP"/git-base/*.php src/
+          cp -R "$RUNNER_TEMP"/git-base/. src/
           git init -q . && git add src && git -c user.name=ci -c user.email=ci@localhost commit -qm "infection base"
-          cp "$RUNNER_TEMP"/src-current/*.php src/
+          cp -R "$RUNNER_TEMP"/src-current/. src/
           git diff --stat HEAD -- src
-          vendor/bin/infection --threads=3 --no-progress --min-msi=0 --min-covered-msi=0 --git-diff-lines --git-diff-base=HEAD | tail -25
-      - name: Report
+          set -o pipefail; vendor/bin/infection --threads=3 --no-progress --min-msi=0 --min-covered-msi=0 --git-diff-lines --git-diff-base=HEAD | tail -25
+      - name: Re-run timed-out mutants at twice the timeout
+        working-directory: ${{ env.MONO }}/sdks/php-pca
         run: |
+          # a timeout is not a kill: each timed-out mutant runs once more at twice the limit, and only a second timeout counts
+          # (then the run-error gate needs a proof that the mutant itself never finishes)
+          [ -f infection-out/log.json ] || exit 0
+          R="$GITHUB_WORKSPACE/.github/scripts/infection-retime.py"
+          n="$(python3 "$R" plan --log infection-out/log.json --src src --base-dir "$RUNNER_TEMP/retime-base" --config infection.json5)"
+          echo "retime: $n line(s) with a timed-out mutant"
+          [ "$n" -gt 0 ] || exit 0
+          ulimit -u $(( $(ps -u "$(id -u)" --no-headers | wc -l) + 1000 ))
+          rm -rf "$RUNNER_TEMP/retime-current" && cp -R src "$RUNNER_TEMP/retime-current"
+          cp -R "$RUNNER_TEMP"/retime-base/. src/
+          git init -q . && git add src && git -c user.name=ci -c user.email=ci@localhost commit -qm "retime base"
+          cp -R "$RUNNER_TEMP"/retime-current/. src/
+          set -o pipefail; vendor/bin/infection --configuration=infection.retime.json5 --threads=3 --no-progress --min-msi=0 --min-covered-msi=0 \
+            --git-diff-lines --git-diff-base=HEAD | tail -25
+          python3 "$R" merge --log infection-out/log.json --retime infection-out/retime-log.json
+      - name: Re-run every errored or timed-out mutant alone
+        working-directory: ${{ env.MONO }}/sdks/php-pca
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          # A dead PHPUnit process (memory fatal, killed) or a timeout is not a kill. Each such mutant gets ONE solo pass: one thread
+          # (one mutant, one PHPUnit process), memory_limit raised to 4096M with the guard's watchdog trigger at 3000 MB (tests/bootstrap.php,
+          # PCA_TEST_MEMORY_MB) and its deadline (PCA_TEST_DEADLINE), and a hard wall-clock limit on the whole process group. The solo result
+          # decides: killed (a test failed, a guard throw included), survived (the ledger applies), or dead again (it needs a proof).
+          # infection-out/solo-report.json keeps both results of every re-run mutant (uploaded per shard).
+          echo '[]' > "$GITHUB_WORKSPACE/solo-report-$SHARD.json"
+          [ -f infection-out/log.json ] || exit 0
+          S="$GITHUB_WORKSPACE/.github/scripts/infection-solo.py"
+          n="$(python3 "$S" plan --log infection-out/log.json --src src --base-dir "$RUNNER_TEMP/solo-base" --config infection.json5)"
+          echo "solo: $n line(s) with an errored or timed-out mutant"
+          [ "$n" -gt 0 ] || exit 0
+          ulimit -u $(( $(ps -u "$(id -u)" --no-headers | wc -l) + 1000 ))
+          sed -i 's|<ini name="memory_limit" value="[^"]*"/>|<ini name="memory_limit" value="4096M"/>|' phpunit.xml
+          grep -q 'value="4096M"' phpunit.xml || { echo "::error::the memory_limit line of phpunit.xml was not found"; exit 1; }
+          rm -rf "$RUNNER_TEMP/solo-current" && cp -R src "$RUNNER_TEMP/solo-current"
+          cp -R "$RUNNER_TEMP"/solo-base/. src/
+          git init -q . && git add src && git -c user.name=ci -c user.email=ci@localhost commit -q --allow-empty -m "solo base"
+          cp -R "$RUNNER_TEMP"/solo-current/. src/
+          export PCA_TEST_MEMORY_MB=3000
+          setsid vendor/bin/infection --configuration=infection.solo.json5 --threads=1 --no-progress --min-msi=0 --min-covered-msi=0 \
+            --git-diff-lines --git-diff-base=HEAD > "$RUNNER_TEMP/solo.out" 2>&1 &
+          P=$!
+          ( sleep 5400; kill -TERM -- -$P 2>/dev/null; sleep 20; kill -KILL -- -$P 2>/dev/null ) &
+          W=$!
+          wait $P || true
+          kill $W 2>/dev/null || true
+          kill -KILL -- -$P 2>/dev/null || true
+          tail -25 "$RUNNER_TEMP/solo.out"
+          [ -f infection-out/solo-log.json ] || { echo "::error::the solo pass produced no log (it was killed at the wall-clock limit or failed to start)"; exit 1; }
+          python3 "$S" merge --log infection-out/log.json --solo infection-out/solo-log.json --report infection-out/solo-report.json
+          cp infection-out/solo-report.json "$GITHUB_WORKSPACE/solo-report-$SHARD.json"
+      - name: Report
+        env:
+          FULL: ${{ (inputs.full || (startsWith(github.ref_name, 'ci/') && endsWith(github.ref_name, '-rc') || startsWith(github.ref_name, 'ci/gate-')) || contains(github.event.head_commit.message, '[force-full]')) }}
+        run: |
+          if [ "$FULL" = true ] && [ -e "$RUNNER_TEMP/carried.json" ]; then echo "::error::full run with carried mutants"; exit 1; fi
           D="$MONO/sdks/php-pca"; S="$D/infection-out/summary.json"
           A=(--src "$D/src" --files "${{ matrix.files }}" --summary "$S" --baseline infection-baseline.json --log "$D/infection-out/log.json")
           [ -f "$RUNNER_TEMP/carried.json" ] && A+=(--carried "$RUNNER_TEMP/carried.json")
           mkdir -p "$D/infection-out"
           python3 "$GITHUB_WORKSPACE/.github/scripts/infection-targeted.py" finish "${A[@]}"
-          python3 "$MONO/tools/pca-audit/native-mutation/php-survivors.py" "$S" "$D/src" survivors.json
+          python3 "$MONO/tools/pca-audit/native-mutation/php-survivors.py" "$S" "$D/src" survivors.json run-errors-${{ matrix.shard }}.json
           node -e '
             const st = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).stats;
             const pick = ["killedCount", "escapedCount", "errorCount", "syntaxErrorCount", "skippedCount", "ignoredCount", "timeOutCount", "notCoveredCount"];
@@ -161,16 +420,26 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: shard-${{ matrix.shard }}
-          path: shard-${{ matrix.shard }}.json
+          path: |
+            shard-${{ matrix.shard }}.json
+            run-errors-${{ matrix.shard }}.json
+            solo-report-${{ matrix.shard }}.json
       - uses: actions/upload-artifact@v4
         with:
           name: infection-baseline-${{ matrix.shard }}
           path: infection-baseline.json
           retention-days: 30
+      - name: Every mutant was run (none time-skipped)
+        run: |
+          # Infection does not run a mutant whose covering tests take longer than infection.json5 "timeout" and lists it nowhere
+          # (only skippedCount): such a mutant is neither killed nor a survivor the ledger can see, so the shard fails.
+          echo "timed out: $(node -p 'require("./counts.json").timeOut ?? 0'), errored (run errors, checked by the merge job): $(node -p 'require("./counts.json").error ?? 0')"
+          n="$(node -p 'require("./counts.json").skipped ?? 0')"
+          [ "$n" = 0 ] || { echo "::error::$n mutant(s) were time-skipped by Infection (never run): raise infection.json5 timeout or speed up the covering tests"; exit 1; }
 
   merge:
-    needs: shard
-    if: always()
+    needs: [reuse, shard]
+    if: ${{ needs.reuse.outputs.skip != 'true' && (always()) }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -187,9 +456,36 @@ jobs:
         run: >
           node .github/scripts/mutation-merge.mjs --crate="$CRATE" --shards="$SHARDS" --reports=reports
           --checker="$MONO/tools/pca-audit" --src="$GITHUB_WORKSPACE"
+      # gate honesty: every ERRORED mutant must be in mutation-run-errors.json with a per-mutant reason (scripts/run-error-gate.mjs).
+      # The control proves the gate refuses what it must, in the same job, before its result is trusted.
+      - name: Run errors (Infection errored mutants) are each listed with a reason
+        if: ${{ !cancelled() }}
+        run: |
+          node .github/scripts/run-error-gate-check.mjs
+          node .github/scripts/run-error-gate.mjs --reports=reports --ledger="$MONO/sdks/php-pca/mutation-run-errors.json" --src="$GITHUB_WORKSPACE" --shards="$SHARDS"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: survivors-merged
           path: reports/survivors-merged.json
           if-no-files-found: ignore
+
+  reuse-record:
+    name: reuse record
+    needs: [reuse, shard, merge]
+    # only a run whose jobs all passed (skipped by their own conditions is fine), that was not partial and not itself a reuse, leaves a record
+    if: ${{ !cancelled() && needs.reuse.outputs.skip != 'true' && needs.reuse.outputs.hash != '' && !(false) && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') && needs.merge.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - id: rec
+        env:
+          GATE_FULL: ${{ inputs.full || (startsWith(github.ref_name, 'ci/') && endsWith(github.ref_name, '-rc') || startsWith(github.ref_name, 'ci/gate-')) || contains(github.event.head_commit.message, '[force-full]') }}
+          HASH: ${{ needs.reuse.outputs.hash }}
+        run: node .github/scripts/ci-reuse.mjs record --workflow=mutation --hash="$HASH" --out="$RUNNER_TEMP/reuse-record"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.rec.outputs.artifact }}
+          path: ${{ runner.temp }}/reuse-record/
+          retention-days: 21

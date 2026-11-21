@@ -1,0 +1,67 @@
+name: Pairing packages
+
+# aggsig, bbs and abe on BLS12-381. Curve and pairing work is supranational blst through ext-ffi; the GT
+# shim (native/pca_gt.c, plain C over blst's public API, needed by attribute-based encryption) is built here with the pinned blst
+# source into one shared library that exports both the blst entry points and the pca_gt_* ones. PCA_BLST_LIB names it.
+on:
+  push:
+    branches: [main, 'ci/**']
+    tags: ['*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BLST_TAG: v0.3.16
+  BLST_COMMIT: e7f90de551e8df682f3cc99067d204d8b90d27ad
+
+jobs:
+  pairing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: sodium, json, mbstring, intl, gd, zip, ffi, openssl, gmp
+          ini-values: ffi.enable=true
+          coverage: none
+          tools: composer
+      - name: Source layout (full adversarial corpus from the flagship)
+        shell: bash
+        run: .github/scripts/fetch-flagship-corpus.sh --mono php-pca --less
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Secret-key oracle corpora (generated, never committed)
+        shell: bash
+        run: .github/scripts/gen-secret-corpus.sh "$PWD/test-data" abe-go:abe
+      - name: blst at the pinned commit
+        run: |
+          git clone --quiet --depth 1 --branch "$BLST_TAG" https://github.com/supranational/blst "$RUNNER_TEMP/blst"
+          test "$(git -C "$RUNNER_TEMP/blst" rev-parse HEAD)" = "$BLST_COMMIT"
+      - name: Build libblst.so (blst + the GT shim, one shared library)
+        run: |
+          mkdir -p native/build
+          cc -O2 -fPIC -shared -D__BLST_PORTABLE__ -I"$RUNNER_TEMP/blst/bindings" \
+            -o native/build/libblst.so \
+            native/pca_gt.c "$RUNNER_TEMP/blst/src/server.c" "$RUNNER_TEMP/blst/build/assembly.S"
+          echo "PCA_BLST_LIB=$PWD/native/build/libblst.so" >> "$GITHUB_ENV"
+      - name: composer install
+        run: |
+          for n in 1 2 3 4; do composer install --no-interaction --no-progress --prefer-dist && break; [ "$n" = 4 ] && exit 1; echo "composer attempt $n failed (network); retrying"; sleep $((n * 15)); done
+      - name: aggsig (reference corpus)
+        if: ${{ !cancelled() }} # one run shows every failing step
+        run: vendor/bin/phpunit --filter RefAggsigDifferentialTest
+      - name: bbs (reference corpus)
+        if: ${{ !cancelled() }}
+        run: vendor/bin/phpunit --filter RefBbsDifferentialTest
+      - name: abe (reference corpus and the independent FAME vectors)
+        if: ${{ !cancelled() }}
+        run: vendor/bin/phpunit --filter 'RefAbeDifferentialTest|RefFamePyeccTest'

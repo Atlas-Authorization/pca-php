@@ -96,7 +96,12 @@ final class OracleData
     /** True when this runtime lacks a post-quantum suite (distro OpenSSL < 3.5): cases that name one cannot agree. */
     public static function pqMissing(): bool
     {
-        return !\Atlas\Pca\Pca::suiteAvailable('ml-dsa-65');
+        $missing = !\Atlas\Pca\Pca::suiteAvailable('ml-dsa-65');
+        // a runner that is meant to have ML-DSA (PCA_REQUIRE_PQ=1) must not turn the post-quantum coverage into silent skips
+        if ($missing && getenv('PCA_REQUIRE_PQ') === '1') {
+            throw new \PHPUnit\Framework\AssertionFailedError('PCA_REQUIRE_PQ=1 but this runtime has no ML-DSA-65 (needs ext-ffi and OpenSSL >= 3.5 libcrypto)');
+        }
+        return $missing;
     }
 
     /** Does the value (a case, its text or a parsed tree) mention a post-quantum suite or key material? */

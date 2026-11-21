@@ -1,0 +1,42 @@
+name: Endemic LWE base OT
+
+# Atlas\Pca\MpcEndemicOt: the post-quantum endemic base OT through ext-ffi over a small C library (liblweot) that wraps the audited pqc_kyber K-PKE
+# (built here from the flagship's crate). The native replays the TypeScript reference corpus, byte for byte.
+on:
+  push:
+    branches: [main, 'ci/**']
+    tags: ['*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lwe-ot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: sodium, json, mbstring, intl, gd, zip, ffi, openssl, gmp
+          ini-values: ffi.enable=true
+          coverage: none
+          tools: composer
+      - name: Source layout (full adversarial corpus and the lattice crate from the flagship)
+        shell: bash
+        run: .github/scripts/fetch-flagship-corpus.sh --mono php-pca --less
+      - name: liblweot (cargo build --features capi)
+        run: echo "ATLAS_PCA_LIBLWEOT=$(.github/scripts/build-liblweot.sh "$RUNNER_TEMP/lweot" "$RUNNER_TEMP/mono/packages/pca-mpc-lwe-ot-wasm/crate" | tail -1)/liblweot.so" >> "$GITHUB_ENV"
+      - name: composer install
+        run: |
+          for n in 1 2 3 4; do composer install --no-interaction --no-progress --prefer-dist && break; [ "$n" = 4 ] && exit 1; echo "composer attempt $n failed (network); retrying"; sleep $((n * 15)); done
+      - name: Endemic OT replay
+        env:
+          ATLAS_PCA_LIBLWEOT_REQUIRED: '1'
+        run: vendor/bin/phpunit --filter 'RefMpcEndemicOtDifferentialTest|MpcEndemicRandomTest'

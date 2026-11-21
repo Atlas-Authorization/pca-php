@@ -1,0 +1,53 @@
+name: URL (Ada C API)
+
+# Atlas\Pca\AdaUrl: the WHATWG URL class through Ada's C API over ext-ffi, used by the HTTP QRNG source to build its request URL. libada is
+# built here from the amalgamated ada.cpp of a pinned release (the C API is part of that file); the library is opt-in through ATLAS_PCA_LIBADA
+# and the entropy corpus is replayed with it required.
+on:
+  push:
+    branches: [main, 'ci/**']
+    tags: ['*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ADA_TAG: v4.0.0
+  ADA_SHA256: 1c722f8f5355d6bf2bf3601870684edc875aa8f56b4d4735440d96263dd0207c
+
+jobs:
+  ada-url:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: sodium, json, mbstring, intl, gd, zip, ffi, openssl, gmp
+          ini-values: ffi.enable=true
+          coverage: none
+          tools: composer
+      - name: Source layout (full shared corpus from the flagship)
+        shell: bash
+        run: .github/scripts/fetch-flagship-corpus.sh --mono php-pca --less
+      - name: libada from the pinned release (amalgamation, checksum verified)
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/ada" && cd "$RUNNER_TEMP/ada"
+          for f in ada.cpp ada.h ada_c.h; do curl -fsSL --retry 4 -o "$f" "https://github.com/ada-url/ada/releases/download/$ADA_TAG/$f"; done
+          echo "$ADA_SHA256  ada.cpp" | sha256sum -c -
+          g++ -O2 -std=c++20 -shared -fPIC ada.cpp -o libada.so
+          echo "ATLAS_PCA_LIBADA=$RUNNER_TEMP/ada/libada.so" >> "$GITHUB_ENV"
+      - name: composer install
+        run: |
+          for n in 1 2 3 4; do composer install --no-interaction --no-progress --prefer-dist && break; [ "$n" = 4 ] && exit 1; echo "composer attempt $n failed (network); retrying"; sleep $((n * 15)); done
+      - name: Entropy replay with the URL builder on Ada
+        env:
+          PCA_ADA_REQUIRED: '1'
+        run: vendor/bin/phpunit --filter 'RefEntropyDifferentialTest'

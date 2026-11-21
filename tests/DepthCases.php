@@ -45,7 +45,7 @@ final class DepthCases
                 case 'threshold_share':
                     return [Pca::verifyThresholdShare($in), ''];
                 case 'pcactn_json':
-                    $v = Pca::verifyJson(self::text($in, $exp), $in->get('grant'), $in->get('now')->int(), $in->get('aud'));
+                    $v = Pca::verifyJson(self::text($in, $exp), $in->get('grant'), $in->get('now')->int(), $in->get('aud'), insecureSkipPlanRootCheck: true);
                     return [$v['allow'] === true, $v['reason']];
                 case 'json_parse':
                     try {

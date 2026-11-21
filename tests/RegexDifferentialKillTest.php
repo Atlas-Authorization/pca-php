@@ -21,7 +21,7 @@ final class RegexDifferentialKillTest extends TestCase
 {
     private static ?Obj $data = null;
 
-    private static function data(): Obj
+    private static function fixtureData(): Obj
     {
         return self::$data ??= Json::parseLax(gzdecode((string) file_get_contents(__DIR__ . '/../test-data/killRegex.json.gz')));
     }
@@ -39,7 +39,7 @@ final class RegexDifferentialKillTest extends TestCase
     public function testFullMatchAgreesWithTheReference(): void
     {
         $n = 0;
-        foreach (self::data()->get('fm') as [$p, $subs, $rs]) {
+        foreach (self::fixtureData()->get('fm') as [$p, $subs, $rs]) {
             $this->assertSame(count($subs), strlen($rs), "/$p/");
             foreach ($subs as $k => $s) {
                 $want = $rs[$k] === 'n' ? null : $rs[$k] === '1';
@@ -55,7 +55,7 @@ final class RegexDifferentialKillTest extends TestCase
 
     public function testCompiledSizesAgree(): void
     {
-        foreach (self::data()->get('size') as [$p, $want]) {
+        foreach (self::fixtureData()->get('size') as [$p, $want]) {
             $got = SafeRegex::progLen($p);
             $want = self::i($want);
             $this->assertSame($want < 0 ? null : $want, $got, "/$p/");
@@ -67,7 +67,7 @@ final class RegexDifferentialKillTest extends TestCase
         $this->assertSame(4096, SafeRegex::MAX_NFA_INSTRUCTIONS);
         $this->assertSame(64, SafeRegex::MAX_REPEAT);
         $this->assertSame(2000000, SafeRegex::MAX_MATCH_STEPS);
-        foreach (self::data()->get('steps') as [$p, $n, $r]) {
+        foreach (self::fixtureData()->get('steps') as [$p, $n, $r]) {
             $n = self::i($n);
             $this->assertSame(self::want(self::i($r)), SafeRegex::fullMatch($p, str_repeat('a', $n)), '/' . substr($p, 0, 20) . "/ n=$n");
         }
@@ -75,7 +75,7 @@ final class RegexDifferentialKillTest extends TestCase
 
     public function testSafeSourceGuardAgrees(): void
     {
-        $safe = self::data()->get('safe');
+        $safe = self::fixtureData()->get('safe');
         $this->assertGreaterThan(500, count($safe));
         foreach ($safe as [$p, $want]) {
             $got = SafeRegex::isSafeRegexSource($p);
@@ -87,7 +87,7 @@ final class RegexDifferentialKillTest extends TestCase
 
     public function testBudgetSequencesAgree(): void
     {
-        foreach (self::data()->get('budgets') as $k => $b) {
+        foreach (self::fixtureData()->get('budgets') as $k => $b) {
             $budget = new SafeRegexBudget();
             $res = $b->get('res');
             foreach ($b->get('ops') as $i => [$src, $len]) {

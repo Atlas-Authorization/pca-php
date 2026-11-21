@@ -1,14 +1,16 @@
 {
     "name": "atlas-auth/atlas-pca",
-    "description": "Official PHP verifier for Atlas Proof-Carrying Authority (PCActn) — strict-JSON wire format v2, Ed25519/ML-DSA leaf signatures, capability-chain and plan-inclusion checks, with optional PSR-15 / Laravel middleware.",
+    "description": "Official PHP SDK for Atlas Proof-Carrying Authority (PCActn): the verifier (strict-JSON wire format v2, Ed25519/ML-DSA/SLH-DSA signatures, capability-chain and plan-inclusion checks, optional PSR-15 / Laravel middleware) and the agent side (grants, delegation, signed actions).",
     "type": "library",
     "keywords": ["atlas", "pca", "proof-carrying-authority", "authorization", "agentic", "ed25519", "ml-dsa", "psr-15"],
     "license": "MIT",
     "homepage": "https://atlasauth.net",
     "require": {
         "php": ">=8.1",
+        "ext-intl": "*",
         "ext-json": "*",
-        "ext-sodium": "*"
+        "ext-sodium": "*",
+        "phpseclib/phpseclib": "^3.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^10.5",
@@ -16,18 +18,29 @@
         "psr/http-factory": "^1.0",
         "psr/http-server-middleware": "^1.0",
         "psr/http-server-handler": "^1.0",
-        "guzzlehttp/psr7": "^2.6"
+        "guzzlehttp/psr7": "^2.6",
+        "theodo-group/llphant": "^1.10",
+        "openai-php/client": "^0.10.3 || ^0.19.2"
     },
     "suggest": {
+        "ext-openssl": "Needed by the hardware attestation verifiers (Atlas\\Pca\\Attest), offline Sigstore bundle verification (Atlas\\Pca\\SigstoreBundle) and the ML-DSA FFI path.",
+        "ext-ffi": "Needed by Atlas\\Pca\\ActionsYamlLoad (the YAML authoring loader, over libyaml), Atlas\\Pca\\FndsaNative (real FN-DSA over libfndsa) and Atlas\\Pca\\FheSeal (the homomorphic risk gate over Microsoft SEAL's C export API, libsealc) and the FFI paths of the pairing packages.",
+        "ext-gmp": "Needed by the hardware attestation verifiers (u64 policy values are held as GMP integers).",
         "psr/http-server-middleware": "To use the framework-agnostic PSR-15 middleware (Atlas\\Pca\\PcaMiddleware) in Slim, Mezzio, Laminas, etc.",
         "psr/http-factory": "Required by PcaMiddleware to build its error responses (any PSR-17 factory).",
-        "guzzlehttp/psr7": "A PSR-7/PSR-17 implementation PcaMiddleware can auto-discover for its error responses; nyholm/psr7 also works."
+        "guzzlehttp/psr7": "A PSR-7/PSR-17 implementation PcaMiddleware can auto-discover for its error responses; nyholm/psr7 also works.",
+        "symfony/psr-http-message-bridge": "For the Laravel route middleware (Atlas\\Pca\\Laravel\\PcaGuard, PcaServiceProvider) and the Symfony request subscriber (Atlas\\Pca\\Symfony\\PcaRequestSubscriber), which run PcaMiddleware on HttpFoundation requests.",
+        "theodo-group/llphant": "Atlas\\Pca\\LlPhant\\PcaToolProxy wraps the object a LLPhant FunctionInfo points at, so every tool call the model makes is signed as a proof-carrying action first.",
+        "openai-php/client": "Atlas\\Pca\\OpenAi\\ToolDispatch signs a PCActn for each chat-completion tool call and runs the mapped handler with the proof."
     },
+    "bin": ["bin/pca-mpc-party", "bin/pca-state-worker", "bin/pca-evidence"],
     "autoload": {
         "psr-4": {
             "Atlas\\Pca\\": "src/"
         },
-        "classmap": ["src/"]
+        "classmap": [
+            "src/"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
@@ -36,6 +49,12 @@
     },
     "config": {
         "sort-packages": true
+    },
+    "extra": {
+        "maturity": "stable",
+        "laravel": {
+            "providers": ["Atlas\\Pca\\Laravel\\PcaServiceProvider"]
+        }
     },
     "scripts": {
         "test": "phpunit"

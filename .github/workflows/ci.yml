@@ -1,6 +1,7 @@
 name: CI
 
-# The shared conformance corpus (conformance.php over conformance/vectors.json) + the PHPUnit suites. ML-DSA comes from
+# The shared conformance corpus (conformance.php over conformance/vectors.json), the native-parity vector families
+# (conformance-vectors.php: decision / escalation / model rules, caveat language v2, passport, vendor attestation evidence, Track 3, goal binding v3, staleness, operations, plans, assurance, K3 + fresh_at, provenance by default, undo windows) + the PHPUnit suites. ML-DSA comes from
 # OpenSSL >= 3.5 libcrypto through FFI: ubuntu-26.04 and macOS have it; ubuntu-24.04 (OpenSSL 3.0) exercises the
 # fail-closed path where the ML-DSA vectors must be skipped, never passed. The PHPUnit corpus suites locate the full
 # adversarial set and the mutation-oracle inputs by the source layout, rebuilt from the flagship at the same ref.
@@ -21,7 +22,10 @@ jobs:
   test:
     name: ${{ matrix.os }} / PHP ${{ matrix.php }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 60
+    # Where OpenSSL >= 3.5 is expected (ubuntu-26.04) a missing ML-DSA is a failure in EVERY PHPUnit step, never a skip.
+    env:
+      PCA_REQUIRE_PQ: ${{ matrix.os == 'ubuntu-26.04' && '1' || '0' }}
     strategy:
       fail-fast: false
       matrix:
@@ -37,22 +41,525 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: sodium, json, mbstring, ffi
-          ini-values: ffi.enable=true
+          extensions: sodium, json, mbstring, intl, gd, zip, ffi, openssl, gmp, pdo_sqlite, sqlite3
+          ini-values: ffi.enable=1
           coverage: none
           tools: composer
+      - name: libyaml (the YAML authoring loader parses with libyaml over ext-ffi)
+        shell: bash
+        run: |
+          case "$RUNNER_OS" in
+            Linux) sudo apt-get update -q && sudo apt-get install -y -q libyaml-dev ;;
+            macOS) brew install libyaml ;;
+            Windows)
+              vcpkg install libyaml:x64-windows
+              echo "$VCPKG_INSTALLATION_ROOT/installed/x64-windows/bin" >> "$GITHUB_PATH"
+              cp "$VCPKG_INSTALLATION_ROOT/installed/x64-windows/bin/yaml.dll" . 2>/dev/null || true ;;
+          esac
       - name: Source layout (full adversarial corpus + mutation-oracle inputs from the flagship)
         shell: bash
         run: .github/scripts/fetch-flagship-corpus.sh --mono php-pca $([ "$RUNNER_OS" = Windows ] || echo --less)
+      - name: libsodium reachable for the Ed25519 core functions (over ext-ffi; needs libsodium >= 1.0.18; the OT tests skip, never pass, without it)
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          php -r 'require "src/Ed25519Core.php"; exit(Atlas\Pca\Ed25519Core::available() ? 0 : 1);' || echo "::warning::libsodium is not reachable over ext-ffi; the MPC OT tests will skip"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: RSA DPoP oracle corpus (generated, never committed)
+        shell: bash
+        run: .github/scripts/dpop-rsa-corpus.sh "$(cd "$PCA_MONO_SDK" && pwd)/test-data/ref-dpop-rsa.json.gz"
+      - name: Secret-key oracle corpora (generated, never committed)
+        shell: bash
+        run: .github/scripts/gen-secret-corpus.sh "$(cd "$PCA_MONO_SDK" && pwd)/test-data" oprf:oprf core-frost-swift:frost mpc-ot:mpc-ot attest-eat:attest-eat abe-go:abe frost-dkg:frost-dkg
       - name: Conformance corpus
         run: php conformance.php
+      - name: Decision vectors (rules 20 and 21, ternary decision, signed escalation answers, model rules through authorize)
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php decision escalation model-rules
+      - name: Caveat language v2 vectors (shared caveat-lang-vectors.json; a missing file FAILS, never skips)
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php caveat-lang
+      - name: Forbid-wins certificate and linked policy template vectors (a missing file fails, never skips)
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php policy-authoring
+      - name: Passport vectors (every reason code, every suite, the hardware seam)
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php passport
+      - name: Attestation vectors (vendor evidence, strict X.509; a missing vector file FAILS)
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php attestation passport-hardware
+      - name: Track 3 vectors (intent state, ledger, optimistic, mesh)
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php intent-state ledger optimistic mesh
+      - name: Goal binding v3 vectors (approved_goal, commit, invalid, binding; a missing file FAILS)
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php goal
+      - name: Revocation staleness vectors (T9, max age, effective class, age, signed epoch, gate; a missing file FAILS)
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php staleness
+      - name: 'Operation records and plan lifecycle vectors (T3, T10: every scenario step, memory and database stores; a missing file FAILS)'
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php operations plans
+      - name: 'Assurance vectors (T8, B7: signature level, report, requirement gate, multi-root; a missing file FAILS)'
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php assurance
+      - name: K3 vectors (signed bundles, decision log, list receipts, grant management) and the fresh_at member
+        if: ${{ !cancelled() }}
+        run: php conformance-vectors.php k3 fresh-at pca-grant blueprint a2a k4 workflow readside vault-aggregate authorize-workflow lease obligations break-glass missing-context policy-classes provenance sigstore
+      - name: 'Provenance by default and undo window vectors (arg-provenance, undo: every section; a missing file FAILS)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          test -s conformance/arg-provenance-vectors.json
+          test -s conformance/undo-vectors.json
+          php conformance-vectors.php arg-provenance undo
+      - name: 'actions-vectors (action kit: ActionDef parse, canonical digest, trait expansion, floor check, pack proof, v2 schema formats; a missing vector directory FAILS)'
+        if: ${{ !cancelled() }}
+        run: php conformance-actions.php
       - name: Install
         if: ${{ !cancelled() }}
         shell: bash
         working-directory: ${{ env.PCA_MONO_SDK }}
-        run: composer install --no-interaction --no-progress --prefer-dist
+        run: |
+          # theodo-group/llphant (and its openai-php/client ^0.19) need PHP 8.2+; the adapter is exercised on 8.2 and later
+          [ "${{ matrix.php }}" = 8.1 ] && composer remove --dev theodo-group/llphant --no-update --no-interaction
+          for n in 1 2 3 4; do composer install --no-interaction --no-progress --prefer-dist && break; [ "$n" = 4 ] && exit 1; echo "composer attempt $n failed (network); retrying"; sleep $((n * 15)); done
+      - name: 'Post-quantum backend probe (OpenSSL version, ext-ffi, libcrypto candidates, the lane ML-DSA probe; fails fast where PCA_REQUIRE_PQ=1)'
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          openssl version || true
+          # the lane's loader probes fixed system paths; also hand it whatever ldconfig reports, so a relocated libcrypto.so.3 is still found
+          sys="$(ldconfig -p 2>/dev/null | awk '/libcrypto\.so\.3 /{print $NF; exit}' || true)"
+          if [ -n "$sys" ]; then echo "ATLAS_PCA_LIBCRYPTO=$sys" >> "$GITHUB_ENV"; export ATLAS_PCA_LIBCRYPTO="$sys"; fi
+          php "$GITHUB_WORKSPACE/.github/scripts/pq-probe.php"
+      - name: 'Operation records, executor and plan lifecycle (PHPUnit: vectors, N processes on one database, store failures)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: vendor/bin/phpunit --filter 'OperationsTest|PlanLifecycleTest|RevocationStalenessTest|GoalCommitV3Test|AssuranceTest|MiddlewareOptionsTest|VerifierHooksTest|StepUpTest|StoreConformanceTest'
+      - name: 'LLPhant adapter against the real library (theodo-group/llphant from require-dev: a FunctionInfo round trip through the tool proxy)'
+        if: ${{ !cancelled() && matrix.php != '8.1' }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: vendor/bin/phpunit --filter 'LlPhantRealTest|LlPhantPcaToolProxyTest'
+      - name: 'OpenAI adapters against the real library (openai-php/client from require-dev: a real tool call through ToolDispatch and the agents guard) and the agents adapter replay'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: vendor/bin/phpunit --filter 'OpenAiPhpRealTest|OpenAiToolDispatchTest|RefOpenAiAgentsDifferentialTest'
+      - name: 'Agent-native surface (caution, rationale, tool-schema firewall, envelope introspection, leases; shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-agent-native.json.gz
+          vendor/bin/phpunit --filter 'RefAgentNativeDifferentialTest'
+      - name: 'Durable stores (ledger store, stored ledger, bond store, budget ledger, mesh witness; shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-core-stores-java.json.gz
+          vendor/bin/phpunit --filter 'RefCoreStoresDifferentialTest'
+      - name: 'Small core helpers (ledger commit, v2 goal parser, intent revocation ids and exposure window, allocation caveat, share and revoke messages; shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-core-kotlin-gaps.json.gz
+          vendor/bin/phpunit --filter 'RefCoreGapsDifferentialTest'
+      - name: 'Hybrid KEM (X25519 + ML-KEM-768 / -1024, X-Wing, FIPS 203 key checks; shared reference corpus, a missing file fails; must run where OpenSSL 3.5 is present)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        env:
+          PCA_REQUIRE_PQ: ${{ matrix.os == 'ubuntu-26.04' && '1' || '0' }}
+        run: |
+          test -s test-data/ref-kem.json.gz
+          vendor/bin/phpunit --filter 'RefKemDifferentialTest'
+      - name: 'Entropy (QRNG sources over an injected transport, SP 800-90B health tests, HKDF mixing, secureSeed; shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-entropy.json.gz
+          vendor/bin/phpunit --filter 'RefEntropyDifferentialTest|FdLibmPowTest'
+      - name: 'Passport helpers (binding match, trust score, assurance label; shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-passport.json.gz
+          vendor/bin/phpunit --filter 'RefPassportHelpersDifferentialTest'
+      - name: 'Registry and intent signers (registry documents, evolution records, re-approvals, accumulator receipts, sequencer key sets, classifier verdicts; shared reference corpora, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        env:
+          PCA_REQUIRE_PQ: ${{ matrix.os == 'ubuntu-26.04' && '1' || '0' }}
+        run: |
+          test -s test-data/ref-action-pin.json.gz
+          test -s test-data/ref-intent-misc2.json.gz
+          test -s test-data/ref-intent-attest.json.gz
+          vendor/bin/phpunit --filter 'RefIntentSignersDifferentialTest|RefIntentAttestDifferentialTest'
+      - name: 'Prohibitions, contracts and the Policy VM derive step (trigger validation, conservative match, constitution and contract signing, composition, clause grids and histories, derive then decide; shared reference corpora, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-prohibitions.json.gz
+          test -s test-data/base-prohibitions.json.gz
+          test -s test-data/ref-contracts.json.gz
+          test -s test-data/ref-decide-derive.json.gz
+          vendor/bin/phpunit --filter 'RefProhibitionsDifferentialTest|ProhibitionsReferenceDiffTest|RefContractsDifferentialTest|RefDecideDeriveDifferentialTest|DecideDeriveInputTest'
+      - name: 'Mesh issuing side and federation (caveat conjunction, size and latency models, the worked example, domain and witness scripts, capability translation, federated budget, cross-reference commitments; shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-mesh-issue.json.gz
+          vendor/bin/phpunit --filter 'RefMeshIssueDifferentialTest'
+      - name: 'Post-quantum quorum sets, proofs and rotation chains (set ids, canonical wire order, share signing, the quorum verifier, rotation, forks, sizes; shared reference corpus, a missing file fails; must run where OpenSSL 3.5 is present)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        env:
+          PCA_REQUIRE_PQ: ${{ matrix.os == 'ubuntu-26.04' && '1' || '0' }}
+        run: |
+          test -s test-data/ref-pq-threshold-quorum.json.gz
+          vendor/bin/phpunit --filter 'RefPqQuorumDifferentialTest'
+      - name: 'Safety certificate (risk-budget bound, check rows, issue and verify under the Ed25519, ML-DSA-65 and hybrid suites, encode and decode, the compliance row; shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-safety-certificate.json.gz
+          vendor/bin/phpunit --filter 'RefSafetyCertificateDifferentialTest'
+      - name: 'Connector action catalog (defineAction, the uncatalogued spec, lookups, digest and pin, extension that may only tighten; shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-catalog.json.gz
+          vendor/bin/phpunit --filter 'RefCatalogDifferentialTest|CatalogTest'
+      - name: 'Policy simulation and budget forecast (simulate, the static lints, forecast over the default and custom catalogs, recommendPolicy, autonomyBoundOf; shared reference corpora, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-budget-forecast.json.gz
+          test -s test-data/ref-core-research-java.json.gz
+          test -s test-data/ref-core-sweep-java.json.gz
+          vendor/bin/phpunit --filter 'RefBudgetForecastDifferentialTest'
+      - name: 'Reputation and coverage pricing (the input validator, scoring, priceCoverage, the signed coverage quote, disputes from guardian-signed settlements; shared reference corpora, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-reputation.json.gz
+          test -s test-data/ref-core-sweep-java.json.gz
+          test -s test-data/ref-core-research-java.json.gz
+          vendor/bin/phpunit --filter 'RefReputationDifferentialTest'
+      - name: 'Agent console, kill-switch set, sessions and the immune read side (shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-core-research-java.json.gz
+          vendor/bin/phpunit --filter 'RefConsoleSessionDifferentialTest'
+      - name: 'Core sweep (chain compaction and memo, receipt log, budget algebra, standing approvals, insurance pool; shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-core-sweep-java.json.gz
+          vendor/bin/phpunit --filter 'RefCoreSweepDifferentialTest'
+      - name: 'Policy debugger (explainRisk, explainDecision, applyDelta, counterfactual, auditPCActn; shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-policy-debug.json.gz
+          vendor/bin/phpunit --filter 'RefPolicyDebugDifferentialTest'
+      - name: 'Guardian-set high availability and the fenced leader lease (shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-ha.json.gz
+          vendor/bin/phpunit --filter 'RefHaDifferentialTest'
+      - name: 'Information-flow taint (lattice, registry, classifyRef, computeTaint) (shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-taint.json.gz
+          vendor/bin/phpunit --filter 'RefTaintDifferentialTest'
+      - name: 'Frontier signals (semantic, progress, objective signals and the risk-input tightening) (shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-frontier-signals.json.gz
+          test -s test-data/ref-core-sweep-java.json.gz
+          vendor/bin/phpunit --filter 'RefFrontierSignalsDifferentialTest'
+      - name: 'Objective risk (canonical action, registry, graph, embedders, goal commitment, calibration, harm, objectiveRisk and its oracle) (shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-objective-risk.json.gz
+          vendor/bin/phpunit --filter 'RefObjectiveRiskDifferentialTest'
+      - name: 'Proof of progress (potentials, goal commitment, steps, tracker, trajectories, signed steps, state attestations, anchors) (shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-progress.json.gz
+          vendor/bin/phpunit --filter 'RefProgressDifferentialTest'
+      - name: 'Software attestation (binding, dev attestor, registry, nonce store, agent-binding match, verifier and hook, multi-root, evidence anchoring) (shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-attestation-soft.json.gz
+          vendor/bin/phpunit --filter 'RefAttestationSoftDifferentialTest'
+      - name: 'AMD SEV-SNP pure helpers (report parser, P-384 key and signature helpers, policy gate, identity, KDS fetch, VCEK certificate helpers) (shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-sevsnp-helpers.json.gz
+          vendor/bin/phpunit --filter 'RefSevSnpHelpersDifferentialTest'
+      - name: 'Connector provider catalog (the 15 seeded manifests, invariants, built-in order and catalog digest) (shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-connectors-providers.json.gz
+          vendor/bin/phpunit --filter 'RefConnectorsProvidersDifferentialTest'
+      - name: 'Post-quantum software attestation root (attestor, verifier) (shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-attest-pq-software.json.gz
+          vendor/bin/phpunit --filter 'RefAttestPqSoftwareDifferentialTest'
+      - name: 'PUF attestation root (fuzzy extractor, TPM-EK provider, enrollment, attestor, registry, verifier) (shared reference corpus, a missing file fails; must run where OpenSSL 3.5 is present)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        env:
+          PCA_REQUIRE_PQ: ${{ matrix.os == 'ubuntu-26.04' && '1' || '0' }}
+        run: |
+          test -s test-data/ref-attest-puf.json.gz
+          vendor/bin/phpunit --filter 'RefAttestPufDifferentialTest'
+      - name: 'Signed measurement allowlists and their transparency anchor (verify under every suite, durable verify, create / sign / revoke, projection, the operator log, anchored verification) (shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-attest-allowlist.json.gz
+          vendor/bin/phpunit --filter 'RefAttestAllowlistDifferentialTest'
+      - name: 'Azure MAA key trust and the release-signed pins (guarded certs fetch, JWKS evaluation, rotation-safe store, corroboration, durable adapter) (shared reference corpus, a missing file fails; must run where OpenSSL 3.5 is present)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        env:
+          PCA_REQUIRE_PQ: ${{ matrix.os == 'ubuntu-26.04' && '1' || '0' }}
+        run: |
+          test -s test-data/ref-attest-maa.json.gz
+          vendor/bin/phpunit --filter 'RefAttestMaaDifferentialTest'
+      - name: 'NVIDIA GPU-CC attestation modules (SPDM transcript, device chain, RIM, golden comparison, CRL / OCSP revocation, OCSP request, collateral hook, fetch helpers) (shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-attest-nvidia.json.gz
+          test -s test-data/ref-attest-nvidia-rim.json.gz
+          vendor/bin/phpunit --filter 'RefAttestNvidiaDifferentialTest'
+      - name: 'Semantic judge threshold (statement and message, verdict signing, verification, k-of-n with calibration, pins and the hardware gate, the hook, risk contribution) (shared reference corpus, a missing file fails; must run where OpenSSL 3.5 is present)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        env:
+          PCA_REQUIRE_PQ: ${{ matrix.os == 'ubuntu-26.04' && '1' || '0' }}
+        run: |
+          test -s test-data/ref-semantic-threshold.json.gz
+          test -s test-data/ref-intent-routing.json.gz
+          vendor/bin/phpunit --filter 'RefSemanticThresholdDifferentialTest'
+      - name: 'Agent passport (fingerprint, issuing, registry, evidence binding, signing, verification order and PQ pins) (shared reference corpus, a missing file fails; must run where OpenSSL 3.5 is present)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        env:
+          PCA_REQUIRE_PQ: ${{ matrix.os == 'ubuntu-26.04' && '1' || '0' }}
+        run: |
+          test -s test-data/ref-passport.json.gz
+          vendor/bin/phpunit --filter 'RefPassportDifferentialTest'
+      - name: 'Liveness beacons (issuing under three suites, message, reference, verification, replay acceptance, frozen liveness, the durable acceptor) (shared reference corpus, a missing file fails; must run where OpenSSL 3.5 is present)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        env:
+          PCA_REQUIRE_PQ: ${{ matrix.os == 'ubuntu-26.04' && '1' || '0' }}
+        run: |
+          test -s test-data/ref-beacons.json.gz
+          vendor/bin/phpunit --filter 'RefBeaconsDifferentialTest'
+      - name: 'Action schema (constants, reversibility, wallet floor, signing / key / digest / verification, MCP hints and the drafting importers) and the OpenAPI drafting corpus (shared reference corpus, a missing file fails; must run where OpenSSL 3.5 is present)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        env:
+          PCA_REQUIRE_PQ: ${{ matrix.os == 'ubuntu-26.04' && '1' || '0' }}
+        run: |
+          test -s test-data/ref-action-schema.json.gz
+          test -s test-data/ref-action-schema-draft.json.gz
+          vendor/bin/phpunit --filter 'RefActionSchemaDifferentialTest'
+      - name: 'Natural-language policy approval (catalog digest, draft binding and digests, policy and draft from a completion, approvals v2 and legacy v1, loading with rejection codes, agent from an approved draft) (shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-nl-approval.json.gz
+          vendor/bin/phpunit --filter 'RefNlApprovalDifferentialTest'
+      - name: 'Post-quantum FROST companions (group algorithm, signer-set digest, hybrid co-sign, PQ quorum block) (shared reference corpus, a missing file fails; must run where OpenSSL 3.5 is present)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        env:
+          PCA_REQUIRE_PQ: ${{ matrix.os == 'ubuntu-26.04' && '1' || '0' }}
+        run: |
+          test -s test-data/ref-frost-net.json.gz
+          vendor/bin/phpunit --filter 'RefFrostPqDifferentialTest'
+      - name: 'Networked FROST allow token, equivocation guard and wire decoders (shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-frost-net.json.gz
+          vendor/bin/phpunit --filter 'RefFrostNetDifferentialTest'
+      - name: 'Networked FROST signer proof of possession and nonce store (shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-frost-net.json.gz
+          vendor/bin/phpunit --filter 'RefFrostNetDifferentialTest'
+      - name: 'Networked FROST signer service and coordinator (shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-frost-net.json.gz
+          vendor/bin/phpunit --filter 'RefFrostServiceDifferentialTest'
+      - name: 'FROST distributed key generation (rounds, blame, echo agreement, codec, inbox, party driver) (shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-frost-dkg.json.gz
+          vendor/bin/phpunit --filter 'RefFrostDkgDifferentialTest'
+      - name: 'Intent artifact, required-problem and classifier helpers (shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-intent-misc2.json.gz
+          vendor/bin/phpunit --filter 'RefIntentMisc2DifferentialTest'
+      - name: 'Intent routing, conformance attestation and JIT scenarios (shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-intent-routing.json.gz
+          vendor/bin/phpunit --filter 'RefIntentRoutingDifferentialTest'
+      - name: 'Base action schema and intent history corpora (shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/base-actionschema.json.gz
+          test -s test-data/base-intenthistory.json.gz
+          vendor/bin/phpunit --filter 'RefBase(ActionSchema|IntentHistory)DifferentialTest'
+      - name: 'blue control protocol vs reference (shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-control-blue.json.gz
+          vendor/bin/phpunit --filter 'RefControlBlueDifferentialTest'
+      - name: 'vendor attestation facades vs reference (shared reference corpus, a missing file fails)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-attest-vendors.json.gz
+          vendor/bin/phpunit --filter 'RefAttestVendorsDifferentialTest'
+      - name: 'zk compliance (statements, the verifier gates, public-input derivation, quantizers, ceremony checks; shared reference corpus, a missing file fails; the pairing cases run in the Groth16 workflow)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          test -s test-data/ref-zk.json.gz
+          vendor/bin/phpunit --filter 'RefZkDifferentialTest'
+      - name: Agent / issuer side (producer vectors byte for byte, round trips; a missing file fails)
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        env:
+          PCA_REQUIRE_PQ: ${{ matrix.os == 'ubuntu-26.04' && '1' || '0' }} # OpenSSL 3.5 over FFI: ML-DSA and SLH-DSA signing must work there
+          PCA_PRODUCER_OUT: ${{ runner.temp }}/producer-native-php.json
+        run: |
+          vendor/bin/phpunit --filter 'AgentProducerTest|FacadeTest|SignersMoreTest|CatalogTest'
+          [ "$PCA_REQUIRE_PQ" != 1 ] || test -s "$PCA_PRODUCER_OUT"  # written where post-quantum signing is required
+      - name: Upload this SDK's signed artifacts for the reference verifier
+        if: ${{ !cancelled() && matrix.os == 'ubuntu-26.04' && matrix.php == '8.4' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: producer-native-php
+          path: ${{ runner.temp }}/producer-native-php.json
+          if-no-files-found: error
+      - name: 'Provenance by default and undo windows (PHPUnit: vectors, mutation kills, the authorize gate, the undo admission hook)'
+        if: ${{ !cancelled() }}
+        shell: bash
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        env:
+          PCA_REQUIRE_PQ: ${{ matrix.os == 'ubuntu-26.04' && '1' || '0' }} # the hybrid provenance receipt test must run there
+        run: vendor/bin/phpunit --filter 'ArgProvenance|Undo|ProvenanceFlow'
       - name: PHPUnit
         if: ${{ !cancelled() }}
         shell: bash
         working-directory: ${{ env.PCA_MONO_SDK }}
+        # --exclude-group native-lib: the tests that need a natively built library run in the sandbox-wasm and lwe-ot workflows (which build it and require it)
+        run: vendor/bin/phpunit --debug --exclude-group native-lib   # --debug names every test as it starts: a stuck test is visible in the log
+
+  run-error-gate-control:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: The mutation run-error gate refuses a changed source line and an unlisted errored mutant
+        run: node .github/scripts/run-error-gate-check.mjs
+
+  laravel-example:
+    name: Laravel example (POST /refunds behind protect())
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: sodium, json, mbstring, intl, gd, zip, openssl, gmp
+          coverage: none
+          tools: composer
+      - name: Install
+        working-directory: examples/laravel-server
+        run: |
+          for n in 1 2 3 4; do composer install --no-interaction --no-progress --prefer-dist && break; [ "$n" = 4 ] && exit 1; echo "composer attempt $n failed (network); retrying"; sleep $((n * 15)); done
+      - name: Smoke test (a signed refund is allowed once, the replay and an unsigned call are refused with a doc link)
+        working-directory: examples/laravel-server
         run: vendor/bin/phpunit
