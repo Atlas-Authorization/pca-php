@@ -1,0 +1,1 @@
+{"id":"fn-canon-unicode-key-order","kind":"fn","fn":"canon","input":{"é":1,"z":2,"Ａ":3,"a":4},"expect":{"canon":"{\"a\":4,\"z\":2,\"é\":1,\"Ａ\":3}","digest":"zqngI_w626pPhx1ZBaOjcNgH4qcEa63fdKQA-y6qbvc"}}

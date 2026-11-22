@@ -4,7 +4,11 @@
     "logs": { "json": "infection-out/log.json", "text": "infection-out/log.txt" },
     "mutators": { "@default": true },
     "testFramework": "phpunit",
-    "timeout": 60,
+    // Infection never runs (status "skipped", listed nowhere) a mutant whose covering tests' measured time is >= timeout; the
+    // whole suite takes ~2-4 min (the k05 differential oracles cover most of src), so 60 s hid ~44% of a shard. 600 s runs every
+    // mutant and still ends a looping one. The shard job fails if any mutant is skipped. The suite grew to ~12 min under coverage
+    // (one thread), so the src/Json.php mutants that nearly every test covers were skipped at 600 s: 1800 s runs them.
+    "timeout": 1800,
     "minMsi": 100,
     "minCoveredMsi": 100
 }

@@ -23,12 +23,8 @@ trait IntentV2Acc
         if (self::isList($verbs) && in_array($verb, $verbs, true)) {
             return true;
         }
-        $ai = self::m($sel, 'accumulates_into');
-        if (!self::isU($ai) && $schema instanceof Obj) {
-            $v = self::schemaVerb($schema, $verb);
-            return !self::isU($v) && count(self::accumulationParams($v, $ai)) > 0;
-        }
-        return false;
+        // no guards needed: a non-Obj schema has no verb entry (undef), undef has no params, and a non-string unit selects no param
+        return count(self::accumulationParams(self::schemaVerb($schema, $verb), self::m($sel, 'accumulates_into'))) > 0;
     }
 
     /** The canonical key of a `distinct` value: the strict canonical JSON text of a string or a safe integer. */
@@ -661,8 +657,10 @@ trait IntentV2Acc
                         return self::bad("the epoch drops '$id', revoked in the last accepted epoch (not append-only)");
                     }
                 }
-                if (self::iv($ep->get('epoch')) === self::iv($le->get('epoch')) && $ep->get('root') !== $le->get('root')) {
-                    return self::bad('two different revocation sets under one epoch number (equivocation)');
+                if (self::iv($ep->get('epoch')) === self::iv($le->get('epoch'))) {
+                    if ($ep->get('root') !== $le->get('root')) {
+                        return self::bad('two different revocation sets under one epoch number (equivocation)');
+                    }
                 }
             }
             foreach ($ids as $id) {

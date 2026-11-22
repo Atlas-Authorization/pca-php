@@ -1,0 +1,1 @@
+{"id":"fn-claim-lying-claim-allow","kind":"fn","fn":"claim","input":{"base":"allow","min_ppm":900000,"claimed_ppm":1000000,"replayed_ppm":null},"expect":"allow"}

@@ -1,0 +1,1518 @@
+[
+ {
+  "id": "adv1563",
+  "name": "session-root-ml-dsa-65-unpinned",
+  "raw": "{\"ver\":2,\"action\":{\"verb\":\"air.book\",\"resource\":\"skyair.example/bookings\",\"params_digest\":\"-BkF8tsZZl_jCgbpiIyAIlRrJBl3PIDqfA1NxxRHg4c\",\"reversibility_class\":\"irreversible\"},\"grant_ref\":\"01j9hpIi_P9gkPCZJ4FN8YpCRMkHpn8chgD3FcIYbXc\",\"cap_chain\":[{\"id\":\"01j9hpIi_P9gkPCZJ4FN8YpCRMkHpn8chgD3FcIYbXc\",\"issuer\":\"4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw\",\"holder\":\"pYz5tUBahM7859yQSF1pQMyZqB26FApp2hKcGFr2P2o\",\"caveats\":[{\"agent_binding\":{},\"caveats\":[],\"goal_commit\":\"o_WCXmy-0c6nR8XKjA3uzoHEDecoJTUt2GdIxq4LtUI\",\"predicates\":[{\"resource\":\"*\",\"verb\":\"air.book\",\"where\":[{\"field\":\"env.acc.trip_spend.post\",\"op\":\"lte\",\"value\":40000}]}],\"risk_policy\":{\"bMax\":1,\"kappa\":1,\"lambda\":0.0005,\"rho\":0.5,\"theta1\":0.25,\"theta2\":0.6,\"weights\":{\"alpha\":0.25,\"beta\":0.2,\"delta\":0.2,\"epsilon\":0.1,\"gamma\":0.2,\"zeta\":0.05}},\"type\":\"envelope\"},{\"root\":\"K2jKOtii8HRp3tox2HQ4BBDP6pLVX3tX5051QA2SuHA\",\"seq\":0,\"session\":\"QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE\",\"type\":\"intent_session\"}],\"body_digest\":\"01j9hpIi_P9gkPCZJ4FN8YpCRMkHpn8chgD3FcIYbXc\",\"sig\":\"MPIFbr3OHrzWpmy8yEgyYqJn-XwopMCeB24-Xtp86BOs0iycm_OBfh_qHWdGiAJlyuaKxFYqJzi4mTV4um7cAA\"}],\"plan\":{\"root\":\"yeQ-bJLqXy5T4R3iKfycuhjonDRU6QPBQxIMK7Uyqzo\",\"inclusion_proof\":{\"index\":0,\"size\":1,\"path\":[]},\"node_id\":\"book\",\"conditions_digest\":\"YM87EgmmvAr4WYQDm1wkrB7pFoHs4esi8tOmv9_DUxY\"},\"attestation\":{\"quote_digest\":\"\",\"epoch\":0,\"model_id\":\"unattested\",\"measurement\":\"\",\"operator\":\"unattested\"},\"provenance\":{\"causal_hash\":\"\",\"taint_level\":0,\"trusted_refs\":[]},\"freshness\":{\"beacon_ref\":\"\",\"epoch\":0,\"accumulator_witness\":\"\"},\"counter\":1,\"risk_claim\":{\"r\":0,\"inputs\":{}},\"aud\":\"skyair.example\",\"iat\":1800000000000,\"exp\":1800000600000,\"intent\":{\"ref\":\"8ihRXE04SR3b2XhJI1Db9pfHzuXnmDY_e_IAk-828mI\",\"map_digest\":\"Fv6Ir9kOvEYPjvEKSF6UTel8dtaAkcOrlDBTIAI80gM\",\"goal_salt\":\"salt0\",\"fidelity_ppm\":1000000,\"residual_risk_ppm\":0},\"intent_session\":{\"session\":\"QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE\",\"root\":\"K2jKOtii8HRp3tox2HQ4BBDP6pLVX3tX5051QA2SuHA\",\"seq\":0,\"schema\":\"AsXp0amxFiFadUc1Qot-6gVqzWpcv7LbvUyt5wOjdPM\",\"acc\":[{\"id\":\"trip_spend\",\"post\":38900}]},\"sig\":\"T-4n-K6ZJ0MnNb2RE-IJKr9E6TwbHb2meS-OXKG5OyYIYDwo1ohiA7LQC6yKKk8_LMEBz6AVOHdPTrBaoLykDA\"}",
+  "grant": "{\"id\":\"01j9hpIi_P9gkPCZJ4FN8YpCRMkHpn8chgD3FcIYbXc\",\"issuer\":\"4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw\",\"holder\":\"pYz5tUBahM7859yQSF1pQMyZqB26FApp2hKcGFr2P2o\",\"caveats\":[{\"agent_binding\":{},\"caveats\":[],\"goal_commit\":\"o_WCXmy-0c6nR8XKjA3uzoHEDecoJTUt2GdIxq4LtUI\",\"predicates\":[{\"resource\":\"*\",\"verb\":\"air.book\",\"where\":[{\"field\":\"env.acc.trip_spend.post\",\"op\":\"lte\",\"value\":40000}]}],\"risk_policy\":{\"bMax\":1,\"kappa\":1,\"lambda\":0.0005,\"rho\":0.5,\"theta1\":0.25,\"theta2\":0.6,\"weights\":{\"alpha\":0.25,\"beta\":0.2,\"delta\":0.2,\"epsilon\":0.1,\"gamma\":0.2,\"zeta\":0.05}},\"type\":\"envelope\"},{\"root\":\"K2jKOtii8HRp3tox2HQ4BBDP6pLVX3tX5051QA2SuHA\",\"seq\":0,\"session\":\"QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE\",\"type\":\"intent_session\"}],\"body_digest\":\"01j9hpIi_P9gkPCZJ4FN8YpCRMkHpn8chgD3FcIYbXc\",\"sig\":\"MPIFbr3OHrzWpmy8yEgyYqJn-XwopMCeB24-Xtp86BOs0iycm_OBfh_qHWdGiAJlyuaKxFYqJzi4mTV4um7cAA\"}",
+  "now": 1800000000000,
+  "aud": "skyair.example",
+  "intent_v2": {
+   "params": {
+    "offer_id": "OF-1",
+    "total": 38900,
+    "add_ons": [
+     "none"
+    ],
+    "refundable": false
+   },
+   "schema": {
+    "docs": [
+     {
+      "v": 1,
+      "kind": "pca-action-schema",
+      "site": "https://skyair.example",
+      "aud": "skyair.example",
+      "version": "2026-10-01",
+      "units": {
+       "usd_cents": {
+        "kind": "money",
+        "currency": "USD",
+        "exponent": 2
+       }
+      },
+      "verbs": [
+       {
+        "verb": "air.book",
+        "kind": "write",
+        "params": {
+         "action.params.offer_id": {
+          "type": "string",
+          "semantic": "product.ref",
+          "sensitivity": "material"
+         },
+         "action.params.total": {
+          "type": "integer",
+          "unit": "usd_cents",
+          "min": 0,
+          "max": 5000000,
+          "semantic": "money.amount",
+          "sensitivity": "critical",
+          "accumulates_into": [
+           "spend.usd_cents"
+          ]
+         },
+         "action.params.add_ons": {
+          "type": "set",
+          "values": [
+           "none",
+           "tripshield",
+           "seat_plus"
+          ],
+          "default": [
+           "none"
+          ],
+          "principal_neutral_default": true,
+          "semantic": "product.addon",
+          "sensitivity": "material"
+         },
+         "action.params.refundable": {
+          "type": "boolean",
+          "semantic": "flag",
+          "sensitivity": "material"
+         },
+         "action.params.passengers": {
+          "type": "array",
+          "max_items": 9,
+          "max_len": 64,
+          "semantic": "person.identity",
+          "sensitivity": "critical",
+          "required": false
+         },
+         "action.params.note": {
+          "type": "string",
+          "semantic": "text.note",
+          "sensitivity": "free",
+          "required": false,
+          "max_len": 16
+         }
+        },
+        "reversibility_by": {
+         "param": "action.params.refundable",
+         "map": {
+          "true": "reversible",
+          "false": "irreversible"
+         }
+        }
+       },
+       {
+        "verb": "air.search",
+        "kind": "read",
+        "params": {
+         "action.params.from": {
+          "type": "string",
+          "values": [
+           "SFO",
+           "JFK"
+          ],
+          "semantic": "place.airport",
+          "sensitivity": "material"
+         },
+         "action.params.date": {
+          "type": "date",
+          "semantic": "schedule.date",
+          "sensitivity": "material"
+         },
+         "action.params.pax": {
+          "type": "integer",
+          "min": 1,
+          "max": 9,
+          "semantic": "quantity",
+          "sensitivity": "material"
+         }
+        },
+        "reversibility": "reversible"
+       }
+      ],
+      "sig": {
+       "alg": "ed25519",
+       "kid": "skyair-2026",
+       "value": "m4EZ7Y15YfzxVAlHJ7UNaU1JdVeBtJB3r36kVaUxgoGmwP1QKLDU89TP0zfxW3nJYi9NouaPWTbhlNtBDQG1DA"
+      }
+     }
+    ],
+    "keys": [
+     {
+      "kid": "skyair-2026",
+      "alg": "ed25519",
+      "pk": "ngFoNxTzXeqGmwUazsE4YDMjft0mQAyAxRWdPwlU4YE"
+     }
+    ]
+   },
+   "session": {
+    "root": {
+     "v": 1,
+     "kind": "pca-intent-session",
+     "session": "QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE",
+     "principals": [
+      {
+       "key": "4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw",
+       "alg": "ml-dsa-65",
+       "pq_pk": "JRGL2vaxlLp67Jst7sjD7Y2f2AlRAHvJDPGxB3WBShEWn3xBm85enZq9x1VR5gPC6bOaT1DndsFZKf7G8Zq4J-VHPR1xb2gVcIfHoI0dEHd-Cd2-UmbzvXHqKAQMmzasaOo7E7erpk82dzMp69sEan4dfwqWlRJ_F7erBZwA5PIA3E5KTRRPJVvXSMERjaS30G9tX1gZSk3pM7EAt5UTmrWQSHMP5tG12NxFiWeP__CacTi2firm-d1h3e5X6Coe3sFdmj5DwEWdDWd21sjqumdsfCNfahe_4dTdUAZa_1imkTBf_2t83Ehi9TGd1CDiMvmckHB7qa0FXx01FwiJxshovNOJpIFwbfa2vMinfw_qZKvJuLnYScWDfI8MRo7Zg7UGRsspDr2mQ57B4oRrcm4PYyL6HEiKYme6oDBsRlTCeN-9YmuT_Q8_apNp096mo4jVvWlEY1SWeqeQsdma7sq2gxxvBU5rTqYfSYqu3PxSoquSUBtHyuETpOEIsxFDfP_A3neRWQgmhYLOUo-htkQvO2--6jYS22t-XNxTdaEg150dbkdye6HMQZbbpvkMR1EZ0hLN6_QtgyuJgK1PLvp2THLjXvv14nyU4txlrKkCJNeix4vxXrP55TWfX-KuhW98MMvjIEa2skm_w5vZ8Llyy98Bq1DHaxfzkd8QNpCfGngWMcrCnJDdivlmcc_-4eJxTki3sMAaBddsibLI9zUGqSQ2mJHgsXfLbZVlu3RiwdcnW9QtgIEGrvR-BIc72-CrKxR5cHW-Gzr1iVVLOktXYYz2DQwZCkZ10EmBg8Ap0QyKSGSsnc349gl3JqVcpVUExk0pXR4-OwokVEhcu3TAEwIWjdTTP4ilSNhiMqf97nZzi7zmnLwRxe-MQvDZW64e6uw3bKiKEPrGSsgvY2A3YlucpiKI947AzBjrjNi30J2m8ubnxTWQkyl5KJ4LDfNUFo25EedRDEm6Y4lQizhvV9ky1Nyk1TZ290FcnQ5Ex_D9t-WUzWE2ujcMraDT32v6GtnINlXAtiUJwPN4TTUyvxF-D_GU1h5OJX626z18zKjHOOA1KYUGvzqbgdDcwPlME8fUhauDhp7rgVUvWkZzvI5GzcqORU4tlJJ5D8XM4uz5YVAOTLCQocD0_pbmAmTFYmAuQMf1aUfTNEW2Wy40z9YmgZJwqMZfn92xCKLB5crmgE6Ug3LroH2in-lidXOOja6KpEdt_KSJPt6ax0D1BkPqP-sp9l0IfTSj0i0WBb2JKRQ99f992eTaJ_xMJhUi8xLx2cyz3u-x9AOMPK28gVOl-sUYpYbPYb9bRl7tG7snXW8ZYmHsNbrv4jSe6A0iaFlJGxKwLceVOcoCYGTahtXk7kEIHefy7BoAytTNudzqcA3Jb25BoMTvQdCafhR929pOt5lGuqHwJrREcXc_8s0qQBKqroz9PUhCOwduPIxDkPNbWFmTGZLwtSIUejvvac0L-egb0ixg5cmXvGT5vnxHJOE4Sqe0I_8CpU_MaFs1ZunT8GCI-CQJapxfAhGgLx7nXDkXS2TNNE0x3zFqetFNC4Y_r_ImSpuV_EBefFmaQVyEWWqLaZ26_dnZ2QjbU3ZqigdeKbP7NV2CFC5Ai1dQC13RjHNQmYw9jPb_FdiFlsSxx6MfqItxnR6E3xolqMH0uMY4N6ZnOzotrALmECK9jAzfQV9FsIwBZVEs8-X7UEtX4YAX2qnnCdx8G6vfYMBxWzEJSaR93KLSBOf3ulT6zJ-KDANO1ami-IRKQ6k61Ieghkk6L1pCMCfEfAXHFCSi3SrR9RWbfrDDsh5UUp3mPuuZKKK9jXY0ppZWIhRGq0OXsVxkveQ4-nRHgtLtYXLmdz7GvXxxikbVS3kcL1EclfccsK1G4GFmd9rF5WA6mSwx_DHEGOC4W0Fvyb2tl0lfjmQkX3NPR-Z19yS1kFbQdY6UU6qx0xqZ_0UiiXuIa_WUKj6D0ZMhkkALHQBOez1VtbndtwU7srYX5dPQtnjLTcsfYJv6TyuTb9W8L-ydEcRUHN0F0228FIYsOZPV30Nt0dZvvSVn8yKKMR568U8YKcUARrfrCGTaYekOjSvjawSrXC2AWb237d8dNMOD8WXSr_SuT2_4Q1dxTLJbsmbta4f6ozwwSTg9dqdo_yR93lxpv4UYrkeWNw-LlpD-ZuYfQE5HMGuQpKLdJAQIhpst-0rz3hJZPV7KyDFocc0LT4Uco18AgiL2QtNxncNSXns_6eMVQCUgq1VxEf0xqBSw3eFQ4z-8ZRhuk9s_4sTu4k2t6f241U5nmOIdYHVL9QIhtzf6MkIvX5SJASfPpZLeECRVNm1W3Zck1NKYp1lcQWb-QD9I7Y6Zng5_pDrd6OqgPjEN7FRfQFJY-cUNbHN_AlSicB9InnFHI9O_t7Ykup3FD348whN_tM4_TNb8LUkQ7mrGJGPtZ8sJLt_H1r9jehkg2tqHFlqHtKK_fenbT0u_BW3AR_5Nn9D2HTnhn_qBkM2EHFJSlmvEKxTM4K1huuMffsGoH1HNex1KF-5x3C6cwZLMxuz7jN1yYfGkoqAgT0X_aQGnVPMVvhdSqiYW5NjtKWlDc4b_ynA"
+      }
+     ],
+     "intent_ref": "8ihRXE04SR3b2XhJI1Db9pfHzuXnmDY_e_IAk-828mI",
+     "schema": {
+      "aud": "skyair.example",
+      "digest": "AsXp0amxFiFadUc1Qot-6gVqzWpcv7LbvUyt5wOjdPM"
+     },
+     "layers": {
+      "task": {
+       "map_digest": "Fv6Ir9kOvEYPjvEKSF6UTel8dtaAkcOrlDBTIAI80gM"
+      }
+     },
+     "accumulators": [
+      {
+       "id": "trip_spend",
+       "agg": "sum",
+       "unit": "usd_cents",
+       "sel": {
+        "accumulates_into": "spend.usd_cents"
+       },
+       "win": {
+        "kind": "task"
+       },
+       "key": null,
+       "domain_max": 500000,
+       "holder": {
+        "kind": "site_local"
+       }
+      },
+      {
+       "id": "questions",
+       "agg": "count",
+       "sel": {
+        "event": "intent_required"
+       },
+       "win": {
+        "kind": "task"
+       },
+       "key": null,
+       "cap": 6,
+       "holder": {
+        "kind": "wallet"
+       }
+      }
+     ],
+     "monitors": [],
+     "question_uri": "https://atlas.example/q",
+     "expires_at": 1800086400000,
+     "signer": "4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw",
+     "sig": "nxu4e8-jzDMOMMsYxCNzRMAC2Me3AKqMfrkaRuC72Tdf1nBEgjNOAEYYleZgGhgLqit0LUqzhaU7wkcNBeUwhPTsUiSMtfMQgfNGNHMuJ-PMa3K3Lmo82oLgcSrK9FYuktaW6L2_HvEoX0t3z4gBk79TkvfnFuUDS54kaaeTJzHqX2VJqmWYkLX31Adh2aCMF-rcjBjomb7Yay7CXIBTbYGtieK3n2URs8sxVCPA8sar39LPkIAfVNaBqoYJKscSi6mXcDEy4R8HgEimfxhMrVL_9faDDmsOEb_Zrzx_9PS7eahym1YTsUBIjbkpaQZPM1zfLcFxGg-HDDIL11NAwsc2y57L37qpLtkurqq0CVrAbEjrpunKMNF3tTyKPbh6w2UALkzI95j5IozsYyDTlE4Mj3IH2Q-c_UoeiQVRZnTK9VcczieUNTaXh1FIrkvLiUHVpYiwXpgQ2BDb9OiNNAUXeo0k_DHTjhUYWf4WFLd4i3wTUOhc0dx3bfTYHebu81CM1IB3_qpjVAVpFDysQxcaTYkQK6xKz-IrCkdGl0ob57kGVTkinUgU_qkH7gFC2cjl1bQtnI28uJInQZjc1X8ELhaa0bzkq4spQSHZmpjHgEDMVucE6UC_FEKkvw51Yhag7ctSEg6QEeDI3w5TOC1RZGtSIb_rR9Jg2-W3ZdUdMs3WbI48P86d5ALNoWQIOT5PG5TvEezuzmP_1b8GmSfypTith-PIhAp4tHei7VCRhofJkZx2Y6eiZ8gclzRzrHrAQhNs2BtODyEBkJEsy3dr_aGb2EegbqaI8dykLcrCWnltmAPoG1EahsCXOR1FLZf3oiUL5xa7_fhxwWF9Qa1O4cTHV7c9T8Ka1UMjC81iJYwMghOsl4A4gHQpHUeDK-fzU8hRfLPL7qe7YaWVB0JJNSgwHgCoaN_zrO9njtw_Tt3B3rZJ5AGh7ahPpuEX53L0RHjE0r7lo86hiquyoDWt9xH8FgkTOA1CeXKPctY_Yu04XCvw55_5erN7oYHeyYWUJ2EatVsrILlNrBlHMFYCOkq-ROL3LMnw_RpwKYsRY911jIObAFct0pPSHPi-e-qvCA-X50KLQCd3YHr7z7D31jJJWCDfG7aC6fg3O24Hilws2SZ0LL-zrJ3wnN-xOgB5hrDqCoshcKwc2lFih4ZJY7f3xp7c7INCG63I60qSCZdu0VXDj2BMMrkNm8rC5ZHIUXIZOW-ikXBAF14v6-xCcxYIQkQtVq1TBpcX6rGciVTtyICb4QYb5Mlb7CpeMmmuOo6QlQ2SUi5_UG-wIMdRtchU6beNKfiulkuQT-AUe5mi3kHxYD4S9a5IsNL8S5dqWrSsUNN1gyQnhQimAv2sJz81yVJWaOEjA0_ddu2IG-mG1EPfLslRNj5SccnO0MxN240MuKD6aaDhhqkVcqhspvxOBPs47rdzD5BcBg6NPDrhcm04_TwPOo0L3RrJ-i4GRmXnvHFRbdRmCo62foZzo7NHkkhjJDV9qmsbtlRwUDCiqJmRs6WNdU_7dvEtvhG-4b5Ln9VbwUUzC-cCjStgKEDcVrkufxTg5guGZSRHJ1W0Ty_WoREBOg33CIbM3dS8v5EWm5ZeUpMUvWPHEs6XZg95ICQrRnQomcYmS0NfI9WaouPnFHFQHXDt3lpI6Je2Eop115gfLkA2z3CYqsrFZ4JOX5s7Dn6kSI4olxQ9VaJDcs_IbPqGTWBmP6-pzXIbBHxBU1ZWlh5JI5Wc6acbY0usNFyhzMHkW1xoJuy38jkftEku8qhUuM_5tM_n4sP7CNDSIQfB2cUkMpI0FHyATb6gEEt8jK064ginNcNhllW-2wqy4H5FRbOSVjm9tC48bBhjfh7GIzTbHGe9bld3wUFDgmBVv_5Y49Ag5w8-8ZY7hwdJSlIvhP6e8lbNXqxwutgaGNZ7CNYMevIadCUTrmtBjYxmOYLpqLUA1df6WP7QHVv5IW18vTMoQ27wnvWawGFMue5BV1xPQOR9SqEknnREGBJEM0f00qLNL3P9JlnU0SUxBl9B01jtYJu7yy8mpGbVA8UuCluUJwoSDjDGWG7oP2mW_oe_AIpabtBulAciNOwR_AmwcKxTLsJ54FIxwTwDQwNiKny3Ev5QYGQBJ7gLFh0EhNdSJ9pT3j1Ux1IBE2H7T159fhPHmhS90oOgwLwEklL37Lwl3XEl3g13_eYHhMvbR0HsEmQCdELKc_GTbssKhlHMApQwCAft_9Xt2cYphaWq1WJN3eEKAUa3fv_djXq0mjE7yrr_IEVJR8rL4GcZEiq5m0iAvigGaDg0a3364oB78JbHlR8Ws7xxhJ_3jtpvtjFQz_l0g_ZTV3ILT83Ukg1xUnvl6JRoddUAniWGUcvB0IO8QvSEESQhmKwH1-dkoAux_OJpweAdwqrRrxfR2oZ3ZmRSUptUTFmX1IK-jj2fn-nUtx__pGwKGNxGgJQe90utbqHk1e5ULe_Q3LA9KNAndYfQB_634BpYbkZUX817nOXYGMSMfxuJDWESi9di6XEB5NxwVnqTZg7I8Yd8zW_lwq1tQ2Y5VwdNjbEengPE1j4ZqymHzbAxjs16T-TGnrDBLkenuQYyKe3NJXO2r8ruoJE0qcMdlvF065Y4kB4AuHdfZ2ZCLoxvLd1GsUtjOF2mvBlE3IaQ4x917G8PP9-0fkjXhgP4-ZaxJfmgKZYaH8aQLoaMXamu6XRFzev3bJv0xGSeuqTJnXH7456OG2mEoyWRCj9A1MDJZkibJEnkGiAVXCWAtHCKSK5LhhKl7PoR9KXMxr-0vFLBZeFW-IPZuUaytbREnvihB2LBXVVC54NZm1bPazMVaYwKcZ95TwakaURK98jthlzKDNwUpQayGpNM15qQsjxhsqRCh3SekboCDfpjfFiH2oHNFgFcoRYAYdz58gpL-y6Eaxq5mdvT2icRXg0_NeUPvnde_pdZggfquor-sYLiUPstmkmp5s80ToWAVxk-ooMYysvHabHgpokGz7Wpze2HDI0rKDes83l7-3ew2pC3wZ6FX7CZKLn9t8AyjgsszYihFgCvqoEiQfmBz66v6yRikwPloA6HB_X_dktXKXVh3TTWF_S8LHmm15cMx2DzBNpks7dCrG95SewHFbIjeqQ_aZQdMh_C9KRFunHmH1dSQYPRuf9wp92GjKkc_1pfKRvKpiBPVsASgHACt5_RUpUJXbP6EnqM_sqWzxAw3CKIJIOX2LJcl5b8KnSbXKVSoDC1fTYIUesMYweLB77iLYRnwIeolRBDueY1Vkl7wmaskSbbnk_G0A-gYeXBYgVHPUMBq9h8DZ7Ixm_BxB91w4edxAspJ5mZXxrB8EF5QWsuyPbxlUafVnsmMQ-M0Ve5oRoEIcr5XiZQtat_hyXPRGoGsYv_mgXaht4I2F1vDMMqp_opgYKgjoWcPwLNKuyk6WK8IYeiKTUEsg6JbYcQi9Gswz4U73z7_5VAI_gu41OCl_RsUgOxYwGnVqS-1VnmE1Ctn-pACPLk1eiCrUj391MxvBVppx5sTrK6NxyLKuf2Ar0g_QKNLQq3ykcpProwUwp9_o6RTjGkjOwXK-rQcasKApMncQa8j2YmmzBgh78_UYAY16pu8cWycoJXPaIIPCOBWMNWYzHBjSyHMiTsPm8MaSKR5Neiy8mQ4FtoPrd-6MknHznNpFxaYwHC7UYkwME8-p7u1tIVvgKCnsomZQBzMP4t95wjg8yFS78Z6YgkNvsh-7mrFEyJpGx33zSBz600bTvQGf6Z4VdKN68Q7uxWmnoQpnEysUZPAzDBJ3qMKdPpHwAj5IIcNj1dha2vTxy6MLYapH_DMQ78UtvtmrukctfAnyFtOnysQDDCtXzufdqTf2a_Euf0DwC3lBYf5P7ossuwySC4v6DSywbJ964Fh1K-vEPa0aoLAm6P8ZF-8mGya2hpyfSx-LJ8urH1cCMVW6Q-YJZb-x6dU_NrsUj6HStbJgP6o5I0Dmm-hBUKEchpGWSsT4CyH9B0HO05lETumFA1B_zepkroHlja0qlR48PZSj5kHGt0CoVNLyZTrcjjFB09YcJ2sa52be9sD5mu2Yx8xzM9W4S_qQGYq0h5ado7lI1KNPx9zwhBtEZ70dvjCZLiAMcGvoLuS1lgTrQYBcXJzf4lQ0nyn2zG9cYdyXzXsfe-WBmOwGXuPJBPC5jEjijXuJ9kykzWN93akfkyJlvMef_gEX5PT2BnMW7s7UHq3FXd8L5_hfECP29Ge96-L79HMWkH-k4KELjIqath71iABvyX8qpugRv7-LbqAbC1LXy6-LS6T17rg2ZzQIQ9fbmMv1aDNcHW7HIzg6MaV-0RHTM2WcXs8vgsQVeirNL1FCs2RG55qdQOK0cAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwYPFh4h",
+     "alg": "ml-dsa-65",
+     "pq_pk": "JRGL2vaxlLp67Jst7sjD7Y2f2AlRAHvJDPGxB3WBShEWn3xBm85enZq9x1VR5gPC6bOaT1DndsFZKf7G8Zq4J-VHPR1xb2gVcIfHoI0dEHd-Cd2-UmbzvXHqKAQMmzasaOo7E7erpk82dzMp69sEan4dfwqWlRJ_F7erBZwA5PIA3E5KTRRPJVvXSMERjaS30G9tX1gZSk3pM7EAt5UTmrWQSHMP5tG12NxFiWeP__CacTi2firm-d1h3e5X6Coe3sFdmj5DwEWdDWd21sjqumdsfCNfahe_4dTdUAZa_1imkTBf_2t83Ehi9TGd1CDiMvmckHB7qa0FXx01FwiJxshovNOJpIFwbfa2vMinfw_qZKvJuLnYScWDfI8MRo7Zg7UGRsspDr2mQ57B4oRrcm4PYyL6HEiKYme6oDBsRlTCeN-9YmuT_Q8_apNp096mo4jVvWlEY1SWeqeQsdma7sq2gxxvBU5rTqYfSYqu3PxSoquSUBtHyuETpOEIsxFDfP_A3neRWQgmhYLOUo-htkQvO2--6jYS22t-XNxTdaEg150dbkdye6HMQZbbpvkMR1EZ0hLN6_QtgyuJgK1PLvp2THLjXvv14nyU4txlrKkCJNeix4vxXrP55TWfX-KuhW98MMvjIEa2skm_w5vZ8Llyy98Bq1DHaxfzkd8QNpCfGngWMcrCnJDdivlmcc_-4eJxTki3sMAaBddsibLI9zUGqSQ2mJHgsXfLbZVlu3RiwdcnW9QtgIEGrvR-BIc72-CrKxR5cHW-Gzr1iVVLOktXYYz2DQwZCkZ10EmBg8Ap0QyKSGSsnc349gl3JqVcpVUExk0pXR4-OwokVEhcu3TAEwIWjdTTP4ilSNhiMqf97nZzi7zmnLwRxe-MQvDZW64e6uw3bKiKEPrGSsgvY2A3YlucpiKI947AzBjrjNi30J2m8ubnxTWQkyl5KJ4LDfNUFo25EedRDEm6Y4lQizhvV9ky1Nyk1TZ290FcnQ5Ex_D9t-WUzWE2ujcMraDT32v6GtnINlXAtiUJwPN4TTUyvxF-D_GU1h5OJX626z18zKjHOOA1KYUGvzqbgdDcwPlME8fUhauDhp7rgVUvWkZzvI5GzcqORU4tlJJ5D8XM4uz5YVAOTLCQocD0_pbmAmTFYmAuQMf1aUfTNEW2Wy40z9YmgZJwqMZfn92xCKLB5crmgE6Ug3LroH2in-lidXOOja6KpEdt_KSJPt6ax0D1BkPqP-sp9l0IfTSj0i0WBb2JKRQ99f992eTaJ_xMJhUi8xLx2cyz3u-x9AOMPK28gVOl-sUYpYbPYb9bRl7tG7snXW8ZYmHsNbrv4jSe6A0iaFlJGxKwLceVOcoCYGTahtXk7kEIHefy7BoAytTNudzqcA3Jb25BoMTvQdCafhR929pOt5lGuqHwJrREcXc_8s0qQBKqroz9PUhCOwduPIxDkPNbWFmTGZLwtSIUejvvac0L-egb0ixg5cmXvGT5vnxHJOE4Sqe0I_8CpU_MaFs1ZunT8GCI-CQJapxfAhGgLx7nXDkXS2TNNE0x3zFqetFNC4Y_r_ImSpuV_EBefFmaQVyEWWqLaZ26_dnZ2QjbU3ZqigdeKbP7NV2CFC5Ai1dQC13RjHNQmYw9jPb_FdiFlsSxx6MfqItxnR6E3xolqMH0uMY4N6ZnOzotrALmECK9jAzfQV9FsIwBZVEs8-X7UEtX4YAX2qnnCdx8G6vfYMBxWzEJSaR93KLSBOf3ulT6zJ-KDANO1ami-IRKQ6k61Ieghkk6L1pCMCfEfAXHFCSi3SrR9RWbfrDDsh5UUp3mPuuZKKK9jXY0ppZWIhRGq0OXsVxkveQ4-nRHgtLtYXLmdz7GvXxxikbVS3kcL1EclfccsK1G4GFmd9rF5WA6mSwx_DHEGOC4W0Fvyb2tl0lfjmQkX3NPR-Z19yS1kFbQdY6UU6qx0xqZ_0UiiXuIa_WUKj6D0ZMhkkALHQBOez1VtbndtwU7srYX5dPQtnjLTcsfYJv6TyuTb9W8L-ydEcRUHN0F0228FIYsOZPV30Nt0dZvvSVn8yKKMR568U8YKcUARrfrCGTaYekOjSvjawSrXC2AWb237d8dNMOD8WXSr_SuT2_4Q1dxTLJbsmbta4f6ozwwSTg9dqdo_yR93lxpv4UYrkeWNw-LlpD-ZuYfQE5HMGuQpKLdJAQIhpst-0rz3hJZPV7KyDFocc0LT4Uco18AgiL2QtNxncNSXns_6eMVQCUgq1VxEf0xqBSw3eFQ4z-8ZRhuk9s_4sTu4k2t6f241U5nmOIdYHVL9QIhtzf6MkIvX5SJASfPpZLeECRVNm1W3Zck1NKYp1lcQWb-QD9I7Y6Zng5_pDrd6OqgPjEN7FRfQFJY-cUNbHN_AlSicB9InnFHI9O_t7Ykup3FD348whN_tM4_TNb8LUkQ7mrGJGPtZ8sJLt_H1r9jehkg2tqHFlqHtKK_fenbT0u_BW3AR_5Nn9D2HTnhn_qBkM2EHFJSlmvEKxTM4K1huuMffsGoH1HNex1KF-5x3C6cwZLMxuz7jN1yYfGkoqAgT0X_aQGnVPMVvhdSqiYW5NjtKWlDc4b_ynA"
+    },
+    "grants": []
+   },
+   "acc": {
+    "state": {
+     "trip_spend": {
+      "sum": 0
+     }
+    },
+    "monitors": {}
+   }
+  }
+ },
+ {
+  "id": "adv1564",
+  "name": "session-root-ml-dsa-65-pin-other-signer",
+  "raw": "{\"ver\":2,\"action\":{\"verb\":\"air.book\",\"resource\":\"skyair.example/bookings\",\"params_digest\":\"-BkF8tsZZl_jCgbpiIyAIlRrJBl3PIDqfA1NxxRHg4c\",\"reversibility_class\":\"irreversible\"},\"grant_ref\":\"01j9hpIi_P9gkPCZJ4FN8YpCRMkHpn8chgD3FcIYbXc\",\"cap_chain\":[{\"id\":\"01j9hpIi_P9gkPCZJ4FN8YpCRMkHpn8chgD3FcIYbXc\",\"issuer\":\"4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw\",\"holder\":\"pYz5tUBahM7859yQSF1pQMyZqB26FApp2hKcGFr2P2o\",\"caveats\":[{\"agent_binding\":{},\"caveats\":[],\"goal_commit\":\"o_WCXmy-0c6nR8XKjA3uzoHEDecoJTUt2GdIxq4LtUI\",\"predicates\":[{\"resource\":\"*\",\"verb\":\"air.book\",\"where\":[{\"field\":\"env.acc.trip_spend.post\",\"op\":\"lte\",\"value\":40000}]}],\"risk_policy\":{\"bMax\":1,\"kappa\":1,\"lambda\":0.0005,\"rho\":0.5,\"theta1\":0.25,\"theta2\":0.6,\"weights\":{\"alpha\":0.25,\"beta\":0.2,\"delta\":0.2,\"epsilon\":0.1,\"gamma\":0.2,\"zeta\":0.05}},\"type\":\"envelope\"},{\"root\":\"K2jKOtii8HRp3tox2HQ4BBDP6pLVX3tX5051QA2SuHA\",\"seq\":0,\"session\":\"QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE\",\"type\":\"intent_session\"}],\"body_digest\":\"01j9hpIi_P9gkPCZJ4FN8YpCRMkHpn8chgD3FcIYbXc\",\"sig\":\"MPIFbr3OHrzWpmy8yEgyYqJn-XwopMCeB24-Xtp86BOs0iycm_OBfh_qHWdGiAJlyuaKxFYqJzi4mTV4um7cAA\"}],\"plan\":{\"root\":\"yeQ-bJLqXy5T4R3iKfycuhjonDRU6QPBQxIMK7Uyqzo\",\"inclusion_proof\":{\"index\":0,\"size\":1,\"path\":[]},\"node_id\":\"book\",\"conditions_digest\":\"YM87EgmmvAr4WYQDm1wkrB7pFoHs4esi8tOmv9_DUxY\"},\"attestation\":{\"quote_digest\":\"\",\"epoch\":0,\"model_id\":\"unattested\",\"measurement\":\"\",\"operator\":\"unattested\"},\"provenance\":{\"causal_hash\":\"\",\"taint_level\":0,\"trusted_refs\":[]},\"freshness\":{\"beacon_ref\":\"\",\"epoch\":0,\"accumulator_witness\":\"\"},\"counter\":1,\"risk_claim\":{\"r\":0,\"inputs\":{}},\"aud\":\"skyair.example\",\"iat\":1800000000000,\"exp\":1800000600000,\"intent\":{\"ref\":\"8ihRXE04SR3b2XhJI1Db9pfHzuXnmDY_e_IAk-828mI\",\"map_digest\":\"Fv6Ir9kOvEYPjvEKSF6UTel8dtaAkcOrlDBTIAI80gM\",\"goal_salt\":\"salt0\",\"fidelity_ppm\":1000000,\"residual_risk_ppm\":0},\"intent_session\":{\"session\":\"QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE\",\"root\":\"K2jKOtii8HRp3tox2HQ4BBDP6pLVX3tX5051QA2SuHA\",\"seq\":0,\"schema\":\"AsXp0amxFiFadUc1Qot-6gVqzWpcv7LbvUyt5wOjdPM\",\"acc\":[{\"id\":\"trip_spend\",\"post\":38900}]},\"sig\":\"T-4n-K6ZJ0MnNb2RE-IJKr9E6TwbHb2meS-OXKG5OyYIYDwo1ohiA7LQC6yKKk8_LMEBz6AVOHdPTrBaoLykDA\"}",
+  "grant": "{\"id\":\"01j9hpIi_P9gkPCZJ4FN8YpCRMkHpn8chgD3FcIYbXc\",\"issuer\":\"4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw\",\"holder\":\"pYz5tUBahM7859yQSF1pQMyZqB26FApp2hKcGFr2P2o\",\"caveats\":[{\"agent_binding\":{},\"caveats\":[],\"goal_commit\":\"o_WCXmy-0c6nR8XKjA3uzoHEDecoJTUt2GdIxq4LtUI\",\"predicates\":[{\"resource\":\"*\",\"verb\":\"air.book\",\"where\":[{\"field\":\"env.acc.trip_spend.post\",\"op\":\"lte\",\"value\":40000}]}],\"risk_policy\":{\"bMax\":1,\"kappa\":1,\"lambda\":0.0005,\"rho\":0.5,\"theta1\":0.25,\"theta2\":0.6,\"weights\":{\"alpha\":0.25,\"beta\":0.2,\"delta\":0.2,\"epsilon\":0.1,\"gamma\":0.2,\"zeta\":0.05}},\"type\":\"envelope\"},{\"root\":\"K2jKOtii8HRp3tox2HQ4BBDP6pLVX3tX5051QA2SuHA\",\"seq\":0,\"session\":\"QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE\",\"type\":\"intent_session\"}],\"body_digest\":\"01j9hpIi_P9gkPCZJ4FN8YpCRMkHpn8chgD3FcIYbXc\",\"sig\":\"MPIFbr3OHrzWpmy8yEgyYqJn-XwopMCeB24-Xtp86BOs0iycm_OBfh_qHWdGiAJlyuaKxFYqJzi4mTV4um7cAA\"}",
+  "now": 1800000000000,
+  "aud": "skyair.example",
+  "intent_v2": {
+   "params": {
+    "offer_id": "OF-1",
+    "total": 38900,
+    "add_ons": [
+     "none"
+    ],
+    "refundable": false
+   },
+   "schema": {
+    "docs": [
+     {
+      "v": 1,
+      "kind": "pca-action-schema",
+      "site": "https://skyair.example",
+      "aud": "skyair.example",
+      "version": "2026-10-01",
+      "units": {
+       "usd_cents": {
+        "kind": "money",
+        "currency": "USD",
+        "exponent": 2
+       }
+      },
+      "verbs": [
+       {
+        "verb": "air.book",
+        "kind": "write",
+        "params": {
+         "action.params.offer_id": {
+          "type": "string",
+          "semantic": "product.ref",
+          "sensitivity": "material"
+         },
+         "action.params.total": {
+          "type": "integer",
+          "unit": "usd_cents",
+          "min": 0,
+          "max": 5000000,
+          "semantic": "money.amount",
+          "sensitivity": "critical",
+          "accumulates_into": [
+           "spend.usd_cents"
+          ]
+         },
+         "action.params.add_ons": {
+          "type": "set",
+          "values": [
+           "none",
+           "tripshield",
+           "seat_plus"
+          ],
+          "default": [
+           "none"
+          ],
+          "principal_neutral_default": true,
+          "semantic": "product.addon",
+          "sensitivity": "material"
+         },
+         "action.params.refundable": {
+          "type": "boolean",
+          "semantic": "flag",
+          "sensitivity": "material"
+         },
+         "action.params.passengers": {
+          "type": "array",
+          "max_items": 9,
+          "max_len": 64,
+          "semantic": "person.identity",
+          "sensitivity": "critical",
+          "required": false
+         },
+         "action.params.note": {
+          "type": "string",
+          "semantic": "text.note",
+          "sensitivity": "free",
+          "required": false,
+          "max_len": 16
+         }
+        },
+        "reversibility_by": {
+         "param": "action.params.refundable",
+         "map": {
+          "true": "reversible",
+          "false": "irreversible"
+         }
+        }
+       },
+       {
+        "verb": "air.search",
+        "kind": "read",
+        "params": {
+         "action.params.from": {
+          "type": "string",
+          "values": [
+           "SFO",
+           "JFK"
+          ],
+          "semantic": "place.airport",
+          "sensitivity": "material"
+         },
+         "action.params.date": {
+          "type": "date",
+          "semantic": "schedule.date",
+          "sensitivity": "material"
+         },
+         "action.params.pax": {
+          "type": "integer",
+          "min": 1,
+          "max": 9,
+          "semantic": "quantity",
+          "sensitivity": "material"
+         }
+        },
+        "reversibility": "reversible"
+       }
+      ],
+      "sig": {
+       "alg": "ed25519",
+       "kid": "skyair-2026",
+       "value": "m4EZ7Y15YfzxVAlHJ7UNaU1JdVeBtJB3r36kVaUxgoGmwP1QKLDU89TP0zfxW3nJYi9NouaPWTbhlNtBDQG1DA"
+      }
+     }
+    ],
+    "keys": [
+     {
+      "kid": "skyair-2026",
+      "alg": "ed25519",
+      "pk": "ngFoNxTzXeqGmwUazsE4YDMjft0mQAyAxRWdPwlU4YE"
+     }
+    ]
+   },
+   "session": {
+    "root": {
+     "v": 1,
+     "kind": "pca-intent-session",
+     "session": "QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE",
+     "principals": [
+      {
+       "key": "4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw",
+       "alg": "ml-dsa-65",
+       "pq_pk": "JRGL2vaxlLp67Jst7sjD7Y2f2AlRAHvJDPGxB3WBShEWn3xBm85enZq9x1VR5gPC6bOaT1DndsFZKf7G8Zq4J-VHPR1xb2gVcIfHoI0dEHd-Cd2-UmbzvXHqKAQMmzasaOo7E7erpk82dzMp69sEan4dfwqWlRJ_F7erBZwA5PIA3E5KTRRPJVvXSMERjaS30G9tX1gZSk3pM7EAt5UTmrWQSHMP5tG12NxFiWeP__CacTi2firm-d1h3e5X6Coe3sFdmj5DwEWdDWd21sjqumdsfCNfahe_4dTdUAZa_1imkTBf_2t83Ehi9TGd1CDiMvmckHB7qa0FXx01FwiJxshovNOJpIFwbfa2vMinfw_qZKvJuLnYScWDfI8MRo7Zg7UGRsspDr2mQ57B4oRrcm4PYyL6HEiKYme6oDBsRlTCeN-9YmuT_Q8_apNp096mo4jVvWlEY1SWeqeQsdma7sq2gxxvBU5rTqYfSYqu3PxSoquSUBtHyuETpOEIsxFDfP_A3neRWQgmhYLOUo-htkQvO2--6jYS22t-XNxTdaEg150dbkdye6HMQZbbpvkMR1EZ0hLN6_QtgyuJgK1PLvp2THLjXvv14nyU4txlrKkCJNeix4vxXrP55TWfX-KuhW98MMvjIEa2skm_w5vZ8Llyy98Bq1DHaxfzkd8QNpCfGngWMcrCnJDdivlmcc_-4eJxTki3sMAaBddsibLI9zUGqSQ2mJHgsXfLbZVlu3RiwdcnW9QtgIEGrvR-BIc72-CrKxR5cHW-Gzr1iVVLOktXYYz2DQwZCkZ10EmBg8Ap0QyKSGSsnc349gl3JqVcpVUExk0pXR4-OwokVEhcu3TAEwIWjdTTP4ilSNhiMqf97nZzi7zmnLwRxe-MQvDZW64e6uw3bKiKEPrGSsgvY2A3YlucpiKI947AzBjrjNi30J2m8ubnxTWQkyl5KJ4LDfNUFo25EedRDEm6Y4lQizhvV9ky1Nyk1TZ290FcnQ5Ex_D9t-WUzWE2ujcMraDT32v6GtnINlXAtiUJwPN4TTUyvxF-D_GU1h5OJX626z18zKjHOOA1KYUGvzqbgdDcwPlME8fUhauDhp7rgVUvWkZzvI5GzcqORU4tlJJ5D8XM4uz5YVAOTLCQocD0_pbmAmTFYmAuQMf1aUfTNEW2Wy40z9YmgZJwqMZfn92xCKLB5crmgE6Ug3LroH2in-lidXOOja6KpEdt_KSJPt6ax0D1BkPqP-sp9l0IfTSj0i0WBb2JKRQ99f992eTaJ_xMJhUi8xLx2cyz3u-x9AOMPK28gVOl-sUYpYbPYb9bRl7tG7snXW8ZYmHsNbrv4jSe6A0iaFlJGxKwLceVOcoCYGTahtXk7kEIHefy7BoAytTNudzqcA3Jb25BoMTvQdCafhR929pOt5lGuqHwJrREcXc_8s0qQBKqroz9PUhCOwduPIxDkPNbWFmTGZLwtSIUejvvac0L-egb0ixg5cmXvGT5vnxHJOE4Sqe0I_8CpU_MaFs1ZunT8GCI-CQJapxfAhGgLx7nXDkXS2TNNE0x3zFqetFNC4Y_r_ImSpuV_EBefFmaQVyEWWqLaZ26_dnZ2QjbU3ZqigdeKbP7NV2CFC5Ai1dQC13RjHNQmYw9jPb_FdiFlsSxx6MfqItxnR6E3xolqMH0uMY4N6ZnOzotrALmECK9jAzfQV9FsIwBZVEs8-X7UEtX4YAX2qnnCdx8G6vfYMBxWzEJSaR93KLSBOf3ulT6zJ-KDANO1ami-IRKQ6k61Ieghkk6L1pCMCfEfAXHFCSi3SrR9RWbfrDDsh5UUp3mPuuZKKK9jXY0ppZWIhRGq0OXsVxkveQ4-nRHgtLtYXLmdz7GvXxxikbVS3kcL1EclfccsK1G4GFmd9rF5WA6mSwx_DHEGOC4W0Fvyb2tl0lfjmQkX3NPR-Z19yS1kFbQdY6UU6qx0xqZ_0UiiXuIa_WUKj6D0ZMhkkALHQBOez1VtbndtwU7srYX5dPQtnjLTcsfYJv6TyuTb9W8L-ydEcRUHN0F0228FIYsOZPV30Nt0dZvvSVn8yKKMR568U8YKcUARrfrCGTaYekOjSvjawSrXC2AWb237d8dNMOD8WXSr_SuT2_4Q1dxTLJbsmbta4f6ozwwSTg9dqdo_yR93lxpv4UYrkeWNw-LlpD-ZuYfQE5HMGuQpKLdJAQIhpst-0rz3hJZPV7KyDFocc0LT4Uco18AgiL2QtNxncNSXns_6eMVQCUgq1VxEf0xqBSw3eFQ4z-8ZRhuk9s_4sTu4k2t6f241U5nmOIdYHVL9QIhtzf6MkIvX5SJASfPpZLeECRVNm1W3Zck1NKYp1lcQWb-QD9I7Y6Zng5_pDrd6OqgPjEN7FRfQFJY-cUNbHN_AlSicB9InnFHI9O_t7Ykup3FD348whN_tM4_TNb8LUkQ7mrGJGPtZ8sJLt_H1r9jehkg2tqHFlqHtKK_fenbT0u_BW3AR_5Nn9D2HTnhn_qBkM2EHFJSlmvEKxTM4K1huuMffsGoH1HNex1KF-5x3C6cwZLMxuz7jN1yYfGkoqAgT0X_aQGnVPMVvhdSqiYW5NjtKWlDc4b_ynA"
+      }
+     ],
+     "intent_ref": "8ihRXE04SR3b2XhJI1Db9pfHzuXnmDY_e_IAk-828mI",
+     "schema": {
+      "aud": "skyair.example",
+      "digest": "AsXp0amxFiFadUc1Qot-6gVqzWpcv7LbvUyt5wOjdPM"
+     },
+     "layers": {
+      "task": {
+       "map_digest": "Fv6Ir9kOvEYPjvEKSF6UTel8dtaAkcOrlDBTIAI80gM"
+      }
+     },
+     "accumulators": [
+      {
+       "id": "trip_spend",
+       "agg": "sum",
+       "unit": "usd_cents",
+       "sel": {
+        "accumulates_into": "spend.usd_cents"
+       },
+       "win": {
+        "kind": "task"
+       },
+       "key": null,
+       "domain_max": 500000,
+       "holder": {
+        "kind": "site_local"
+       }
+      },
+      {
+       "id": "questions",
+       "agg": "count",
+       "sel": {
+        "event": "intent_required"
+       },
+       "win": {
+        "kind": "task"
+       },
+       "key": null,
+       "cap": 6,
+       "holder": {
+        "kind": "wallet"
+       }
+      }
+     ],
+     "monitors": [],
+     "question_uri": "https://atlas.example/q",
+     "expires_at": 1800086400000,
+     "signer": "4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw",
+     "sig": "nxu4e8-jzDMOMMsYxCNzRMAC2Me3AKqMfrkaRuC72Tdf1nBEgjNOAEYYleZgGhgLqit0LUqzhaU7wkcNBeUwhPTsUiSMtfMQgfNGNHMuJ-PMa3K3Lmo82oLgcSrK9FYuktaW6L2_HvEoX0t3z4gBk79TkvfnFuUDS54kaaeTJzHqX2VJqmWYkLX31Adh2aCMF-rcjBjomb7Yay7CXIBTbYGtieK3n2URs8sxVCPA8sar39LPkIAfVNaBqoYJKscSi6mXcDEy4R8HgEimfxhMrVL_9faDDmsOEb_Zrzx_9PS7eahym1YTsUBIjbkpaQZPM1zfLcFxGg-HDDIL11NAwsc2y57L37qpLtkurqq0CVrAbEjrpunKMNF3tTyKPbh6w2UALkzI95j5IozsYyDTlE4Mj3IH2Q-c_UoeiQVRZnTK9VcczieUNTaXh1FIrkvLiUHVpYiwXpgQ2BDb9OiNNAUXeo0k_DHTjhUYWf4WFLd4i3wTUOhc0dx3bfTYHebu81CM1IB3_qpjVAVpFDysQxcaTYkQK6xKz-IrCkdGl0ob57kGVTkinUgU_qkH7gFC2cjl1bQtnI28uJInQZjc1X8ELhaa0bzkq4spQSHZmpjHgEDMVucE6UC_FEKkvw51Yhag7ctSEg6QEeDI3w5TOC1RZGtSIb_rR9Jg2-W3ZdUdMs3WbI48P86d5ALNoWQIOT5PG5TvEezuzmP_1b8GmSfypTith-PIhAp4tHei7VCRhofJkZx2Y6eiZ8gclzRzrHrAQhNs2BtODyEBkJEsy3dr_aGb2EegbqaI8dykLcrCWnltmAPoG1EahsCXOR1FLZf3oiUL5xa7_fhxwWF9Qa1O4cTHV7c9T8Ka1UMjC81iJYwMghOsl4A4gHQpHUeDK-fzU8hRfLPL7qe7YaWVB0JJNSgwHgCoaN_zrO9njtw_Tt3B3rZJ5AGh7ahPpuEX53L0RHjE0r7lo86hiquyoDWt9xH8FgkTOA1CeXKPctY_Yu04XCvw55_5erN7oYHeyYWUJ2EatVsrILlNrBlHMFYCOkq-ROL3LMnw_RpwKYsRY911jIObAFct0pPSHPi-e-qvCA-X50KLQCd3YHr7z7D31jJJWCDfG7aC6fg3O24Hilws2SZ0LL-zrJ3wnN-xOgB5hrDqCoshcKwc2lFih4ZJY7f3xp7c7INCG63I60qSCZdu0VXDj2BMMrkNm8rC5ZHIUXIZOW-ikXBAF14v6-xCcxYIQkQtVq1TBpcX6rGciVTtyICb4QYb5Mlb7CpeMmmuOo6QlQ2SUi5_UG-wIMdRtchU6beNKfiulkuQT-AUe5mi3kHxYD4S9a5IsNL8S5dqWrSsUNN1gyQnhQimAv2sJz81yVJWaOEjA0_ddu2IG-mG1EPfLslRNj5SccnO0MxN240MuKD6aaDhhqkVcqhspvxOBPs47rdzD5BcBg6NPDrhcm04_TwPOo0L3RrJ-i4GRmXnvHFRbdRmCo62foZzo7NHkkhjJDV9qmsbtlRwUDCiqJmRs6WNdU_7dvEtvhG-4b5Ln9VbwUUzC-cCjStgKEDcVrkufxTg5guGZSRHJ1W0Ty_WoREBOg33CIbM3dS8v5EWm5ZeUpMUvWPHEs6XZg95ICQrRnQomcYmS0NfI9WaouPnFHFQHXDt3lpI6Je2Eop115gfLkA2z3CYqsrFZ4JOX5s7Dn6kSI4olxQ9VaJDcs_IbPqGTWBmP6-pzXIbBHxBU1ZWlh5JI5Wc6acbY0usNFyhzMHkW1xoJuy38jkftEku8qhUuM_5tM_n4sP7CNDSIQfB2cUkMpI0FHyATb6gEEt8jK064ginNcNhllW-2wqy4H5FRbOSVjm9tC48bBhjfh7GIzTbHGe9bld3wUFDgmBVv_5Y49Ag5w8-8ZY7hwdJSlIvhP6e8lbNXqxwutgaGNZ7CNYMevIadCUTrmtBjYxmOYLpqLUA1df6WP7QHVv5IW18vTMoQ27wnvWawGFMue5BV1xPQOR9SqEknnREGBJEM0f00qLNL3P9JlnU0SUxBl9B01jtYJu7yy8mpGbVA8UuCluUJwoSDjDGWG7oP2mW_oe_AIpabtBulAciNOwR_AmwcKxTLsJ54FIxwTwDQwNiKny3Ev5QYGQBJ7gLFh0EhNdSJ9pT3j1Ux1IBE2H7T159fhPHmhS90oOgwLwEklL37Lwl3XEl3g13_eYHhMvbR0HsEmQCdELKc_GTbssKhlHMApQwCAft_9Xt2cYphaWq1WJN3eEKAUa3fv_djXq0mjE7yrr_IEVJR8rL4GcZEiq5m0iAvigGaDg0a3364oB78JbHlR8Ws7xxhJ_3jtpvtjFQz_l0g_ZTV3ILT83Ukg1xUnvl6JRoddUAniWGUcvB0IO8QvSEESQhmKwH1-dkoAux_OJpweAdwqrRrxfR2oZ3ZmRSUptUTFmX1IK-jj2fn-nUtx__pGwKGNxGgJQe90utbqHk1e5ULe_Q3LA9KNAndYfQB_634BpYbkZUX817nOXYGMSMfxuJDWESi9di6XEB5NxwVnqTZg7I8Yd8zW_lwq1tQ2Y5VwdNjbEengPE1j4ZqymHzbAxjs16T-TGnrDBLkenuQYyKe3NJXO2r8ruoJE0qcMdlvF065Y4kB4AuHdfZ2ZCLoxvLd1GsUtjOF2mvBlE3IaQ4x917G8PP9-0fkjXhgP4-ZaxJfmgKZYaH8aQLoaMXamu6XRFzev3bJv0xGSeuqTJnXH7456OG2mEoyWRCj9A1MDJZkibJEnkGiAVXCWAtHCKSK5LhhKl7PoR9KXMxr-0vFLBZeFW-IPZuUaytbREnvihB2LBXVVC54NZm1bPazMVaYwKcZ95TwakaURK98jthlzKDNwUpQayGpNM15qQsjxhsqRCh3SekboCDfpjfFiH2oHNFgFcoRYAYdz58gpL-y6Eaxq5mdvT2icRXg0_NeUPvnde_pdZggfquor-sYLiUPstmkmp5s80ToWAVxk-ooMYysvHabHgpokGz7Wpze2HDI0rKDes83l7-3ew2pC3wZ6FX7CZKLn9t8AyjgsszYihFgCvqoEiQfmBz66v6yRikwPloA6HB_X_dktXKXVh3TTWF_S8LHmm15cMx2DzBNpks7dCrG95SewHFbIjeqQ_aZQdMh_C9KRFunHmH1dSQYPRuf9wp92GjKkc_1pfKRvKpiBPVsASgHACt5_RUpUJXbP6EnqM_sqWzxAw3CKIJIOX2LJcl5b8KnSbXKVSoDC1fTYIUesMYweLB77iLYRnwIeolRBDueY1Vkl7wmaskSbbnk_G0A-gYeXBYgVHPUMBq9h8DZ7Ixm_BxB91w4edxAspJ5mZXxrB8EF5QWsuyPbxlUafVnsmMQ-M0Ve5oRoEIcr5XiZQtat_hyXPRGoGsYv_mgXaht4I2F1vDMMqp_opgYKgjoWcPwLNKuyk6WK8IYeiKTUEsg6JbYcQi9Gswz4U73z7_5VAI_gu41OCl_RsUgOxYwGnVqS-1VnmE1Ctn-pACPLk1eiCrUj391MxvBVppx5sTrK6NxyLKuf2Ar0g_QKNLQq3ykcpProwUwp9_o6RTjGkjOwXK-rQcasKApMncQa8j2YmmzBgh78_UYAY16pu8cWycoJXPaIIPCOBWMNWYzHBjSyHMiTsPm8MaSKR5Neiy8mQ4FtoPrd-6MknHznNpFxaYwHC7UYkwME8-p7u1tIVvgKCnsomZQBzMP4t95wjg8yFS78Z6YgkNvsh-7mrFEyJpGx33zSBz600bTvQGf6Z4VdKN68Q7uxWmnoQpnEysUZPAzDBJ3qMKdPpHwAj5IIcNj1dha2vTxy6MLYapH_DMQ78UtvtmrukctfAnyFtOnysQDDCtXzufdqTf2a_Euf0DwC3lBYf5P7ossuwySC4v6DSywbJ964Fh1K-vEPa0aoLAm6P8ZF-8mGya2hpyfSx-LJ8urH1cCMVW6Q-YJZb-x6dU_NrsUj6HStbJgP6o5I0Dmm-hBUKEchpGWSsT4CyH9B0HO05lETumFA1B_zepkroHlja0qlR48PZSj5kHGt0CoVNLyZTrcjjFB09YcJ2sa52be9sD5mu2Yx8xzM9W4S_qQGYq0h5ado7lI1KNPx9zwhBtEZ70dvjCZLiAMcGvoLuS1lgTrQYBcXJzf4lQ0nyn2zG9cYdyXzXsfe-WBmOwGXuPJBPC5jEjijXuJ9kykzWN93akfkyJlvMef_gEX5PT2BnMW7s7UHq3FXd8L5_hfECP29Ge96-L79HMWkH-k4KELjIqath71iABvyX8qpugRv7-LbqAbC1LXy6-LS6T17rg2ZzQIQ9fbmMv1aDNcHW7HIzg6MaV-0RHTM2WcXs8vgsQVeirNL1FCs2RG55qdQOK0cAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwYPFh4h",
+     "alg": "ml-dsa-65",
+     "pq_pk": "JRGL2vaxlLp67Jst7sjD7Y2f2AlRAHvJDPGxB3WBShEWn3xBm85enZq9x1VR5gPC6bOaT1DndsFZKf7G8Zq4J-VHPR1xb2gVcIfHoI0dEHd-Cd2-UmbzvXHqKAQMmzasaOo7E7erpk82dzMp69sEan4dfwqWlRJ_F7erBZwA5PIA3E5KTRRPJVvXSMERjaS30G9tX1gZSk3pM7EAt5UTmrWQSHMP5tG12NxFiWeP__CacTi2firm-d1h3e5X6Coe3sFdmj5DwEWdDWd21sjqumdsfCNfahe_4dTdUAZa_1imkTBf_2t83Ehi9TGd1CDiMvmckHB7qa0FXx01FwiJxshovNOJpIFwbfa2vMinfw_qZKvJuLnYScWDfI8MRo7Zg7UGRsspDr2mQ57B4oRrcm4PYyL6HEiKYme6oDBsRlTCeN-9YmuT_Q8_apNp096mo4jVvWlEY1SWeqeQsdma7sq2gxxvBU5rTqYfSYqu3PxSoquSUBtHyuETpOEIsxFDfP_A3neRWQgmhYLOUo-htkQvO2--6jYS22t-XNxTdaEg150dbkdye6HMQZbbpvkMR1EZ0hLN6_QtgyuJgK1PLvp2THLjXvv14nyU4txlrKkCJNeix4vxXrP55TWfX-KuhW98MMvjIEa2skm_w5vZ8Llyy98Bq1DHaxfzkd8QNpCfGngWMcrCnJDdivlmcc_-4eJxTki3sMAaBddsibLI9zUGqSQ2mJHgsXfLbZVlu3RiwdcnW9QtgIEGrvR-BIc72-CrKxR5cHW-Gzr1iVVLOktXYYz2DQwZCkZ10EmBg8Ap0QyKSGSsnc349gl3JqVcpVUExk0pXR4-OwokVEhcu3TAEwIWjdTTP4ilSNhiMqf97nZzi7zmnLwRxe-MQvDZW64e6uw3bKiKEPrGSsgvY2A3YlucpiKI947AzBjrjNi30J2m8ubnxTWQkyl5KJ4LDfNUFo25EedRDEm6Y4lQizhvV9ky1Nyk1TZ290FcnQ5Ex_D9t-WUzWE2ujcMraDT32v6GtnINlXAtiUJwPN4TTUyvxF-D_GU1h5OJX626z18zKjHOOA1KYUGvzqbgdDcwPlME8fUhauDhp7rgVUvWkZzvI5GzcqORU4tlJJ5D8XM4uz5YVAOTLCQocD0_pbmAmTFYmAuQMf1aUfTNEW2Wy40z9YmgZJwqMZfn92xCKLB5crmgE6Ug3LroH2in-lidXOOja6KpEdt_KSJPt6ax0D1BkPqP-sp9l0IfTSj0i0WBb2JKRQ99f992eTaJ_xMJhUi8xLx2cyz3u-x9AOMPK28gVOl-sUYpYbPYb9bRl7tG7snXW8ZYmHsNbrv4jSe6A0iaFlJGxKwLceVOcoCYGTahtXk7kEIHefy7BoAytTNudzqcA3Jb25BoMTvQdCafhR929pOt5lGuqHwJrREcXc_8s0qQBKqroz9PUhCOwduPIxDkPNbWFmTGZLwtSIUejvvac0L-egb0ixg5cmXvGT5vnxHJOE4Sqe0I_8CpU_MaFs1ZunT8GCI-CQJapxfAhGgLx7nXDkXS2TNNE0x3zFqetFNC4Y_r_ImSpuV_EBefFmaQVyEWWqLaZ26_dnZ2QjbU3ZqigdeKbP7NV2CFC5Ai1dQC13RjHNQmYw9jPb_FdiFlsSxx6MfqItxnR6E3xolqMH0uMY4N6ZnOzotrALmECK9jAzfQV9FsIwBZVEs8-X7UEtX4YAX2qnnCdx8G6vfYMBxWzEJSaR93KLSBOf3ulT6zJ-KDANO1ami-IRKQ6k61Ieghkk6L1pCMCfEfAXHFCSi3SrR9RWbfrDDsh5UUp3mPuuZKKK9jXY0ppZWIhRGq0OXsVxkveQ4-nRHgtLtYXLmdz7GvXxxikbVS3kcL1EclfccsK1G4GFmd9rF5WA6mSwx_DHEGOC4W0Fvyb2tl0lfjmQkX3NPR-Z19yS1kFbQdY6UU6qx0xqZ_0UiiXuIa_WUKj6D0ZMhkkALHQBOez1VtbndtwU7srYX5dPQtnjLTcsfYJv6TyuTb9W8L-ydEcRUHN0F0228FIYsOZPV30Nt0dZvvSVn8yKKMR568U8YKcUARrfrCGTaYekOjSvjawSrXC2AWb237d8dNMOD8WXSr_SuT2_4Q1dxTLJbsmbta4f6ozwwSTg9dqdo_yR93lxpv4UYrkeWNw-LlpD-ZuYfQE5HMGuQpKLdJAQIhpst-0rz3hJZPV7KyDFocc0LT4Uco18AgiL2QtNxncNSXns_6eMVQCUgq1VxEf0xqBSw3eFQ4z-8ZRhuk9s_4sTu4k2t6f241U5nmOIdYHVL9QIhtzf6MkIvX5SJASfPpZLeECRVNm1W3Zck1NKYp1lcQWb-QD9I7Y6Zng5_pDrd6OqgPjEN7FRfQFJY-cUNbHN_AlSicB9InnFHI9O_t7Ykup3FD348whN_tM4_TNb8LUkQ7mrGJGPtZ8sJLt_H1r9jehkg2tqHFlqHtKK_fenbT0u_BW3AR_5Nn9D2HTnhn_qBkM2EHFJSlmvEKxTM4K1huuMffsGoH1HNex1KF-5x3C6cwZLMxuz7jN1yYfGkoqAgT0X_aQGnVPMVvhdSqiYW5NjtKWlDc4b_ynA"
+    },
+    "grants": [],
+    "pq_pins": {
+     "_pD1Xfa785jZxCNX07_uz868-XComvLE-JTUfJ3wUBA": "JRGL2vaxlLp67Jst7sjD7Y2f2AlRAHvJDPGxB3WBShEWn3xBm85enZq9x1VR5gPC6bOaT1DndsFZKf7G8Zq4J-VHPR1xb2gVcIfHoI0dEHd-Cd2-UmbzvXHqKAQMmzasaOo7E7erpk82dzMp69sEan4dfwqWlRJ_F7erBZwA5PIA3E5KTRRPJVvXSMERjaS30G9tX1gZSk3pM7EAt5UTmrWQSHMP5tG12NxFiWeP__CacTi2firm-d1h3e5X6Coe3sFdmj5DwEWdDWd21sjqumdsfCNfahe_4dTdUAZa_1imkTBf_2t83Ehi9TGd1CDiMvmckHB7qa0FXx01FwiJxshovNOJpIFwbfa2vMinfw_qZKvJuLnYScWDfI8MRo7Zg7UGRsspDr2mQ57B4oRrcm4PYyL6HEiKYme6oDBsRlTCeN-9YmuT_Q8_apNp096mo4jVvWlEY1SWeqeQsdma7sq2gxxvBU5rTqYfSYqu3PxSoquSUBtHyuETpOEIsxFDfP_A3neRWQgmhYLOUo-htkQvO2--6jYS22t-XNxTdaEg150dbkdye6HMQZbbpvkMR1EZ0hLN6_QtgyuJgK1PLvp2THLjXvv14nyU4txlrKkCJNeix4vxXrP55TWfX-KuhW98MMvjIEa2skm_w5vZ8Llyy98Bq1DHaxfzkd8QNpCfGngWMcrCnJDdivlmcc_-4eJxTki3sMAaBddsibLI9zUGqSQ2mJHgsXfLbZVlu3RiwdcnW9QtgIEGrvR-BIc72-CrKxR5cHW-Gzr1iVVLOktXYYz2DQwZCkZ10EmBg8Ap0QyKSGSsnc349gl3JqVcpVUExk0pXR4-OwokVEhcu3TAEwIWjdTTP4ilSNhiMqf97nZzi7zmnLwRxe-MQvDZW64e6uw3bKiKEPrGSsgvY2A3YlucpiKI947AzBjrjNi30J2m8ubnxTWQkyl5KJ4LDfNUFo25EedRDEm6Y4lQizhvV9ky1Nyk1TZ290FcnQ5Ex_D9t-WUzWE2ujcMraDT32v6GtnINlXAtiUJwPN4TTUyvxF-D_GU1h5OJX626z18zKjHOOA1KYUGvzqbgdDcwPlME8fUhauDhp7rgVUvWkZzvI5GzcqORU4tlJJ5D8XM4uz5YVAOTLCQocD0_pbmAmTFYmAuQMf1aUfTNEW2Wy40z9YmgZJwqMZfn92xCKLB5crmgE6Ug3LroH2in-lidXOOja6KpEdt_KSJPt6ax0D1BkPqP-sp9l0IfTSj0i0WBb2JKRQ99f992eTaJ_xMJhUi8xLx2cyz3u-x9AOMPK28gVOl-sUYpYbPYb9bRl7tG7snXW8ZYmHsNbrv4jSe6A0iaFlJGxKwLceVOcoCYGTahtXk7kEIHefy7BoAytTNudzqcA3Jb25BoMTvQdCafhR929pOt5lGuqHwJrREcXc_8s0qQBKqroz9PUhCOwduPIxDkPNbWFmTGZLwtSIUejvvac0L-egb0ixg5cmXvGT5vnxHJOE4Sqe0I_8CpU_MaFs1ZunT8GCI-CQJapxfAhGgLx7nXDkXS2TNNE0x3zFqetFNC4Y_r_ImSpuV_EBefFmaQVyEWWqLaZ26_dnZ2QjbU3ZqigdeKbP7NV2CFC5Ai1dQC13RjHNQmYw9jPb_FdiFlsSxx6MfqItxnR6E3xolqMH0uMY4N6ZnOzotrALmECK9jAzfQV9FsIwBZVEs8-X7UEtX4YAX2qnnCdx8G6vfYMBxWzEJSaR93KLSBOf3ulT6zJ-KDANO1ami-IRKQ6k61Ieghkk6L1pCMCfEfAXHFCSi3SrR9RWbfrDDsh5UUp3mPuuZKKK9jXY0ppZWIhRGq0OXsVxkveQ4-nRHgtLtYXLmdz7GvXxxikbVS3kcL1EclfccsK1G4GFmd9rF5WA6mSwx_DHEGOC4W0Fvyb2tl0lfjmQkX3NPR-Z19yS1kFbQdY6UU6qx0xqZ_0UiiXuIa_WUKj6D0ZMhkkALHQBOez1VtbndtwU7srYX5dPQtnjLTcsfYJv6TyuTb9W8L-ydEcRUHN0F0228FIYsOZPV30Nt0dZvvSVn8yKKMR568U8YKcUARrfrCGTaYekOjSvjawSrXC2AWb237d8dNMOD8WXSr_SuT2_4Q1dxTLJbsmbta4f6ozwwSTg9dqdo_yR93lxpv4UYrkeWNw-LlpD-ZuYfQE5HMGuQpKLdJAQIhpst-0rz3hJZPV7KyDFocc0LT4Uco18AgiL2QtNxncNSXns_6eMVQCUgq1VxEf0xqBSw3eFQ4z-8ZRhuk9s_4sTu4k2t6f241U5nmOIdYHVL9QIhtzf6MkIvX5SJASfPpZLeECRVNm1W3Zck1NKYp1lcQWb-QD9I7Y6Zng5_pDrd6OqgPjEN7FRfQFJY-cUNbHN_AlSicB9InnFHI9O_t7Ykup3FD348whN_tM4_TNb8LUkQ7mrGJGPtZ8sJLt_H1r9jehkg2tqHFlqHtKK_fenbT0u_BW3AR_5Nn9D2HTnhn_qBkM2EHFJSlmvEKxTM4K1huuMffsGoH1HNex1KF-5x3C6cwZLMxuz7jN1yYfGkoqAgT0X_aQGnVPMVvhdSqiYW5NjtKWlDc4b_ynA"
+    }
+   },
+   "acc": {
+    "state": {
+     "trip_spend": {
+      "sum": 0
+     }
+    },
+    "monitors": {}
+   }
+  }
+ },
+ {
+  "id": "adv1565",
+  "name": "session-root-ml-dsa-65-pin-mismatch",
+  "raw": "{\"ver\":2,\"action\":{\"verb\":\"air.book\",\"resource\":\"skyair.example/bookings\",\"params_digest\":\"-BkF8tsZZl_jCgbpiIyAIlRrJBl3PIDqfA1NxxRHg4c\",\"reversibility_class\":\"irreversible\"},\"grant_ref\":\"01j9hpIi_P9gkPCZJ4FN8YpCRMkHpn8chgD3FcIYbXc\",\"cap_chain\":[{\"id\":\"01j9hpIi_P9gkPCZJ4FN8YpCRMkHpn8chgD3FcIYbXc\",\"issuer\":\"4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw\",\"holder\":\"pYz5tUBahM7859yQSF1pQMyZqB26FApp2hKcGFr2P2o\",\"caveats\":[{\"agent_binding\":{},\"caveats\":[],\"goal_commit\":\"o_WCXmy-0c6nR8XKjA3uzoHEDecoJTUt2GdIxq4LtUI\",\"predicates\":[{\"resource\":\"*\",\"verb\":\"air.book\",\"where\":[{\"field\":\"env.acc.trip_spend.post\",\"op\":\"lte\",\"value\":40000}]}],\"risk_policy\":{\"bMax\":1,\"kappa\":1,\"lambda\":0.0005,\"rho\":0.5,\"theta1\":0.25,\"theta2\":0.6,\"weights\":{\"alpha\":0.25,\"beta\":0.2,\"delta\":0.2,\"epsilon\":0.1,\"gamma\":0.2,\"zeta\":0.05}},\"type\":\"envelope\"},{\"root\":\"K2jKOtii8HRp3tox2HQ4BBDP6pLVX3tX5051QA2SuHA\",\"seq\":0,\"session\":\"QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE\",\"type\":\"intent_session\"}],\"body_digest\":\"01j9hpIi_P9gkPCZJ4FN8YpCRMkHpn8chgD3FcIYbXc\",\"sig\":\"MPIFbr3OHrzWpmy8yEgyYqJn-XwopMCeB24-Xtp86BOs0iycm_OBfh_qHWdGiAJlyuaKxFYqJzi4mTV4um7cAA\"}],\"plan\":{\"root\":\"yeQ-bJLqXy5T4R3iKfycuhjonDRU6QPBQxIMK7Uyqzo\",\"inclusion_proof\":{\"index\":0,\"size\":1,\"path\":[]},\"node_id\":\"book\",\"conditions_digest\":\"YM87EgmmvAr4WYQDm1wkrB7pFoHs4esi8tOmv9_DUxY\"},\"attestation\":{\"quote_digest\":\"\",\"epoch\":0,\"model_id\":\"unattested\",\"measurement\":\"\",\"operator\":\"unattested\"},\"provenance\":{\"causal_hash\":\"\",\"taint_level\":0,\"trusted_refs\":[]},\"freshness\":{\"beacon_ref\":\"\",\"epoch\":0,\"accumulator_witness\":\"\"},\"counter\":1,\"risk_claim\":{\"r\":0,\"inputs\":{}},\"aud\":\"skyair.example\",\"iat\":1800000000000,\"exp\":1800000600000,\"intent\":{\"ref\":\"8ihRXE04SR3b2XhJI1Db9pfHzuXnmDY_e_IAk-828mI\",\"map_digest\":\"Fv6Ir9kOvEYPjvEKSF6UTel8dtaAkcOrlDBTIAI80gM\",\"goal_salt\":\"salt0\",\"fidelity_ppm\":1000000,\"residual_risk_ppm\":0},\"intent_session\":{\"session\":\"QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE\",\"root\":\"K2jKOtii8HRp3tox2HQ4BBDP6pLVX3tX5051QA2SuHA\",\"seq\":0,\"schema\":\"AsXp0amxFiFadUc1Qot-6gVqzWpcv7LbvUyt5wOjdPM\",\"acc\":[{\"id\":\"trip_spend\",\"post\":38900}]},\"sig\":\"T-4n-K6ZJ0MnNb2RE-IJKr9E6TwbHb2meS-OXKG5OyYIYDwo1ohiA7LQC6yKKk8_LMEBz6AVOHdPTrBaoLykDA\"}",
+  "grant": "{\"id\":\"01j9hpIi_P9gkPCZJ4FN8YpCRMkHpn8chgD3FcIYbXc\",\"issuer\":\"4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw\",\"holder\":\"pYz5tUBahM7859yQSF1pQMyZqB26FApp2hKcGFr2P2o\",\"caveats\":[{\"agent_binding\":{},\"caveats\":[],\"goal_commit\":\"o_WCXmy-0c6nR8XKjA3uzoHEDecoJTUt2GdIxq4LtUI\",\"predicates\":[{\"resource\":\"*\",\"verb\":\"air.book\",\"where\":[{\"field\":\"env.acc.trip_spend.post\",\"op\":\"lte\",\"value\":40000}]}],\"risk_policy\":{\"bMax\":1,\"kappa\":1,\"lambda\":0.0005,\"rho\":0.5,\"theta1\":0.25,\"theta2\":0.6,\"weights\":{\"alpha\":0.25,\"beta\":0.2,\"delta\":0.2,\"epsilon\":0.1,\"gamma\":0.2,\"zeta\":0.05}},\"type\":\"envelope\"},{\"root\":\"K2jKOtii8HRp3tox2HQ4BBDP6pLVX3tX5051QA2SuHA\",\"seq\":0,\"session\":\"QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE\",\"type\":\"intent_session\"}],\"body_digest\":\"01j9hpIi_P9gkPCZJ4FN8YpCRMkHpn8chgD3FcIYbXc\",\"sig\":\"MPIFbr3OHrzWpmy8yEgyYqJn-XwopMCeB24-Xtp86BOs0iycm_OBfh_qHWdGiAJlyuaKxFYqJzi4mTV4um7cAA\"}",
+  "now": 1800000000000,
+  "aud": "skyair.example",
+  "intent_v2": {
+   "params": {
+    "offer_id": "OF-1",
+    "total": 38900,
+    "add_ons": [
+     "none"
+    ],
+    "refundable": false
+   },
+   "schema": {
+    "docs": [
+     {
+      "v": 1,
+      "kind": "pca-action-schema",
+      "site": "https://skyair.example",
+      "aud": "skyair.example",
+      "version": "2026-10-01",
+      "units": {
+       "usd_cents": {
+        "kind": "money",
+        "currency": "USD",
+        "exponent": 2
+       }
+      },
+      "verbs": [
+       {
+        "verb": "air.book",
+        "kind": "write",
+        "params": {
+         "action.params.offer_id": {
+          "type": "string",
+          "semantic": "product.ref",
+          "sensitivity": "material"
+         },
+         "action.params.total": {
+          "type": "integer",
+          "unit": "usd_cents",
+          "min": 0,
+          "max": 5000000,
+          "semantic": "money.amount",
+          "sensitivity": "critical",
+          "accumulates_into": [
+           "spend.usd_cents"
+          ]
+         },
+         "action.params.add_ons": {
+          "type": "set",
+          "values": [
+           "none",
+           "tripshield",
+           "seat_plus"
+          ],
+          "default": [
+           "none"
+          ],
+          "principal_neutral_default": true,
+          "semantic": "product.addon",
+          "sensitivity": "material"
+         },
+         "action.params.refundable": {
+          "type": "boolean",
+          "semantic": "flag",
+          "sensitivity": "material"
+         },
+         "action.params.passengers": {
+          "type": "array",
+          "max_items": 9,
+          "max_len": 64,
+          "semantic": "person.identity",
+          "sensitivity": "critical",
+          "required": false
+         },
+         "action.params.note": {
+          "type": "string",
+          "semantic": "text.note",
+          "sensitivity": "free",
+          "required": false,
+          "max_len": 16
+         }
+        },
+        "reversibility_by": {
+         "param": "action.params.refundable",
+         "map": {
+          "true": "reversible",
+          "false": "irreversible"
+         }
+        }
+       },
+       {
+        "verb": "air.search",
+        "kind": "read",
+        "params": {
+         "action.params.from": {
+          "type": "string",
+          "values": [
+           "SFO",
+           "JFK"
+          ],
+          "semantic": "place.airport",
+          "sensitivity": "material"
+         },
+         "action.params.date": {
+          "type": "date",
+          "semantic": "schedule.date",
+          "sensitivity": "material"
+         },
+         "action.params.pax": {
+          "type": "integer",
+          "min": 1,
+          "max": 9,
+          "semantic": "quantity",
+          "sensitivity": "material"
+         }
+        },
+        "reversibility": "reversible"
+       }
+      ],
+      "sig": {
+       "alg": "ed25519",
+       "kid": "skyair-2026",
+       "value": "m4EZ7Y15YfzxVAlHJ7UNaU1JdVeBtJB3r36kVaUxgoGmwP1QKLDU89TP0zfxW3nJYi9NouaPWTbhlNtBDQG1DA"
+      }
+     }
+    ],
+    "keys": [
+     {
+      "kid": "skyair-2026",
+      "alg": "ed25519",
+      "pk": "ngFoNxTzXeqGmwUazsE4YDMjft0mQAyAxRWdPwlU4YE"
+     }
+    ]
+   },
+   "session": {
+    "root": {
+     "v": 1,
+     "kind": "pca-intent-session",
+     "session": "QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE",
+     "principals": [
+      {
+       "key": "4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw",
+       "alg": "ml-dsa-65",
+       "pq_pk": "JRGL2vaxlLp67Jst7sjD7Y2f2AlRAHvJDPGxB3WBShEWn3xBm85enZq9x1VR5gPC6bOaT1DndsFZKf7G8Zq4J-VHPR1xb2gVcIfHoI0dEHd-Cd2-UmbzvXHqKAQMmzasaOo7E7erpk82dzMp69sEan4dfwqWlRJ_F7erBZwA5PIA3E5KTRRPJVvXSMERjaS30G9tX1gZSk3pM7EAt5UTmrWQSHMP5tG12NxFiWeP__CacTi2firm-d1h3e5X6Coe3sFdmj5DwEWdDWd21sjqumdsfCNfahe_4dTdUAZa_1imkTBf_2t83Ehi9TGd1CDiMvmckHB7qa0FXx01FwiJxshovNOJpIFwbfa2vMinfw_qZKvJuLnYScWDfI8MRo7Zg7UGRsspDr2mQ57B4oRrcm4PYyL6HEiKYme6oDBsRlTCeN-9YmuT_Q8_apNp096mo4jVvWlEY1SWeqeQsdma7sq2gxxvBU5rTqYfSYqu3PxSoquSUBtHyuETpOEIsxFDfP_A3neRWQgmhYLOUo-htkQvO2--6jYS22t-XNxTdaEg150dbkdye6HMQZbbpvkMR1EZ0hLN6_QtgyuJgK1PLvp2THLjXvv14nyU4txlrKkCJNeix4vxXrP55TWfX-KuhW98MMvjIEa2skm_w5vZ8Llyy98Bq1DHaxfzkd8QNpCfGngWMcrCnJDdivlmcc_-4eJxTki3sMAaBddsibLI9zUGqSQ2mJHgsXfLbZVlu3RiwdcnW9QtgIEGrvR-BIc72-CrKxR5cHW-Gzr1iVVLOktXYYz2DQwZCkZ10EmBg8Ap0QyKSGSsnc349gl3JqVcpVUExk0pXR4-OwokVEhcu3TAEwIWjdTTP4ilSNhiMqf97nZzi7zmnLwRxe-MQvDZW64e6uw3bKiKEPrGSsgvY2A3YlucpiKI947AzBjrjNi30J2m8ubnxTWQkyl5KJ4LDfNUFo25EedRDEm6Y4lQizhvV9ky1Nyk1TZ290FcnQ5Ex_D9t-WUzWE2ujcMraDT32v6GtnINlXAtiUJwPN4TTUyvxF-D_GU1h5OJX626z18zKjHOOA1KYUGvzqbgdDcwPlME8fUhauDhp7rgVUvWkZzvI5GzcqORU4tlJJ5D8XM4uz5YVAOTLCQocD0_pbmAmTFYmAuQMf1aUfTNEW2Wy40z9YmgZJwqMZfn92xCKLB5crmgE6Ug3LroH2in-lidXOOja6KpEdt_KSJPt6ax0D1BkPqP-sp9l0IfTSj0i0WBb2JKRQ99f992eTaJ_xMJhUi8xLx2cyz3u-x9AOMPK28gVOl-sUYpYbPYb9bRl7tG7snXW8ZYmHsNbrv4jSe6A0iaFlJGxKwLceVOcoCYGTahtXk7kEIHefy7BoAytTNudzqcA3Jb25BoMTvQdCafhR929pOt5lGuqHwJrREcXc_8s0qQBKqroz9PUhCOwduPIxDkPNbWFmTGZLwtSIUejvvac0L-egb0ixg5cmXvGT5vnxHJOE4Sqe0I_8CpU_MaFs1ZunT8GCI-CQJapxfAhGgLx7nXDkXS2TNNE0x3zFqetFNC4Y_r_ImSpuV_EBefFmaQVyEWWqLaZ26_dnZ2QjbU3ZqigdeKbP7NV2CFC5Ai1dQC13RjHNQmYw9jPb_FdiFlsSxx6MfqItxnR6E3xolqMH0uMY4N6ZnOzotrALmECK9jAzfQV9FsIwBZVEs8-X7UEtX4YAX2qnnCdx8G6vfYMBxWzEJSaR93KLSBOf3ulT6zJ-KDANO1ami-IRKQ6k61Ieghkk6L1pCMCfEfAXHFCSi3SrR9RWbfrDDsh5UUp3mPuuZKKK9jXY0ppZWIhRGq0OXsVxkveQ4-nRHgtLtYXLmdz7GvXxxikbVS3kcL1EclfccsK1G4GFmd9rF5WA6mSwx_DHEGOC4W0Fvyb2tl0lfjmQkX3NPR-Z19yS1kFbQdY6UU6qx0xqZ_0UiiXuIa_WUKj6D0ZMhkkALHQBOez1VtbndtwU7srYX5dPQtnjLTcsfYJv6TyuTb9W8L-ydEcRUHN0F0228FIYsOZPV30Nt0dZvvSVn8yKKMR568U8YKcUARrfrCGTaYekOjSvjawSrXC2AWb237d8dNMOD8WXSr_SuT2_4Q1dxTLJbsmbta4f6ozwwSTg9dqdo_yR93lxpv4UYrkeWNw-LlpD-ZuYfQE5HMGuQpKLdJAQIhpst-0rz3hJZPV7KyDFocc0LT4Uco18AgiL2QtNxncNSXns_6eMVQCUgq1VxEf0xqBSw3eFQ4z-8ZRhuk9s_4sTu4k2t6f241U5nmOIdYHVL9QIhtzf6MkIvX5SJASfPpZLeECRVNm1W3Zck1NKYp1lcQWb-QD9I7Y6Zng5_pDrd6OqgPjEN7FRfQFJY-cUNbHN_AlSicB9InnFHI9O_t7Ykup3FD348whN_tM4_TNb8LUkQ7mrGJGPtZ8sJLt_H1r9jehkg2tqHFlqHtKK_fenbT0u_BW3AR_5Nn9D2HTnhn_qBkM2EHFJSlmvEKxTM4K1huuMffsGoH1HNex1KF-5x3C6cwZLMxuz7jN1yYfGkoqAgT0X_aQGnVPMVvhdSqiYW5NjtKWlDc4b_ynA"
+      }
+     ],
+     "intent_ref": "8ihRXE04SR3b2XhJI1Db9pfHzuXnmDY_e_IAk-828mI",
+     "schema": {
+      "aud": "skyair.example",
+      "digest": "AsXp0amxFiFadUc1Qot-6gVqzWpcv7LbvUyt5wOjdPM"
+     },
+     "layers": {
+      "task": {
+       "map_digest": "Fv6Ir9kOvEYPjvEKSF6UTel8dtaAkcOrlDBTIAI80gM"
+      }
+     },
+     "accumulators": [
+      {
+       "id": "trip_spend",
+       "agg": "sum",
+       "unit": "usd_cents",
+       "sel": {
+        "accumulates_into": "spend.usd_cents"
+       },
+       "win": {
+        "kind": "task"
+       },
+       "key": null,
+       "domain_max": 500000,
+       "holder": {
+        "kind": "site_local"
+       }
+      },
+      {
+       "id": "questions",
+       "agg": "count",
+       "sel": {
+        "event": "intent_required"
+       },
+       "win": {
+        "kind": "task"
+       },
+       "key": null,
+       "cap": 6,
+       "holder": {
+        "kind": "wallet"
+       }
+      }
+     ],
+     "monitors": [],
+     "question_uri": "https://atlas.example/q",
+     "expires_at": 1800086400000,
+     "signer": "4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw",
+     "sig": "nxu4e8-jzDMOMMsYxCNzRMAC2Me3AKqMfrkaRuC72Tdf1nBEgjNOAEYYleZgGhgLqit0LUqzhaU7wkcNBeUwhPTsUiSMtfMQgfNGNHMuJ-PMa3K3Lmo82oLgcSrK9FYuktaW6L2_HvEoX0t3z4gBk79TkvfnFuUDS54kaaeTJzHqX2VJqmWYkLX31Adh2aCMF-rcjBjomb7Yay7CXIBTbYGtieK3n2URs8sxVCPA8sar39LPkIAfVNaBqoYJKscSi6mXcDEy4R8HgEimfxhMrVL_9faDDmsOEb_Zrzx_9PS7eahym1YTsUBIjbkpaQZPM1zfLcFxGg-HDDIL11NAwsc2y57L37qpLtkurqq0CVrAbEjrpunKMNF3tTyKPbh6w2UALkzI95j5IozsYyDTlE4Mj3IH2Q-c_UoeiQVRZnTK9VcczieUNTaXh1FIrkvLiUHVpYiwXpgQ2BDb9OiNNAUXeo0k_DHTjhUYWf4WFLd4i3wTUOhc0dx3bfTYHebu81CM1IB3_qpjVAVpFDysQxcaTYkQK6xKz-IrCkdGl0ob57kGVTkinUgU_qkH7gFC2cjl1bQtnI28uJInQZjc1X8ELhaa0bzkq4spQSHZmpjHgEDMVucE6UC_FEKkvw51Yhag7ctSEg6QEeDI3w5TOC1RZGtSIb_rR9Jg2-W3ZdUdMs3WbI48P86d5ALNoWQIOT5PG5TvEezuzmP_1b8GmSfypTith-PIhAp4tHei7VCRhofJkZx2Y6eiZ8gclzRzrHrAQhNs2BtODyEBkJEsy3dr_aGb2EegbqaI8dykLcrCWnltmAPoG1EahsCXOR1FLZf3oiUL5xa7_fhxwWF9Qa1O4cTHV7c9T8Ka1UMjC81iJYwMghOsl4A4gHQpHUeDK-fzU8hRfLPL7qe7YaWVB0JJNSgwHgCoaN_zrO9njtw_Tt3B3rZJ5AGh7ahPpuEX53L0RHjE0r7lo86hiquyoDWt9xH8FgkTOA1CeXKPctY_Yu04XCvw55_5erN7oYHeyYWUJ2EatVsrILlNrBlHMFYCOkq-ROL3LMnw_RpwKYsRY911jIObAFct0pPSHPi-e-qvCA-X50KLQCd3YHr7z7D31jJJWCDfG7aC6fg3O24Hilws2SZ0LL-zrJ3wnN-xOgB5hrDqCoshcKwc2lFih4ZJY7f3xp7c7INCG63I60qSCZdu0VXDj2BMMrkNm8rC5ZHIUXIZOW-ikXBAF14v6-xCcxYIQkQtVq1TBpcX6rGciVTtyICb4QYb5Mlb7CpeMmmuOo6QlQ2SUi5_UG-wIMdRtchU6beNKfiulkuQT-AUe5mi3kHxYD4S9a5IsNL8S5dqWrSsUNN1gyQnhQimAv2sJz81yVJWaOEjA0_ddu2IG-mG1EPfLslRNj5SccnO0MxN240MuKD6aaDhhqkVcqhspvxOBPs47rdzD5BcBg6NPDrhcm04_TwPOo0L3RrJ-i4GRmXnvHFRbdRmCo62foZzo7NHkkhjJDV9qmsbtlRwUDCiqJmRs6WNdU_7dvEtvhG-4b5Ln9VbwUUzC-cCjStgKEDcVrkufxTg5guGZSRHJ1W0Ty_WoREBOg33CIbM3dS8v5EWm5ZeUpMUvWPHEs6XZg95ICQrRnQomcYmS0NfI9WaouPnFHFQHXDt3lpI6Je2Eop115gfLkA2z3CYqsrFZ4JOX5s7Dn6kSI4olxQ9VaJDcs_IbPqGTWBmP6-pzXIbBHxBU1ZWlh5JI5Wc6acbY0usNFyhzMHkW1xoJuy38jkftEku8qhUuM_5tM_n4sP7CNDSIQfB2cUkMpI0FHyATb6gEEt8jK064ginNcNhllW-2wqy4H5FRbOSVjm9tC48bBhjfh7GIzTbHGe9bld3wUFDgmBVv_5Y49Ag5w8-8ZY7hwdJSlIvhP6e8lbNXqxwutgaGNZ7CNYMevIadCUTrmtBjYxmOYLpqLUA1df6WP7QHVv5IW18vTMoQ27wnvWawGFMue5BV1xPQOR9SqEknnREGBJEM0f00qLNL3P9JlnU0SUxBl9B01jtYJu7yy8mpGbVA8UuCluUJwoSDjDGWG7oP2mW_oe_AIpabtBulAciNOwR_AmwcKxTLsJ54FIxwTwDQwNiKny3Ev5QYGQBJ7gLFh0EhNdSJ9pT3j1Ux1IBE2H7T159fhPHmhS90oOgwLwEklL37Lwl3XEl3g13_eYHhMvbR0HsEmQCdELKc_GTbssKhlHMApQwCAft_9Xt2cYphaWq1WJN3eEKAUa3fv_djXq0mjE7yrr_IEVJR8rL4GcZEiq5m0iAvigGaDg0a3364oB78JbHlR8Ws7xxhJ_3jtpvtjFQz_l0g_ZTV3ILT83Ukg1xUnvl6JRoddUAniWGUcvB0IO8QvSEESQhmKwH1-dkoAux_OJpweAdwqrRrxfR2oZ3ZmRSUptUTFmX1IK-jj2fn-nUtx__pGwKGNxGgJQe90utbqHk1e5ULe_Q3LA9KNAndYfQB_634BpYbkZUX817nOXYGMSMfxuJDWESi9di6XEB5NxwVnqTZg7I8Yd8zW_lwq1tQ2Y5VwdNjbEengPE1j4ZqymHzbAxjs16T-TGnrDBLkenuQYyKe3NJXO2r8ruoJE0qcMdlvF065Y4kB4AuHdfZ2ZCLoxvLd1GsUtjOF2mvBlE3IaQ4x917G8PP9-0fkjXhgP4-ZaxJfmgKZYaH8aQLoaMXamu6XRFzev3bJv0xGSeuqTJnXH7456OG2mEoyWRCj9A1MDJZkibJEnkGiAVXCWAtHCKSK5LhhKl7PoR9KXMxr-0vFLBZeFW-IPZuUaytbREnvihB2LBXVVC54NZm1bPazMVaYwKcZ95TwakaURK98jthlzKDNwUpQayGpNM15qQsjxhsqRCh3SekboCDfpjfFiH2oHNFgFcoRYAYdz58gpL-y6Eaxq5mdvT2icRXg0_NeUPvnde_pdZggfquor-sYLiUPstmkmp5s80ToWAVxk-ooMYysvHabHgpokGz7Wpze2HDI0rKDes83l7-3ew2pC3wZ6FX7CZKLn9t8AyjgsszYihFgCvqoEiQfmBz66v6yRikwPloA6HB_X_dktXKXVh3TTWF_S8LHmm15cMx2DzBNpks7dCrG95SewHFbIjeqQ_aZQdMh_C9KRFunHmH1dSQYPRuf9wp92GjKkc_1pfKRvKpiBPVsASgHACt5_RUpUJXbP6EnqM_sqWzxAw3CKIJIOX2LJcl5b8KnSbXKVSoDC1fTYIUesMYweLB77iLYRnwIeolRBDueY1Vkl7wmaskSbbnk_G0A-gYeXBYgVHPUMBq9h8DZ7Ixm_BxB91w4edxAspJ5mZXxrB8EF5QWsuyPbxlUafVnsmMQ-M0Ve5oRoEIcr5XiZQtat_hyXPRGoGsYv_mgXaht4I2F1vDMMqp_opgYKgjoWcPwLNKuyk6WK8IYeiKTUEsg6JbYcQi9Gswz4U73z7_5VAI_gu41OCl_RsUgOxYwGnVqS-1VnmE1Ctn-pACPLk1eiCrUj391MxvBVppx5sTrK6NxyLKuf2Ar0g_QKNLQq3ykcpProwUwp9_o6RTjGkjOwXK-rQcasKApMncQa8j2YmmzBgh78_UYAY16pu8cWycoJXPaIIPCOBWMNWYzHBjSyHMiTsPm8MaSKR5Neiy8mQ4FtoPrd-6MknHznNpFxaYwHC7UYkwME8-p7u1tIVvgKCnsomZQBzMP4t95wjg8yFS78Z6YgkNvsh-7mrFEyJpGx33zSBz600bTvQGf6Z4VdKN68Q7uxWmnoQpnEysUZPAzDBJ3qMKdPpHwAj5IIcNj1dha2vTxy6MLYapH_DMQ78UtvtmrukctfAnyFtOnysQDDCtXzufdqTf2a_Euf0DwC3lBYf5P7ossuwySC4v6DSywbJ964Fh1K-vEPa0aoLAm6P8ZF-8mGya2hpyfSx-LJ8urH1cCMVW6Q-YJZb-x6dU_NrsUj6HStbJgP6o5I0Dmm-hBUKEchpGWSsT4CyH9B0HO05lETumFA1B_zepkroHlja0qlR48PZSj5kHGt0CoVNLyZTrcjjFB09YcJ2sa52be9sD5mu2Yx8xzM9W4S_qQGYq0h5ado7lI1KNPx9zwhBtEZ70dvjCZLiAMcGvoLuS1lgTrQYBcXJzf4lQ0nyn2zG9cYdyXzXsfe-WBmOwGXuPJBPC5jEjijXuJ9kykzWN93akfkyJlvMef_gEX5PT2BnMW7s7UHq3FXd8L5_hfECP29Ge96-L79HMWkH-k4KELjIqath71iABvyX8qpugRv7-LbqAbC1LXy6-LS6T17rg2ZzQIQ9fbmMv1aDNcHW7HIzg6MaV-0RHTM2WcXs8vgsQVeirNL1FCs2RG55qdQOK0cAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwYPFh4h",
+     "alg": "ml-dsa-65",
+     "pq_pk": "JRGL2vaxlLp67Jst7sjD7Y2f2AlRAHvJDPGxB3WBShEWn3xBm85enZq9x1VR5gPC6bOaT1DndsFZKf7G8Zq4J-VHPR1xb2gVcIfHoI0dEHd-Cd2-UmbzvXHqKAQMmzasaOo7E7erpk82dzMp69sEan4dfwqWlRJ_F7erBZwA5PIA3E5KTRRPJVvXSMERjaS30G9tX1gZSk3pM7EAt5UTmrWQSHMP5tG12NxFiWeP__CacTi2firm-d1h3e5X6Coe3sFdmj5DwEWdDWd21sjqumdsfCNfahe_4dTdUAZa_1imkTBf_2t83Ehi9TGd1CDiMvmckHB7qa0FXx01FwiJxshovNOJpIFwbfa2vMinfw_qZKvJuLnYScWDfI8MRo7Zg7UGRsspDr2mQ57B4oRrcm4PYyL6HEiKYme6oDBsRlTCeN-9YmuT_Q8_apNp096mo4jVvWlEY1SWeqeQsdma7sq2gxxvBU5rTqYfSYqu3PxSoquSUBtHyuETpOEIsxFDfP_A3neRWQgmhYLOUo-htkQvO2--6jYS22t-XNxTdaEg150dbkdye6HMQZbbpvkMR1EZ0hLN6_QtgyuJgK1PLvp2THLjXvv14nyU4txlrKkCJNeix4vxXrP55TWfX-KuhW98MMvjIEa2skm_w5vZ8Llyy98Bq1DHaxfzkd8QNpCfGngWMcrCnJDdivlmcc_-4eJxTki3sMAaBddsibLI9zUGqSQ2mJHgsXfLbZVlu3RiwdcnW9QtgIEGrvR-BIc72-CrKxR5cHW-Gzr1iVVLOktXYYz2DQwZCkZ10EmBg8Ap0QyKSGSsnc349gl3JqVcpVUExk0pXR4-OwokVEhcu3TAEwIWjdTTP4ilSNhiMqf97nZzi7zmnLwRxe-MQvDZW64e6uw3bKiKEPrGSsgvY2A3YlucpiKI947AzBjrjNi30J2m8ubnxTWQkyl5KJ4LDfNUFo25EedRDEm6Y4lQizhvV9ky1Nyk1TZ290FcnQ5Ex_D9t-WUzWE2ujcMraDT32v6GtnINlXAtiUJwPN4TTUyvxF-D_GU1h5OJX626z18zKjHOOA1KYUGvzqbgdDcwPlME8fUhauDhp7rgVUvWkZzvI5GzcqORU4tlJJ5D8XM4uz5YVAOTLCQocD0_pbmAmTFYmAuQMf1aUfTNEW2Wy40z9YmgZJwqMZfn92xCKLB5crmgE6Ug3LroH2in-lidXOOja6KpEdt_KSJPt6ax0D1BkPqP-sp9l0IfTSj0i0WBb2JKRQ99f992eTaJ_xMJhUi8xLx2cyz3u-x9AOMPK28gVOl-sUYpYbPYb9bRl7tG7snXW8ZYmHsNbrv4jSe6A0iaFlJGxKwLceVOcoCYGTahtXk7kEIHefy7BoAytTNudzqcA3Jb25BoMTvQdCafhR929pOt5lGuqHwJrREcXc_8s0qQBKqroz9PUhCOwduPIxDkPNbWFmTGZLwtSIUejvvac0L-egb0ixg5cmXvGT5vnxHJOE4Sqe0I_8CpU_MaFs1ZunT8GCI-CQJapxfAhGgLx7nXDkXS2TNNE0x3zFqetFNC4Y_r_ImSpuV_EBefFmaQVyEWWqLaZ26_dnZ2QjbU3ZqigdeKbP7NV2CFC5Ai1dQC13RjHNQmYw9jPb_FdiFlsSxx6MfqItxnR6E3xolqMH0uMY4N6ZnOzotrALmECK9jAzfQV9FsIwBZVEs8-X7UEtX4YAX2qnnCdx8G6vfYMBxWzEJSaR93KLSBOf3ulT6zJ-KDANO1ami-IRKQ6k61Ieghkk6L1pCMCfEfAXHFCSi3SrR9RWbfrDDsh5UUp3mPuuZKKK9jXY0ppZWIhRGq0OXsVxkveQ4-nRHgtLtYXLmdz7GvXxxikbVS3kcL1EclfccsK1G4GFmd9rF5WA6mSwx_DHEGOC4W0Fvyb2tl0lfjmQkX3NPR-Z19yS1kFbQdY6UU6qx0xqZ_0UiiXuIa_WUKj6D0ZMhkkALHQBOez1VtbndtwU7srYX5dPQtnjLTcsfYJv6TyuTb9W8L-ydEcRUHN0F0228FIYsOZPV30Nt0dZvvSVn8yKKMR568U8YKcUARrfrCGTaYekOjSvjawSrXC2AWb237d8dNMOD8WXSr_SuT2_4Q1dxTLJbsmbta4f6ozwwSTg9dqdo_yR93lxpv4UYrkeWNw-LlpD-ZuYfQE5HMGuQpKLdJAQIhpst-0rz3hJZPV7KyDFocc0LT4Uco18AgiL2QtNxncNSXns_6eMVQCUgq1VxEf0xqBSw3eFQ4z-8ZRhuk9s_4sTu4k2t6f241U5nmOIdYHVL9QIhtzf6MkIvX5SJASfPpZLeECRVNm1W3Zck1NKYp1lcQWb-QD9I7Y6Zng5_pDrd6OqgPjEN7FRfQFJY-cUNbHN_AlSicB9InnFHI9O_t7Ykup3FD348whN_tM4_TNb8LUkQ7mrGJGPtZ8sJLt_H1r9jehkg2tqHFlqHtKK_fenbT0u_BW3AR_5Nn9D2HTnhn_qBkM2EHFJSlmvEKxTM4K1huuMffsGoH1HNex1KF-5x3C6cwZLMxuz7jN1yYfGkoqAgT0X_aQGnVPMVvhdSqiYW5NjtKWlDc4b_ynA"
+    },
+    "grants": [],
+    "pq_pins": {
+     "4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw": "n-c8VIIZqPqbVePXZyDz33gteutPdcE391Dt7ix9zZU-hIHDjzkouOHPVgHCAj6e29qds-7K7OT75i3AObM71Tts1EiAzSdqfgNH8D11s767Aj1rGJqx8a6t28Ultkhsxvb4l0b6_to370hxvb6OYYiQwF3_hYWWStLJ1D8I3K0AQumcH7XeeIVnoEtXJWM1XIBM7Jbx2ayCBeCr9AnscZgEg8uqgjWjjUE-zkUz9zXA9_U0qGfdpDwjvBijEH5qzqxklAV78B9O0KuOY45X2RgVV-WLn_BWg_dF1Mp_6GsPpV1j7LzKFVy8Y0_FQ5bvyANGFwc28wjoPpOt2yvQFFszI0HLidEbR17XLmSIzfZvN8Hbb-hnReCvpWw5bcUgWamJqUP17lrIhi4zCkH-ryfKPXNGWZMhBI8YGit6geu20m4vJkZ4EbzVSIwOhiX8qrB4iNh6NJNgim2_snMRmuLYPxjh3rlD1L4GfCg0Na2yQo952K2JPczEWU6G2jnLOK9L3NEWkDiiAL5qKBJMUXjv_vzuJJ3F-AuZOL0i7TApbcB3zffQexBCIPkBBypEuf7fPe8cgpKykzN2agN2PMjNwl2x8r6c7McpI9xa9o1DPgct1xPLcVIMMnqS5s9mx9RTibZtb0NZmAIC3pO8O8aZS12vNl5C0Q1WD7totK_d4cZ6ji_KIRV8RjeGaPCbFsqlD5n0uT2InwxwWtTPkEJ7Knbr1S5neTMToBQ3Q7pbBfgOVfzDBlbJKk3RFXCLmKfQi3RAoAXrKcf-Gz3rm6FDDjU1XjXr9TGhohWQcvrooI6PcZ7qc3TveXGzaQt4rhdZl3spk3pTdnxPFlGQvsSbrLpl1Ms_zYkusiOrwzzUExNH3d-goVKmF0eORlmxqrk_hivg7LdI5PzzzRF__Wx3Y5L4kMdJv77efluUIfDhvC2y2FairTEhlbAniLDWvzAxPrqS4r_qpR56N7nLBKCI9ZaSxH-TLddEHua9gZ2P9c6RtENf3DELutZrGJh96Q4z8K3mV4sSOWGpaSYO-94wLcjjopcgp8hpwiU7F5tKxvr6Cnvg6BdyxXXgL0sFKOHtjAaZDWFrwINti_388i7d6SGtnGabLB_pJC2VCvMmmUFiSXizOMnUPfSPut4nT_E0sMnPgTdlDViVAo2hsqqJqXGYLS9D0kK63TUj-nZQJE6krQok-cudap6XfCxVDya0ue0wDgOa4-rsr31QRrYGlaHKK5OBJhSkSR8d4haN1HEVYvy1BQu3q7e0Cf5iXz5q9u_7KKPsreDTuVnkSRquR6-UhM1ozWvAY1agGNW6CBGMGv2MHJssBGI97m-N6i_saHcCKHMrA5f2NiQDFMdsbE1DNu_l4AaDZiUSn7aFu_H3o0YSgz6ADAXzG__osSohhAmVcHnNm4tKy2iZ-a9xl5_em6pCrqSaqTPUj-_4Z95DKWErwqBQ9c3Pt5NAWz0g05LYPVnLrt41daoIxCI7BNtdS7j6bRvWwsmDWdhUybYg9--ZRnmsHAQs24en1l1t-j0F62Oog4f32a3vRS3sI5PSxgylqkP4YhohUICI7P6sbUNaBR6Lnmt7tUeGnABB3Iz_arFVwoDID83daTvEadcs0izwganspO-Zp6wr7ZCYPXxiGTM7NUGDYuAbpl1B7Kxx310KCoIGXmV805QVc4TgJZHiNwdVO8Pnvt0DxouTvbXPSiXxEI6y98PVYaSTwoB5QzjGac3rShrfifT_w_AtuUuT6yZGA6-ez_UCVErg3tLRUubeYol4vpR-lppHKcl7_zwhNHRHU1l_OVN8YJESS6HVUz-xO-6wT--G1pQPBU_3jvYlqS7JAfl4wx4daHQRSPGRDQj_x9ihIOEO8W3-eOZuYNyfCkQgYdqiJ3fUrmn2BiyiVBa9JSyBKCr3KLul_D451uUF3wpBOmJ0R0VM97c-KznS6KyzeVBo62g9UB-ok5iGpa_TiwMEkFZxp5hCAS5GBzKKBieEuzFBTJdfEve5eUHLkeexgPztMmzxO1bferWsPDyAb82ZrcSWQbgZOCNQBCCkzMjy8MCM8kBAPeHX3GozQY5lMxYmMQLeNT2ML0vi4gINJ7B8v1Pw53Co5V_OCSdLK6ACj20HnO_AV0U1dH2nnqQ1NuHawDH7tzog29lHgTvipI9X0bsJ4oCVK-xfJFxZKXuBS7mBj-HtVgt9qkvuc8IrxjIZXZHvyM_apzuMiflAc8VrZc5UptFxGgQd5wPHN4KpkbNgw7t_rLR5nZQKtGkx5p8l7VPhytjcWyTpgv_LP3G19p7iSrkxGNkKKHhEo2mdoBLRLm7tK2D6zei-IvzrjYnHHHS6g86oQK_0SvhM2HiPOyb5By6JG6UuuYQjvHSvwyrjMLWUxmRfxP1vevClseKiDHEGdxDTZTEbv4ik-Ec3a5NGGB8bCDiHiQ6WE3TXU7wReOgklMtHcNAKuklJ77QQ6R9GRv0V_QRNt1jhB-S09YxzIlaeW05zZ6inREbkp0eJ4k3cnLkYBXgH8NQpAVnVdn9zAIz0CFTn9ZegEEpywYvaz1-huS6b2qaUETx9DFFD7gyVD2fTGYpwlaDGbgU"
+    }
+   },
+   "acc": {
+    "state": {
+     "trip_spend": {
+      "sum": 0
+     }
+    },
+    "monitors": {}
+   }
+  }
+ },
+ {
+  "id": "adv1566",
+  "name": "session-root-hybrid-ed25519-ml-dsa-65-unpinned",
+  "raw": "{\"ver\":2,\"action\":{\"verb\":\"air.book\",\"resource\":\"skyair.example/bookings\",\"params_digest\":\"-BkF8tsZZl_jCgbpiIyAIlRrJBl3PIDqfA1NxxRHg4c\",\"reversibility_class\":\"irreversible\"},\"grant_ref\":\"TKB_XTOf4_yHvyKw7_OOi0EsKECiy5JTIEkITBKn0rE\",\"cap_chain\":[{\"id\":\"TKB_XTOf4_yHvyKw7_OOi0EsKECiy5JTIEkITBKn0rE\",\"issuer\":\"4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw\",\"holder\":\"pYz5tUBahM7859yQSF1pQMyZqB26FApp2hKcGFr2P2o\",\"caveats\":[{\"agent_binding\":{},\"caveats\":[],\"goal_commit\":\"o_WCXmy-0c6nR8XKjA3uzoHEDecoJTUt2GdIxq4LtUI\",\"predicates\":[{\"resource\":\"*\",\"verb\":\"air.book\",\"where\":[{\"field\":\"env.acc.trip_spend.post\",\"op\":\"lte\",\"value\":40000}]}],\"risk_policy\":{\"bMax\":1,\"kappa\":1,\"lambda\":0.0005,\"rho\":0.5,\"theta1\":0.25,\"theta2\":0.6,\"weights\":{\"alpha\":0.25,\"beta\":0.2,\"delta\":0.2,\"epsilon\":0.1,\"gamma\":0.2,\"zeta\":0.05}},\"type\":\"envelope\"},{\"root\":\"Ly5rkOX2s1GPp77dm3ZE9jTZPi6gr0eXcFHJFjYjqlw\",\"seq\":0,\"session\":\"QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE\",\"type\":\"intent_session\"}],\"body_digest\":\"TKB_XTOf4_yHvyKw7_OOi0EsKECiy5JTIEkITBKn0rE\",\"sig\":\"a9y7IDsXG69o3moin2cDQRnkcOlIFRmmejS8mJEchkU8ydYkS0fiXGYOM6aWzuY92Z249BZrd4xTXjAM9vgkBw\"}],\"plan\":{\"root\":\"yeQ-bJLqXy5T4R3iKfycuhjonDRU6QPBQxIMK7Uyqzo\",\"inclusion_proof\":{\"index\":0,\"size\":1,\"path\":[]},\"node_id\":\"book\",\"conditions_digest\":\"YM87EgmmvAr4WYQDm1wkrB7pFoHs4esi8tOmv9_DUxY\"},\"attestation\":{\"quote_digest\":\"\",\"epoch\":0,\"model_id\":\"unattested\",\"measurement\":\"\",\"operator\":\"unattested\"},\"provenance\":{\"causal_hash\":\"\",\"taint_level\":0,\"trusted_refs\":[]},\"freshness\":{\"beacon_ref\":\"\",\"epoch\":0,\"accumulator_witness\":\"\"},\"counter\":1,\"risk_claim\":{\"r\":0,\"inputs\":{}},\"aud\":\"skyair.example\",\"iat\":1800000000000,\"exp\":1800000600000,\"intent\":{\"ref\":\"8ihRXE04SR3b2XhJI1Db9pfHzuXnmDY_e_IAk-828mI\",\"map_digest\":\"Fv6Ir9kOvEYPjvEKSF6UTel8dtaAkcOrlDBTIAI80gM\",\"goal_salt\":\"salt0\",\"fidelity_ppm\":1000000,\"residual_risk_ppm\":0},\"intent_session\":{\"session\":\"QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE\",\"root\":\"Ly5rkOX2s1GPp77dm3ZE9jTZPi6gr0eXcFHJFjYjqlw\",\"seq\":0,\"schema\":\"AsXp0amxFiFadUc1Qot-6gVqzWpcv7LbvUyt5wOjdPM\",\"acc\":[{\"id\":\"trip_spend\",\"post\":38900}]},\"sig\":\"HUmdAkyrtkTzj0uCQsoyKDvvqkpNlcpHA67AYdEg9zM99--oxvnF-evR3ddnHWjTeM6Bn6YGEdvg6_2dSx7SAA\"}",
+  "grant": "{\"id\":\"TKB_XTOf4_yHvyKw7_OOi0EsKECiy5JTIEkITBKn0rE\",\"issuer\":\"4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw\",\"holder\":\"pYz5tUBahM7859yQSF1pQMyZqB26FApp2hKcGFr2P2o\",\"caveats\":[{\"agent_binding\":{},\"caveats\":[],\"goal_commit\":\"o_WCXmy-0c6nR8XKjA3uzoHEDecoJTUt2GdIxq4LtUI\",\"predicates\":[{\"resource\":\"*\",\"verb\":\"air.book\",\"where\":[{\"field\":\"env.acc.trip_spend.post\",\"op\":\"lte\",\"value\":40000}]}],\"risk_policy\":{\"bMax\":1,\"kappa\":1,\"lambda\":0.0005,\"rho\":0.5,\"theta1\":0.25,\"theta2\":0.6,\"weights\":{\"alpha\":0.25,\"beta\":0.2,\"delta\":0.2,\"epsilon\":0.1,\"gamma\":0.2,\"zeta\":0.05}},\"type\":\"envelope\"},{\"root\":\"Ly5rkOX2s1GPp77dm3ZE9jTZPi6gr0eXcFHJFjYjqlw\",\"seq\":0,\"session\":\"QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE\",\"type\":\"intent_session\"}],\"body_digest\":\"TKB_XTOf4_yHvyKw7_OOi0EsKECiy5JTIEkITBKn0rE\",\"sig\":\"a9y7IDsXG69o3moin2cDQRnkcOlIFRmmejS8mJEchkU8ydYkS0fiXGYOM6aWzuY92Z249BZrd4xTXjAM9vgkBw\"}",
+  "now": 1800000000000,
+  "aud": "skyair.example",
+  "intent_v2": {
+   "params": {
+    "offer_id": "OF-1",
+    "total": 38900,
+    "add_ons": [
+     "none"
+    ],
+    "refundable": false
+   },
+   "schema": {
+    "docs": [
+     {
+      "v": 1,
+      "kind": "pca-action-schema",
+      "site": "https://skyair.example",
+      "aud": "skyair.example",
+      "version": "2026-10-01",
+      "units": {
+       "usd_cents": {
+        "kind": "money",
+        "currency": "USD",
+        "exponent": 2
+       }
+      },
+      "verbs": [
+       {
+        "verb": "air.book",
+        "kind": "write",
+        "params": {
+         "action.params.offer_id": {
+          "type": "string",
+          "semantic": "product.ref",
+          "sensitivity": "material"
+         },
+         "action.params.total": {
+          "type": "integer",
+          "unit": "usd_cents",
+          "min": 0,
+          "max": 5000000,
+          "semantic": "money.amount",
+          "sensitivity": "critical",
+          "accumulates_into": [
+           "spend.usd_cents"
+          ]
+         },
+         "action.params.add_ons": {
+          "type": "set",
+          "values": [
+           "none",
+           "tripshield",
+           "seat_plus"
+          ],
+          "default": [
+           "none"
+          ],
+          "principal_neutral_default": true,
+          "semantic": "product.addon",
+          "sensitivity": "material"
+         },
+         "action.params.refundable": {
+          "type": "boolean",
+          "semantic": "flag",
+          "sensitivity": "material"
+         },
+         "action.params.passengers": {
+          "type": "array",
+          "max_items": 9,
+          "max_len": 64,
+          "semantic": "person.identity",
+          "sensitivity": "critical",
+          "required": false
+         },
+         "action.params.note": {
+          "type": "string",
+          "semantic": "text.note",
+          "sensitivity": "free",
+          "required": false,
+          "max_len": 16
+         }
+        },
+        "reversibility_by": {
+         "param": "action.params.refundable",
+         "map": {
+          "true": "reversible",
+          "false": "irreversible"
+         }
+        }
+       },
+       {
+        "verb": "air.search",
+        "kind": "read",
+        "params": {
+         "action.params.from": {
+          "type": "string",
+          "values": [
+           "SFO",
+           "JFK"
+          ],
+          "semantic": "place.airport",
+          "sensitivity": "material"
+         },
+         "action.params.date": {
+          "type": "date",
+          "semantic": "schedule.date",
+          "sensitivity": "material"
+         },
+         "action.params.pax": {
+          "type": "integer",
+          "min": 1,
+          "max": 9,
+          "semantic": "quantity",
+          "sensitivity": "material"
+         }
+        },
+        "reversibility": "reversible"
+       }
+      ],
+      "sig": {
+       "alg": "ed25519",
+       "kid": "skyair-2026",
+       "value": "m4EZ7Y15YfzxVAlHJ7UNaU1JdVeBtJB3r36kVaUxgoGmwP1QKLDU89TP0zfxW3nJYi9NouaPWTbhlNtBDQG1DA"
+      }
+     }
+    ],
+    "keys": [
+     {
+      "kid": "skyair-2026",
+      "alg": "ed25519",
+      "pk": "ngFoNxTzXeqGmwUazsE4YDMjft0mQAyAxRWdPwlU4YE"
+     }
+    ]
+   },
+   "session": {
+    "root": {
+     "v": 1,
+     "kind": "pca-intent-session",
+     "session": "QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE",
+     "principals": [
+      {
+       "key": "4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw",
+       "alg": "hybrid-ed25519-ml-dsa-65",
+       "pq_pk": "JRGL2vaxlLp67Jst7sjD7Y2f2AlRAHvJDPGxB3WBShEWn3xBm85enZq9x1VR5gPC6bOaT1DndsFZKf7G8Zq4J-VHPR1xb2gVcIfHoI0dEHd-Cd2-UmbzvXHqKAQMmzasaOo7E7erpk82dzMp69sEan4dfwqWlRJ_F7erBZwA5PIA3E5KTRRPJVvXSMERjaS30G9tX1gZSk3pM7EAt5UTmrWQSHMP5tG12NxFiWeP__CacTi2firm-d1h3e5X6Coe3sFdmj5DwEWdDWd21sjqumdsfCNfahe_4dTdUAZa_1imkTBf_2t83Ehi9TGd1CDiMvmckHB7qa0FXx01FwiJxshovNOJpIFwbfa2vMinfw_qZKvJuLnYScWDfI8MRo7Zg7UGRsspDr2mQ57B4oRrcm4PYyL6HEiKYme6oDBsRlTCeN-9YmuT_Q8_apNp096mo4jVvWlEY1SWeqeQsdma7sq2gxxvBU5rTqYfSYqu3PxSoquSUBtHyuETpOEIsxFDfP_A3neRWQgmhYLOUo-htkQvO2--6jYS22t-XNxTdaEg150dbkdye6HMQZbbpvkMR1EZ0hLN6_QtgyuJgK1PLvp2THLjXvv14nyU4txlrKkCJNeix4vxXrP55TWfX-KuhW98MMvjIEa2skm_w5vZ8Llyy98Bq1DHaxfzkd8QNpCfGngWMcrCnJDdivlmcc_-4eJxTki3sMAaBddsibLI9zUGqSQ2mJHgsXfLbZVlu3RiwdcnW9QtgIEGrvR-BIc72-CrKxR5cHW-Gzr1iVVLOktXYYz2DQwZCkZ10EmBg8Ap0QyKSGSsnc349gl3JqVcpVUExk0pXR4-OwokVEhcu3TAEwIWjdTTP4ilSNhiMqf97nZzi7zmnLwRxe-MQvDZW64e6uw3bKiKEPrGSsgvY2A3YlucpiKI947AzBjrjNi30J2m8ubnxTWQkyl5KJ4LDfNUFo25EedRDEm6Y4lQizhvV9ky1Nyk1TZ290FcnQ5Ex_D9t-WUzWE2ujcMraDT32v6GtnINlXAtiUJwPN4TTUyvxF-D_GU1h5OJX626z18zKjHOOA1KYUGvzqbgdDcwPlME8fUhauDhp7rgVUvWkZzvI5GzcqORU4tlJJ5D8XM4uz5YVAOTLCQocD0_pbmAmTFYmAuQMf1aUfTNEW2Wy40z9YmgZJwqMZfn92xCKLB5crmgE6Ug3LroH2in-lidXOOja6KpEdt_KSJPt6ax0D1BkPqP-sp9l0IfTSj0i0WBb2JKRQ99f992eTaJ_xMJhUi8xLx2cyz3u-x9AOMPK28gVOl-sUYpYbPYb9bRl7tG7snXW8ZYmHsNbrv4jSe6A0iaFlJGxKwLceVOcoCYGTahtXk7kEIHefy7BoAytTNudzqcA3Jb25BoMTvQdCafhR929pOt5lGuqHwJrREcXc_8s0qQBKqroz9PUhCOwduPIxDkPNbWFmTGZLwtSIUejvvac0L-egb0ixg5cmXvGT5vnxHJOE4Sqe0I_8CpU_MaFs1ZunT8GCI-CQJapxfAhGgLx7nXDkXS2TNNE0x3zFqetFNC4Y_r_ImSpuV_EBefFmaQVyEWWqLaZ26_dnZ2QjbU3ZqigdeKbP7NV2CFC5Ai1dQC13RjHNQmYw9jPb_FdiFlsSxx6MfqItxnR6E3xolqMH0uMY4N6ZnOzotrALmECK9jAzfQV9FsIwBZVEs8-X7UEtX4YAX2qnnCdx8G6vfYMBxWzEJSaR93KLSBOf3ulT6zJ-KDANO1ami-IRKQ6k61Ieghkk6L1pCMCfEfAXHFCSi3SrR9RWbfrDDsh5UUp3mPuuZKKK9jXY0ppZWIhRGq0OXsVxkveQ4-nRHgtLtYXLmdz7GvXxxikbVS3kcL1EclfccsK1G4GFmd9rF5WA6mSwx_DHEGOC4W0Fvyb2tl0lfjmQkX3NPR-Z19yS1kFbQdY6UU6qx0xqZ_0UiiXuIa_WUKj6D0ZMhkkALHQBOez1VtbndtwU7srYX5dPQtnjLTcsfYJv6TyuTb9W8L-ydEcRUHN0F0228FIYsOZPV30Nt0dZvvSVn8yKKMR568U8YKcUARrfrCGTaYekOjSvjawSrXC2AWb237d8dNMOD8WXSr_SuT2_4Q1dxTLJbsmbta4f6ozwwSTg9dqdo_yR93lxpv4UYrkeWNw-LlpD-ZuYfQE5HMGuQpKLdJAQIhpst-0rz3hJZPV7KyDFocc0LT4Uco18AgiL2QtNxncNSXns_6eMVQCUgq1VxEf0xqBSw3eFQ4z-8ZRhuk9s_4sTu4k2t6f241U5nmOIdYHVL9QIhtzf6MkIvX5SJASfPpZLeECRVNm1W3Zck1NKYp1lcQWb-QD9I7Y6Zng5_pDrd6OqgPjEN7FRfQFJY-cUNbHN_AlSicB9InnFHI9O_t7Ykup3FD348whN_tM4_TNb8LUkQ7mrGJGPtZ8sJLt_H1r9jehkg2tqHFlqHtKK_fenbT0u_BW3AR_5Nn9D2HTnhn_qBkM2EHFJSlmvEKxTM4K1huuMffsGoH1HNex1KF-5x3C6cwZLMxuz7jN1yYfGkoqAgT0X_aQGnVPMVvhdSqiYW5NjtKWlDc4b_ynA"
+      }
+     ],
+     "intent_ref": "8ihRXE04SR3b2XhJI1Db9pfHzuXnmDY_e_IAk-828mI",
+     "schema": {
+      "aud": "skyair.example",
+      "digest": "AsXp0amxFiFadUc1Qot-6gVqzWpcv7LbvUyt5wOjdPM"
+     },
+     "layers": {
+      "task": {
+       "map_digest": "Fv6Ir9kOvEYPjvEKSF6UTel8dtaAkcOrlDBTIAI80gM"
+      }
+     },
+     "accumulators": [
+      {
+       "id": "trip_spend",
+       "agg": "sum",
+       "unit": "usd_cents",
+       "sel": {
+        "accumulates_into": "spend.usd_cents"
+       },
+       "win": {
+        "kind": "task"
+       },
+       "key": null,
+       "domain_max": 500000,
+       "holder": {
+        "kind": "site_local"
+       }
+      },
+      {
+       "id": "questions",
+       "agg": "count",
+       "sel": {
+        "event": "intent_required"
+       },
+       "win": {
+        "kind": "task"
+       },
+       "key": null,
+       "cap": 6,
+       "holder": {
+        "kind": "wallet"
+       }
+      }
+     ],
+     "monitors": [],
+     "question_uri": "https://atlas.example/q",
+     "expires_at": 1800086400000,
+     "signer": "4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw",
+     "sig": "yEQa4sx9BuA4Vcwj7XyBVclL5Sszury_w2TMB87vDDY3r-waMycraM4LFiU_b3RQcWLOonqqPrfVbTJ9vhRNCw",
+     "alg": "hybrid-ed25519-ml-dsa-65",
+     "pq_pk": "JRGL2vaxlLp67Jst7sjD7Y2f2AlRAHvJDPGxB3WBShEWn3xBm85enZq9x1VR5gPC6bOaT1DndsFZKf7G8Zq4J-VHPR1xb2gVcIfHoI0dEHd-Cd2-UmbzvXHqKAQMmzasaOo7E7erpk82dzMp69sEan4dfwqWlRJ_F7erBZwA5PIA3E5KTRRPJVvXSMERjaS30G9tX1gZSk3pM7EAt5UTmrWQSHMP5tG12NxFiWeP__CacTi2firm-d1h3e5X6Coe3sFdmj5DwEWdDWd21sjqumdsfCNfahe_4dTdUAZa_1imkTBf_2t83Ehi9TGd1CDiMvmckHB7qa0FXx01FwiJxshovNOJpIFwbfa2vMinfw_qZKvJuLnYScWDfI8MRo7Zg7UGRsspDr2mQ57B4oRrcm4PYyL6HEiKYme6oDBsRlTCeN-9YmuT_Q8_apNp096mo4jVvWlEY1SWeqeQsdma7sq2gxxvBU5rTqYfSYqu3PxSoquSUBtHyuETpOEIsxFDfP_A3neRWQgmhYLOUo-htkQvO2--6jYS22t-XNxTdaEg150dbkdye6HMQZbbpvkMR1EZ0hLN6_QtgyuJgK1PLvp2THLjXvv14nyU4txlrKkCJNeix4vxXrP55TWfX-KuhW98MMvjIEa2skm_w5vZ8Llyy98Bq1DHaxfzkd8QNpCfGngWMcrCnJDdivlmcc_-4eJxTki3sMAaBddsibLI9zUGqSQ2mJHgsXfLbZVlu3RiwdcnW9QtgIEGrvR-BIc72-CrKxR5cHW-Gzr1iVVLOktXYYz2DQwZCkZ10EmBg8Ap0QyKSGSsnc349gl3JqVcpVUExk0pXR4-OwokVEhcu3TAEwIWjdTTP4ilSNhiMqf97nZzi7zmnLwRxe-MQvDZW64e6uw3bKiKEPrGSsgvY2A3YlucpiKI947AzBjrjNi30J2m8ubnxTWQkyl5KJ4LDfNUFo25EedRDEm6Y4lQizhvV9ky1Nyk1TZ290FcnQ5Ex_D9t-WUzWE2ujcMraDT32v6GtnINlXAtiUJwPN4TTUyvxF-D_GU1h5OJX626z18zKjHOOA1KYUGvzqbgdDcwPlME8fUhauDhp7rgVUvWkZzvI5GzcqORU4tlJJ5D8XM4uz5YVAOTLCQocD0_pbmAmTFYmAuQMf1aUfTNEW2Wy40z9YmgZJwqMZfn92xCKLB5crmgE6Ug3LroH2in-lidXOOja6KpEdt_KSJPt6ax0D1BkPqP-sp9l0IfTSj0i0WBb2JKRQ99f992eTaJ_xMJhUi8xLx2cyz3u-x9AOMPK28gVOl-sUYpYbPYb9bRl7tG7snXW8ZYmHsNbrv4jSe6A0iaFlJGxKwLceVOcoCYGTahtXk7kEIHefy7BoAytTNudzqcA3Jb25BoMTvQdCafhR929pOt5lGuqHwJrREcXc_8s0qQBKqroz9PUhCOwduPIxDkPNbWFmTGZLwtSIUejvvac0L-egb0ixg5cmXvGT5vnxHJOE4Sqe0I_8CpU_MaFs1ZunT8GCI-CQJapxfAhGgLx7nXDkXS2TNNE0x3zFqetFNC4Y_r_ImSpuV_EBefFmaQVyEWWqLaZ26_dnZ2QjbU3ZqigdeKbP7NV2CFC5Ai1dQC13RjHNQmYw9jPb_FdiFlsSxx6MfqItxnR6E3xolqMH0uMY4N6ZnOzotrALmECK9jAzfQV9FsIwBZVEs8-X7UEtX4YAX2qnnCdx8G6vfYMBxWzEJSaR93KLSBOf3ulT6zJ-KDANO1ami-IRKQ6k61Ieghkk6L1pCMCfEfAXHFCSi3SrR9RWbfrDDsh5UUp3mPuuZKKK9jXY0ppZWIhRGq0OXsVxkveQ4-nRHgtLtYXLmdz7GvXxxikbVS3kcL1EclfccsK1G4GFmd9rF5WA6mSwx_DHEGOC4W0Fvyb2tl0lfjmQkX3NPR-Z19yS1kFbQdY6UU6qx0xqZ_0UiiXuIa_WUKj6D0ZMhkkALHQBOez1VtbndtwU7srYX5dPQtnjLTcsfYJv6TyuTb9W8L-ydEcRUHN0F0228FIYsOZPV30Nt0dZvvSVn8yKKMR568U8YKcUARrfrCGTaYekOjSvjawSrXC2AWb237d8dNMOD8WXSr_SuT2_4Q1dxTLJbsmbta4f6ozwwSTg9dqdo_yR93lxpv4UYrkeWNw-LlpD-ZuYfQE5HMGuQpKLdJAQIhpst-0rz3hJZPV7KyDFocc0LT4Uco18AgiL2QtNxncNSXns_6eMVQCUgq1VxEf0xqBSw3eFQ4z-8ZRhuk9s_4sTu4k2t6f241U5nmOIdYHVL9QIhtzf6MkIvX5SJASfPpZLeECRVNm1W3Zck1NKYp1lcQWb-QD9I7Y6Zng5_pDrd6OqgPjEN7FRfQFJY-cUNbHN_AlSicB9InnFHI9O_t7Ykup3FD348whN_tM4_TNb8LUkQ7mrGJGPtZ8sJLt_H1r9jehkg2tqHFlqHtKK_fenbT0u_BW3AR_5Nn9D2HTnhn_qBkM2EHFJSlmvEKxTM4K1huuMffsGoH1HNex1KF-5x3C6cwZLMxuz7jN1yYfGkoqAgT0X_aQGnVPMVvhdSqiYW5NjtKWlDc4b_ynA",
+     "pq_sig": "lY-r8O9sUbX466zpSKq6AaQV5BPnm8PoGFEcXCpVSmA8IjlSr-CdZ8y3L_JjXg_G2XCfprP2sJvw_3WuLMVy0eWesmYBLG2JDxVMMq8eR9M4v8otwVPfxdX7Azj2-sWHDfBQjk8gyjdxHet6sbun496SIReBRP3A0l6y1pcMHDL42e3C4c7GMB0Tv06gTVbglskkfqzY2FscGDt8uiAyGFsOId4eH0DRdmEfKTumGWPAcOUk4odATlRQCMZv-B9tSVKd4OhleDiX99zQyfKTm0GjbvG1pRl1IFQsoEw4Xho8fxx8rtU-y1ggKJYAzYN6rSrdxXGaGl7V9C7sdO-ISwhk22VVwZ3P8KvFVulHlqPkka1Wt88MMIpu10FQwE9aNKiapqSzwqQSgefr4RN-AxqVfyAeCamQ4CHIAvzKdHaqbIyN00eHpKYao1C564QgwDyiDEEJHb8PsxpoIx6Z9wYIkugXGO9mrDco72lyWSQXOqaP3otZTikHUCKviC7XswuVWgdMSd6agudFLe7hsE0LijZ_hV5WAIp074NC7VIhHCDis1wqERaHIYHNuIVPoWMUctyKwxOSHMSGXyS3h7YPv0oxumVC7IZJENXGPnS9zJzlrMu82KEzzRP750IXXKwFAhfAJt1FEjmnd5EEB4voxzZOQE1NO1PC0zI1fq5nxhXFCP9vVIKoNbHze_zXTYlneR_uuBiDZpNbofgAvpqAukupuWHmDBCSSjauY0fr1kNrH_FlKCBcNwa3u6jo9vHthJBHiMPkftlwLfPCnxHjVQxk11W4SoduE99SKJRUPdrkpyuL62IVa0NNZmuUIUQnMe-07ibHAz8wF2Bbe_GRiWb-B0r326KAGMBoY1200Q-y77sGMNxOwmYdOueL7BuBrq9n1nN-GHzE1g4KcPmVdqJNQVV7xzepWU2YGv-2RNgN-3rX5qLi7mUQIlCcnZE4dFccG9WczLWafQhMYnitTUkXHP3rXcBTUB2u-Krovm7i8aDCDZ-7_yiQsRGZQzGZdtDSccUdCqoefPDxrfQnYKRgCHlQMcupkouAGnHrwI-zNtUvtb-INAW_JzabU_MHoDqaQhYgTM-mu_nqdeLSpF4YfOg_C0Ha97dr-3kUUFflcGIhhDfBW2XVABbUI8uZmvaOHn6Kw0S120aXf4T5VQIK8ePjWzDRTx1YUqFOGLOBiBIjZ2qyiRw52BsyCXcHSFjOtI5s0HfLp7fzGI0Vq2sjDeET06mUYbWZE1sucdK9RfNTvPDl1T9uKoUq_QtIOJJhopaNTcS5oRXmqEGQb895vKTMW-RJZz0r-MAIbSgfDnbHTdTJFq1t48hIVIZ71aMdvsn-mXjrBmiw3fLzjkMvktGk6vo1UU21XODsQF34CedYAXEqTzpDhpD5eNVAO1wuFkrQoKMO3jcD8NGjbCjsYk8h5ZA5WlsKWxqAqRELwKpHxrG4MJICW1vtBWWze9kvE5ICYxvBymG8hh92TAqqXpN-FrlGzrYYQe-g96iDDIShgV9q8KKATaMxpU9TBGpG-PCFdid3rGE4tYo5JjMTFCyp9kSzA2neYOaWHDl1hZLg4HZtXQFo8t255JdI9bjQhlK77yH8BA8tqo4J6V1WW17MxMNoBbgzQPPufuvO_t7rYxmSfo6BsiQnMuLsVl3ZfHLXH7-FuEWHDlvAFKxSAmRPHHlP5KdJpXXCP0Zlo13cb5jX0YRjvId8VbLigOFAbKUYAQpdS9gUvkRO4cL3dLXAeH3O4VEVY9x4zToU1FGeYmlhzIVTXSPVPPNbSONXirbPH-HisIqn3S5wz20DzOU2uJ8ZhaMIKW5amEkc7sFUnFIt9oMVhY6UFpAgcFWZBXO5ek_n6Rcizn833VEWqzmbvI79CA6H1IUAomWCpXwVtDjxj5nnNMOBCT5Rbq987RaTsertD2PaJj442nvr1M_etGZlPDT5LNEgiHjPdU4pj127L0tDLbflzKarXu18sEYS-p9V2v_RNzBByu0RwsyXH0HfCLD3FTjTE2t7QJz_724r7WtYR1MUJqmme0S8p9jnauUGLjjm_p5ZM8TNUIieTz_TM8egm1PBecERW6C0fa2NvpgjsTlvUpJgj1mGQN6KbFZ2nBifvPU4x0X4QXslMPY-QmQFSSIOBXAk76aeZsqbejPLFsuQpYO4u03-snutPDIgu5EQ-AHkxR62ZK0DqwDoFXKL7a5wBDN2l-QKoIbI5deGq5YsrnnWqZyxGShmYe6YscYgkR7I3dm4hxHq-KPJq-be56XGamV9TRqFB9YSLfuVuDPUHvxlPdTZtOujWyYHjSvn8k0xcYG0FVcBdiKsJNuj5rj-S6Ljcfxf9xlq_T_vOlkxbvPenTQ6Ohkd-5KUi9pCT3PjehtRGmRZiRa6Xe5ZrTvx7HeFJehYU6GgdZ8Bft14uJhYItRCRKj9V5PYfQOJlopk4-gWesIZpYmG9fGj4ahPh0yqFRCCM55wm9YGGgBnBTu7Ifj2dnQs5jwP1Mxpk1UP6VQgIJINwEAanpqNNTFz5iCvg3sxQsTquBBk9-8vxtDyx9QgQhhH3y_d7c5kx6PaWNkcTwcWXtU_dHRkvyRvKR2XhA8TOv7HykYHabffER529Vj678_7vn0T0H39BkRwzRkF19NykJ4SIVvn4-asWXtkooUHMkJjJ3HZ5h-pc3UItb2y6ZOyfaKlSuokuSOmFTIA6brRT3kxu4m7ay_yxHhDQYRZ57l2USeMing5d4vSJqlC4IIx8ax6wlh7Z8D5YrcoAwPiEDaNTUs9oqlabayZpehtXRgO6JeMyGG6o6AgqlV4XgiQJCm4GcU54WqjlB2fDwoWbos2H9TkqLXMORdbR5a8IRH6P60UcqYORiEm-WawG8T68ZLGdpVYWf3qM_i6hRwbY4tWUP8HAmElBiA5wmwjEcdB1iUO8mjkMX5gi0ljjBvK5v7ZRzeXHQQCPR9SaRtVNiiIuWjfOz3BTE0gQPxHFnNN5RaJY1U0QbxllzQcShmtKGjbZ5CglXjkSB2TAOkaWGkklub5RVJ3p01JJ2RgcusaZj-taBI2YljBTOSCWrDePbvTkF8sO5S3_PlMqZTujjw-BZS_4qr5scL8YziydVDyrFIJCagYeU8MbNzVkmwVQEBThN20NpK9v52yAD_ZZjLPKZf6VErG3k9_qfRI4NIe6H2JQF8-i1UM11BXrSnxjWKjk1X-xiOUXkZ73KKG6ZXxjli7WjB3CYtZnIvcfKJyQ2OtR-Wr8K0HrVmrUzJ1qsgkJPjlRvfLgUu5BKaFmIu2NbFGo26e_qm2r-_mweNwcNaXmZs-NXtxck6UD0y86b1d9vsrtAWoX8Lu2uCGCOPfh4mnDltImRgKHevhBbPXn1nPhWBkR33ST2FfMw4OuIJYKRzhfhJUItwpoRrdE-NDJp6EkxzAtMjcHddf3oe16ktxKQt0IMwgiYmWiBSgjajAagb8aAHjuOn1ornIPAG1B4nKdtzIB-xfMXRSea10zu4MzDF8X67zDn463vV8WDl68fMH9E9Lf1ej26eiR5nW4_K6s66GlFIAUOcHf5ulEhUA5VtR1YQiGyBUyudmEY36lRTbkcb4SsfqEETtAbYA2mvUFsKnZoPmdWyCFEduR8H3gT0o09OvbTv1JC2rHelEB_H1itdSANElL7OpHSdS4Z4uliKDPenUyz3BA1jcgYOw-GpXAdHnGQ6-YL2fVN2vogDpwPXXbVcuBr4cQLet24lTMTi0e44U9U2gNd5DscHl_I-5oWFFoNfjUXMkerjEPDFZbNpPRV59J7KwaoyLsZqhyYEgxw_funxi9xNiMfnT8LBu0tte2AO1fGLOqB-3aRaRjLSF5gT7lehWcIEf7t89jnU4FhAV07dNSFxu5z7EPnnHAaxeMVFtY263E_Y3p8lcFFe1YDMVAV8DQa5_uF6KGGKqvw25PWHW38mntU5AVNF1hjeILdeeCuiRyH43m83wMYkXp0DBbH1V-kHg047LLzOxY3SMKNOLCV0x9O_eCCiBpKae1zBJAeMRJbLgic-Mqb1kkdUq1EB1mhsW241rY88nL_FfOFsyoZeCp4Ewj4sszv5ymfbB1zbFzh11JB7E_FfPs91itH1biVTAyWtBKdFOgQI03Q88SvwL-1tB3evyoalWQ5USUJpYlkmwxJdhctIzjO-Bv0k71kYzkRI_ZS-beEvDstDDxikrXBMtsz-7GqkEQFPrZLP8-cGszij5VQx6dCvWDUgC28ucOFNZ2bIlg9OccwhyKzTxiyj62TdqzPBpNENzcH6zCUuZ-0IOI-b6VJjI8HnfBlryRb6XMpIkOE-AiJrUETY4X2HFMz5eb7LD2wYKN63K2wFEheEJF0GGir7R1dzv_AAAAAAAAAAAAAAAAAAABw0UGh4p"
+    },
+    "grants": []
+   },
+   "acc": {
+    "state": {
+     "trip_spend": {
+      "sum": 0
+     }
+    },
+    "monitors": {}
+   }
+  }
+ },
+ {
+  "id": "adv1567",
+  "name": "session-root-hybrid-ed25519-ml-dsa-65-pin-other-signer",
+  "raw": "{\"ver\":2,\"action\":{\"verb\":\"air.book\",\"resource\":\"skyair.example/bookings\",\"params_digest\":\"-BkF8tsZZl_jCgbpiIyAIlRrJBl3PIDqfA1NxxRHg4c\",\"reversibility_class\":\"irreversible\"},\"grant_ref\":\"TKB_XTOf4_yHvyKw7_OOi0EsKECiy5JTIEkITBKn0rE\",\"cap_chain\":[{\"id\":\"TKB_XTOf4_yHvyKw7_OOi0EsKECiy5JTIEkITBKn0rE\",\"issuer\":\"4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw\",\"holder\":\"pYz5tUBahM7859yQSF1pQMyZqB26FApp2hKcGFr2P2o\",\"caveats\":[{\"agent_binding\":{},\"caveats\":[],\"goal_commit\":\"o_WCXmy-0c6nR8XKjA3uzoHEDecoJTUt2GdIxq4LtUI\",\"predicates\":[{\"resource\":\"*\",\"verb\":\"air.book\",\"where\":[{\"field\":\"env.acc.trip_spend.post\",\"op\":\"lte\",\"value\":40000}]}],\"risk_policy\":{\"bMax\":1,\"kappa\":1,\"lambda\":0.0005,\"rho\":0.5,\"theta1\":0.25,\"theta2\":0.6,\"weights\":{\"alpha\":0.25,\"beta\":0.2,\"delta\":0.2,\"epsilon\":0.1,\"gamma\":0.2,\"zeta\":0.05}},\"type\":\"envelope\"},{\"root\":\"Ly5rkOX2s1GPp77dm3ZE9jTZPi6gr0eXcFHJFjYjqlw\",\"seq\":0,\"session\":\"QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE\",\"type\":\"intent_session\"}],\"body_digest\":\"TKB_XTOf4_yHvyKw7_OOi0EsKECiy5JTIEkITBKn0rE\",\"sig\":\"a9y7IDsXG69o3moin2cDQRnkcOlIFRmmejS8mJEchkU8ydYkS0fiXGYOM6aWzuY92Z249BZrd4xTXjAM9vgkBw\"}],\"plan\":{\"root\":\"yeQ-bJLqXy5T4R3iKfycuhjonDRU6QPBQxIMK7Uyqzo\",\"inclusion_proof\":{\"index\":0,\"size\":1,\"path\":[]},\"node_id\":\"book\",\"conditions_digest\":\"YM87EgmmvAr4WYQDm1wkrB7pFoHs4esi8tOmv9_DUxY\"},\"attestation\":{\"quote_digest\":\"\",\"epoch\":0,\"model_id\":\"unattested\",\"measurement\":\"\",\"operator\":\"unattested\"},\"provenance\":{\"causal_hash\":\"\",\"taint_level\":0,\"trusted_refs\":[]},\"freshness\":{\"beacon_ref\":\"\",\"epoch\":0,\"accumulator_witness\":\"\"},\"counter\":1,\"risk_claim\":{\"r\":0,\"inputs\":{}},\"aud\":\"skyair.example\",\"iat\":1800000000000,\"exp\":1800000600000,\"intent\":{\"ref\":\"8ihRXE04SR3b2XhJI1Db9pfHzuXnmDY_e_IAk-828mI\",\"map_digest\":\"Fv6Ir9kOvEYPjvEKSF6UTel8dtaAkcOrlDBTIAI80gM\",\"goal_salt\":\"salt0\",\"fidelity_ppm\":1000000,\"residual_risk_ppm\":0},\"intent_session\":{\"session\":\"QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE\",\"root\":\"Ly5rkOX2s1GPp77dm3ZE9jTZPi6gr0eXcFHJFjYjqlw\",\"seq\":0,\"schema\":\"AsXp0amxFiFadUc1Qot-6gVqzWpcv7LbvUyt5wOjdPM\",\"acc\":[{\"id\":\"trip_spend\",\"post\":38900}]},\"sig\":\"HUmdAkyrtkTzj0uCQsoyKDvvqkpNlcpHA67AYdEg9zM99--oxvnF-evR3ddnHWjTeM6Bn6YGEdvg6_2dSx7SAA\"}",
+  "grant": "{\"id\":\"TKB_XTOf4_yHvyKw7_OOi0EsKECiy5JTIEkITBKn0rE\",\"issuer\":\"4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw\",\"holder\":\"pYz5tUBahM7859yQSF1pQMyZqB26FApp2hKcGFr2P2o\",\"caveats\":[{\"agent_binding\":{},\"caveats\":[],\"goal_commit\":\"o_WCXmy-0c6nR8XKjA3uzoHEDecoJTUt2GdIxq4LtUI\",\"predicates\":[{\"resource\":\"*\",\"verb\":\"air.book\",\"where\":[{\"field\":\"env.acc.trip_spend.post\",\"op\":\"lte\",\"value\":40000}]}],\"risk_policy\":{\"bMax\":1,\"kappa\":1,\"lambda\":0.0005,\"rho\":0.5,\"theta1\":0.25,\"theta2\":0.6,\"weights\":{\"alpha\":0.25,\"beta\":0.2,\"delta\":0.2,\"epsilon\":0.1,\"gamma\":0.2,\"zeta\":0.05}},\"type\":\"envelope\"},{\"root\":\"Ly5rkOX2s1GPp77dm3ZE9jTZPi6gr0eXcFHJFjYjqlw\",\"seq\":0,\"session\":\"QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE\",\"type\":\"intent_session\"}],\"body_digest\":\"TKB_XTOf4_yHvyKw7_OOi0EsKECiy5JTIEkITBKn0rE\",\"sig\":\"a9y7IDsXG69o3moin2cDQRnkcOlIFRmmejS8mJEchkU8ydYkS0fiXGYOM6aWzuY92Z249BZrd4xTXjAM9vgkBw\"}",
+  "now": 1800000000000,
+  "aud": "skyair.example",
+  "intent_v2": {
+   "params": {
+    "offer_id": "OF-1",
+    "total": 38900,
+    "add_ons": [
+     "none"
+    ],
+    "refundable": false
+   },
+   "schema": {
+    "docs": [
+     {
+      "v": 1,
+      "kind": "pca-action-schema",
+      "site": "https://skyair.example",
+      "aud": "skyair.example",
+      "version": "2026-10-01",
+      "units": {
+       "usd_cents": {
+        "kind": "money",
+        "currency": "USD",
+        "exponent": 2
+       }
+      },
+      "verbs": [
+       {
+        "verb": "air.book",
+        "kind": "write",
+        "params": {
+         "action.params.offer_id": {
+          "type": "string",
+          "semantic": "product.ref",
+          "sensitivity": "material"
+         },
+         "action.params.total": {
+          "type": "integer",
+          "unit": "usd_cents",
+          "min": 0,
+          "max": 5000000,
+          "semantic": "money.amount",
+          "sensitivity": "critical",
+          "accumulates_into": [
+           "spend.usd_cents"
+          ]
+         },
+         "action.params.add_ons": {
+          "type": "set",
+          "values": [
+           "none",
+           "tripshield",
+           "seat_plus"
+          ],
+          "default": [
+           "none"
+          ],
+          "principal_neutral_default": true,
+          "semantic": "product.addon",
+          "sensitivity": "material"
+         },
+         "action.params.refundable": {
+          "type": "boolean",
+          "semantic": "flag",
+          "sensitivity": "material"
+         },
+         "action.params.passengers": {
+          "type": "array",
+          "max_items": 9,
+          "max_len": 64,
+          "semantic": "person.identity",
+          "sensitivity": "critical",
+          "required": false
+         },
+         "action.params.note": {
+          "type": "string",
+          "semantic": "text.note",
+          "sensitivity": "free",
+          "required": false,
+          "max_len": 16
+         }
+        },
+        "reversibility_by": {
+         "param": "action.params.refundable",
+         "map": {
+          "true": "reversible",
+          "false": "irreversible"
+         }
+        }
+       },
+       {
+        "verb": "air.search",
+        "kind": "read",
+        "params": {
+         "action.params.from": {
+          "type": "string",
+          "values": [
+           "SFO",
+           "JFK"
+          ],
+          "semantic": "place.airport",
+          "sensitivity": "material"
+         },
+         "action.params.date": {
+          "type": "date",
+          "semantic": "schedule.date",
+          "sensitivity": "material"
+         },
+         "action.params.pax": {
+          "type": "integer",
+          "min": 1,
+          "max": 9,
+          "semantic": "quantity",
+          "sensitivity": "material"
+         }
+        },
+        "reversibility": "reversible"
+       }
+      ],
+      "sig": {
+       "alg": "ed25519",
+       "kid": "skyair-2026",
+       "value": "m4EZ7Y15YfzxVAlHJ7UNaU1JdVeBtJB3r36kVaUxgoGmwP1QKLDU89TP0zfxW3nJYi9NouaPWTbhlNtBDQG1DA"
+      }
+     }
+    ],
+    "keys": [
+     {
+      "kid": "skyair-2026",
+      "alg": "ed25519",
+      "pk": "ngFoNxTzXeqGmwUazsE4YDMjft0mQAyAxRWdPwlU4YE"
+     }
+    ]
+   },
+   "session": {
+    "root": {
+     "v": 1,
+     "kind": "pca-intent-session",
+     "session": "QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE",
+     "principals": [
+      {
+       "key": "4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw",
+       "alg": "hybrid-ed25519-ml-dsa-65",
+       "pq_pk": "JRGL2vaxlLp67Jst7sjD7Y2f2AlRAHvJDPGxB3WBShEWn3xBm85enZq9x1VR5gPC6bOaT1DndsFZKf7G8Zq4J-VHPR1xb2gVcIfHoI0dEHd-Cd2-UmbzvXHqKAQMmzasaOo7E7erpk82dzMp69sEan4dfwqWlRJ_F7erBZwA5PIA3E5KTRRPJVvXSMERjaS30G9tX1gZSk3pM7EAt5UTmrWQSHMP5tG12NxFiWeP__CacTi2firm-d1h3e5X6Coe3sFdmj5DwEWdDWd21sjqumdsfCNfahe_4dTdUAZa_1imkTBf_2t83Ehi9TGd1CDiMvmckHB7qa0FXx01FwiJxshovNOJpIFwbfa2vMinfw_qZKvJuLnYScWDfI8MRo7Zg7UGRsspDr2mQ57B4oRrcm4PYyL6HEiKYme6oDBsRlTCeN-9YmuT_Q8_apNp096mo4jVvWlEY1SWeqeQsdma7sq2gxxvBU5rTqYfSYqu3PxSoquSUBtHyuETpOEIsxFDfP_A3neRWQgmhYLOUo-htkQvO2--6jYS22t-XNxTdaEg150dbkdye6HMQZbbpvkMR1EZ0hLN6_QtgyuJgK1PLvp2THLjXvv14nyU4txlrKkCJNeix4vxXrP55TWfX-KuhW98MMvjIEa2skm_w5vZ8Llyy98Bq1DHaxfzkd8QNpCfGngWMcrCnJDdivlmcc_-4eJxTki3sMAaBddsibLI9zUGqSQ2mJHgsXfLbZVlu3RiwdcnW9QtgIEGrvR-BIc72-CrKxR5cHW-Gzr1iVVLOktXYYz2DQwZCkZ10EmBg8Ap0QyKSGSsnc349gl3JqVcpVUExk0pXR4-OwokVEhcu3TAEwIWjdTTP4ilSNhiMqf97nZzi7zmnLwRxe-MQvDZW64e6uw3bKiKEPrGSsgvY2A3YlucpiKI947AzBjrjNi30J2m8ubnxTWQkyl5KJ4LDfNUFo25EedRDEm6Y4lQizhvV9ky1Nyk1TZ290FcnQ5Ex_D9t-WUzWE2ujcMraDT32v6GtnINlXAtiUJwPN4TTUyvxF-D_GU1h5OJX626z18zKjHOOA1KYUGvzqbgdDcwPlME8fUhauDhp7rgVUvWkZzvI5GzcqORU4tlJJ5D8XM4uz5YVAOTLCQocD0_pbmAmTFYmAuQMf1aUfTNEW2Wy40z9YmgZJwqMZfn92xCKLB5crmgE6Ug3LroH2in-lidXOOja6KpEdt_KSJPt6ax0D1BkPqP-sp9l0IfTSj0i0WBb2JKRQ99f992eTaJ_xMJhUi8xLx2cyz3u-x9AOMPK28gVOl-sUYpYbPYb9bRl7tG7snXW8ZYmHsNbrv4jSe6A0iaFlJGxKwLceVOcoCYGTahtXk7kEIHefy7BoAytTNudzqcA3Jb25BoMTvQdCafhR929pOt5lGuqHwJrREcXc_8s0qQBKqroz9PUhCOwduPIxDkPNbWFmTGZLwtSIUejvvac0L-egb0ixg5cmXvGT5vnxHJOE4Sqe0I_8CpU_MaFs1ZunT8GCI-CQJapxfAhGgLx7nXDkXS2TNNE0x3zFqetFNC4Y_r_ImSpuV_EBefFmaQVyEWWqLaZ26_dnZ2QjbU3ZqigdeKbP7NV2CFC5Ai1dQC13RjHNQmYw9jPb_FdiFlsSxx6MfqItxnR6E3xolqMH0uMY4N6ZnOzotrALmECK9jAzfQV9FsIwBZVEs8-X7UEtX4YAX2qnnCdx8G6vfYMBxWzEJSaR93KLSBOf3ulT6zJ-KDANO1ami-IRKQ6k61Ieghkk6L1pCMCfEfAXHFCSi3SrR9RWbfrDDsh5UUp3mPuuZKKK9jXY0ppZWIhRGq0OXsVxkveQ4-nRHgtLtYXLmdz7GvXxxikbVS3kcL1EclfccsK1G4GFmd9rF5WA6mSwx_DHEGOC4W0Fvyb2tl0lfjmQkX3NPR-Z19yS1kFbQdY6UU6qx0xqZ_0UiiXuIa_WUKj6D0ZMhkkALHQBOez1VtbndtwU7srYX5dPQtnjLTcsfYJv6TyuTb9W8L-ydEcRUHN0F0228FIYsOZPV30Nt0dZvvSVn8yKKMR568U8YKcUARrfrCGTaYekOjSvjawSrXC2AWb237d8dNMOD8WXSr_SuT2_4Q1dxTLJbsmbta4f6ozwwSTg9dqdo_yR93lxpv4UYrkeWNw-LlpD-ZuYfQE5HMGuQpKLdJAQIhpst-0rz3hJZPV7KyDFocc0LT4Uco18AgiL2QtNxncNSXns_6eMVQCUgq1VxEf0xqBSw3eFQ4z-8ZRhuk9s_4sTu4k2t6f241U5nmOIdYHVL9QIhtzf6MkIvX5SJASfPpZLeECRVNm1W3Zck1NKYp1lcQWb-QD9I7Y6Zng5_pDrd6OqgPjEN7FRfQFJY-cUNbHN_AlSicB9InnFHI9O_t7Ykup3FD348whN_tM4_TNb8LUkQ7mrGJGPtZ8sJLt_H1r9jehkg2tqHFlqHtKK_fenbT0u_BW3AR_5Nn9D2HTnhn_qBkM2EHFJSlmvEKxTM4K1huuMffsGoH1HNex1KF-5x3C6cwZLMxuz7jN1yYfGkoqAgT0X_aQGnVPMVvhdSqiYW5NjtKWlDc4b_ynA"
+      }
+     ],
+     "intent_ref": "8ihRXE04SR3b2XhJI1Db9pfHzuXnmDY_e_IAk-828mI",
+     "schema": {
+      "aud": "skyair.example",
+      "digest": "AsXp0amxFiFadUc1Qot-6gVqzWpcv7LbvUyt5wOjdPM"
+     },
+     "layers": {
+      "task": {
+       "map_digest": "Fv6Ir9kOvEYPjvEKSF6UTel8dtaAkcOrlDBTIAI80gM"
+      }
+     },
+     "accumulators": [
+      {
+       "id": "trip_spend",
+       "agg": "sum",
+       "unit": "usd_cents",
+       "sel": {
+        "accumulates_into": "spend.usd_cents"
+       },
+       "win": {
+        "kind": "task"
+       },
+       "key": null,
+       "domain_max": 500000,
+       "holder": {
+        "kind": "site_local"
+       }
+      },
+      {
+       "id": "questions",
+       "agg": "count",
+       "sel": {
+        "event": "intent_required"
+       },
+       "win": {
+        "kind": "task"
+       },
+       "key": null,
+       "cap": 6,
+       "holder": {
+        "kind": "wallet"
+       }
+      }
+     ],
+     "monitors": [],
+     "question_uri": "https://atlas.example/q",
+     "expires_at": 1800086400000,
+     "signer": "4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw",
+     "sig": "yEQa4sx9BuA4Vcwj7XyBVclL5Sszury_w2TMB87vDDY3r-waMycraM4LFiU_b3RQcWLOonqqPrfVbTJ9vhRNCw",
+     "alg": "hybrid-ed25519-ml-dsa-65",
+     "pq_pk": "JRGL2vaxlLp67Jst7sjD7Y2f2AlRAHvJDPGxB3WBShEWn3xBm85enZq9x1VR5gPC6bOaT1DndsFZKf7G8Zq4J-VHPR1xb2gVcIfHoI0dEHd-Cd2-UmbzvXHqKAQMmzasaOo7E7erpk82dzMp69sEan4dfwqWlRJ_F7erBZwA5PIA3E5KTRRPJVvXSMERjaS30G9tX1gZSk3pM7EAt5UTmrWQSHMP5tG12NxFiWeP__CacTi2firm-d1h3e5X6Coe3sFdmj5DwEWdDWd21sjqumdsfCNfahe_4dTdUAZa_1imkTBf_2t83Ehi9TGd1CDiMvmckHB7qa0FXx01FwiJxshovNOJpIFwbfa2vMinfw_qZKvJuLnYScWDfI8MRo7Zg7UGRsspDr2mQ57B4oRrcm4PYyL6HEiKYme6oDBsRlTCeN-9YmuT_Q8_apNp096mo4jVvWlEY1SWeqeQsdma7sq2gxxvBU5rTqYfSYqu3PxSoquSUBtHyuETpOEIsxFDfP_A3neRWQgmhYLOUo-htkQvO2--6jYS22t-XNxTdaEg150dbkdye6HMQZbbpvkMR1EZ0hLN6_QtgyuJgK1PLvp2THLjXvv14nyU4txlrKkCJNeix4vxXrP55TWfX-KuhW98MMvjIEa2skm_w5vZ8Llyy98Bq1DHaxfzkd8QNpCfGngWMcrCnJDdivlmcc_-4eJxTki3sMAaBddsibLI9zUGqSQ2mJHgsXfLbZVlu3RiwdcnW9QtgIEGrvR-BIc72-CrKxR5cHW-Gzr1iVVLOktXYYz2DQwZCkZ10EmBg8Ap0QyKSGSsnc349gl3JqVcpVUExk0pXR4-OwokVEhcu3TAEwIWjdTTP4ilSNhiMqf97nZzi7zmnLwRxe-MQvDZW64e6uw3bKiKEPrGSsgvY2A3YlucpiKI947AzBjrjNi30J2m8ubnxTWQkyl5KJ4LDfNUFo25EedRDEm6Y4lQizhvV9ky1Nyk1TZ290FcnQ5Ex_D9t-WUzWE2ujcMraDT32v6GtnINlXAtiUJwPN4TTUyvxF-D_GU1h5OJX626z18zKjHOOA1KYUGvzqbgdDcwPlME8fUhauDhp7rgVUvWkZzvI5GzcqORU4tlJJ5D8XM4uz5YVAOTLCQocD0_pbmAmTFYmAuQMf1aUfTNEW2Wy40z9YmgZJwqMZfn92xCKLB5crmgE6Ug3LroH2in-lidXOOja6KpEdt_KSJPt6ax0D1BkPqP-sp9l0IfTSj0i0WBb2JKRQ99f992eTaJ_xMJhUi8xLx2cyz3u-x9AOMPK28gVOl-sUYpYbPYb9bRl7tG7snXW8ZYmHsNbrv4jSe6A0iaFlJGxKwLceVOcoCYGTahtXk7kEIHefy7BoAytTNudzqcA3Jb25BoMTvQdCafhR929pOt5lGuqHwJrREcXc_8s0qQBKqroz9PUhCOwduPIxDkPNbWFmTGZLwtSIUejvvac0L-egb0ixg5cmXvGT5vnxHJOE4Sqe0I_8CpU_MaFs1ZunT8GCI-CQJapxfAhGgLx7nXDkXS2TNNE0x3zFqetFNC4Y_r_ImSpuV_EBefFmaQVyEWWqLaZ26_dnZ2QjbU3ZqigdeKbP7NV2CFC5Ai1dQC13RjHNQmYw9jPb_FdiFlsSxx6MfqItxnR6E3xolqMH0uMY4N6ZnOzotrALmECK9jAzfQV9FsIwBZVEs8-X7UEtX4YAX2qnnCdx8G6vfYMBxWzEJSaR93KLSBOf3ulT6zJ-KDANO1ami-IRKQ6k61Ieghkk6L1pCMCfEfAXHFCSi3SrR9RWbfrDDsh5UUp3mPuuZKKK9jXY0ppZWIhRGq0OXsVxkveQ4-nRHgtLtYXLmdz7GvXxxikbVS3kcL1EclfccsK1G4GFmd9rF5WA6mSwx_DHEGOC4W0Fvyb2tl0lfjmQkX3NPR-Z19yS1kFbQdY6UU6qx0xqZ_0UiiXuIa_WUKj6D0ZMhkkALHQBOez1VtbndtwU7srYX5dPQtnjLTcsfYJv6TyuTb9W8L-ydEcRUHN0F0228FIYsOZPV30Nt0dZvvSVn8yKKMR568U8YKcUARrfrCGTaYekOjSvjawSrXC2AWb237d8dNMOD8WXSr_SuT2_4Q1dxTLJbsmbta4f6ozwwSTg9dqdo_yR93lxpv4UYrkeWNw-LlpD-ZuYfQE5HMGuQpKLdJAQIhpst-0rz3hJZPV7KyDFocc0LT4Uco18AgiL2QtNxncNSXns_6eMVQCUgq1VxEf0xqBSw3eFQ4z-8ZRhuk9s_4sTu4k2t6f241U5nmOIdYHVL9QIhtzf6MkIvX5SJASfPpZLeECRVNm1W3Zck1NKYp1lcQWb-QD9I7Y6Zng5_pDrd6OqgPjEN7FRfQFJY-cUNbHN_AlSicB9InnFHI9O_t7Ykup3FD348whN_tM4_TNb8LUkQ7mrGJGPtZ8sJLt_H1r9jehkg2tqHFlqHtKK_fenbT0u_BW3AR_5Nn9D2HTnhn_qBkM2EHFJSlmvEKxTM4K1huuMffsGoH1HNex1KF-5x3C6cwZLMxuz7jN1yYfGkoqAgT0X_aQGnVPMVvhdSqiYW5NjtKWlDc4b_ynA",
+     "pq_sig": "lY-r8O9sUbX466zpSKq6AaQV5BPnm8PoGFEcXCpVSmA8IjlSr-CdZ8y3L_JjXg_G2XCfprP2sJvw_3WuLMVy0eWesmYBLG2JDxVMMq8eR9M4v8otwVPfxdX7Azj2-sWHDfBQjk8gyjdxHet6sbun496SIReBRP3A0l6y1pcMHDL42e3C4c7GMB0Tv06gTVbglskkfqzY2FscGDt8uiAyGFsOId4eH0DRdmEfKTumGWPAcOUk4odATlRQCMZv-B9tSVKd4OhleDiX99zQyfKTm0GjbvG1pRl1IFQsoEw4Xho8fxx8rtU-y1ggKJYAzYN6rSrdxXGaGl7V9C7sdO-ISwhk22VVwZ3P8KvFVulHlqPkka1Wt88MMIpu10FQwE9aNKiapqSzwqQSgefr4RN-AxqVfyAeCamQ4CHIAvzKdHaqbIyN00eHpKYao1C564QgwDyiDEEJHb8PsxpoIx6Z9wYIkugXGO9mrDco72lyWSQXOqaP3otZTikHUCKviC7XswuVWgdMSd6agudFLe7hsE0LijZ_hV5WAIp074NC7VIhHCDis1wqERaHIYHNuIVPoWMUctyKwxOSHMSGXyS3h7YPv0oxumVC7IZJENXGPnS9zJzlrMu82KEzzRP750IXXKwFAhfAJt1FEjmnd5EEB4voxzZOQE1NO1PC0zI1fq5nxhXFCP9vVIKoNbHze_zXTYlneR_uuBiDZpNbofgAvpqAukupuWHmDBCSSjauY0fr1kNrH_FlKCBcNwa3u6jo9vHthJBHiMPkftlwLfPCnxHjVQxk11W4SoduE99SKJRUPdrkpyuL62IVa0NNZmuUIUQnMe-07ibHAz8wF2Bbe_GRiWb-B0r326KAGMBoY1200Q-y77sGMNxOwmYdOueL7BuBrq9n1nN-GHzE1g4KcPmVdqJNQVV7xzepWU2YGv-2RNgN-3rX5qLi7mUQIlCcnZE4dFccG9WczLWafQhMYnitTUkXHP3rXcBTUB2u-Krovm7i8aDCDZ-7_yiQsRGZQzGZdtDSccUdCqoefPDxrfQnYKRgCHlQMcupkouAGnHrwI-zNtUvtb-INAW_JzabU_MHoDqaQhYgTM-mu_nqdeLSpF4YfOg_C0Ha97dr-3kUUFflcGIhhDfBW2XVABbUI8uZmvaOHn6Kw0S120aXf4T5VQIK8ePjWzDRTx1YUqFOGLOBiBIjZ2qyiRw52BsyCXcHSFjOtI5s0HfLp7fzGI0Vq2sjDeET06mUYbWZE1sucdK9RfNTvPDl1T9uKoUq_QtIOJJhopaNTcS5oRXmqEGQb895vKTMW-RJZz0r-MAIbSgfDnbHTdTJFq1t48hIVIZ71aMdvsn-mXjrBmiw3fLzjkMvktGk6vo1UU21XODsQF34CedYAXEqTzpDhpD5eNVAO1wuFkrQoKMO3jcD8NGjbCjsYk8h5ZA5WlsKWxqAqRELwKpHxrG4MJICW1vtBWWze9kvE5ICYxvBymG8hh92TAqqXpN-FrlGzrYYQe-g96iDDIShgV9q8KKATaMxpU9TBGpG-PCFdid3rGE4tYo5JjMTFCyp9kSzA2neYOaWHDl1hZLg4HZtXQFo8t255JdI9bjQhlK77yH8BA8tqo4J6V1WW17MxMNoBbgzQPPufuvO_t7rYxmSfo6BsiQnMuLsVl3ZfHLXH7-FuEWHDlvAFKxSAmRPHHlP5KdJpXXCP0Zlo13cb5jX0YRjvId8VbLigOFAbKUYAQpdS9gUvkRO4cL3dLXAeH3O4VEVY9x4zToU1FGeYmlhzIVTXSPVPPNbSONXirbPH-HisIqn3S5wz20DzOU2uJ8ZhaMIKW5amEkc7sFUnFIt9oMVhY6UFpAgcFWZBXO5ek_n6Rcizn833VEWqzmbvI79CA6H1IUAomWCpXwVtDjxj5nnNMOBCT5Rbq987RaTsertD2PaJj442nvr1M_etGZlPDT5LNEgiHjPdU4pj127L0tDLbflzKarXu18sEYS-p9V2v_RNzBByu0RwsyXH0HfCLD3FTjTE2t7QJz_724r7WtYR1MUJqmme0S8p9jnauUGLjjm_p5ZM8TNUIieTz_TM8egm1PBecERW6C0fa2NvpgjsTlvUpJgj1mGQN6KbFZ2nBifvPU4x0X4QXslMPY-QmQFSSIOBXAk76aeZsqbejPLFsuQpYO4u03-snutPDIgu5EQ-AHkxR62ZK0DqwDoFXKL7a5wBDN2l-QKoIbI5deGq5YsrnnWqZyxGShmYe6YscYgkR7I3dm4hxHq-KPJq-be56XGamV9TRqFB9YSLfuVuDPUHvxlPdTZtOujWyYHjSvn8k0xcYG0FVcBdiKsJNuj5rj-S6Ljcfxf9xlq_T_vOlkxbvPenTQ6Ohkd-5KUi9pCT3PjehtRGmRZiRa6Xe5ZrTvx7HeFJehYU6GgdZ8Bft14uJhYItRCRKj9V5PYfQOJlopk4-gWesIZpYmG9fGj4ahPh0yqFRCCM55wm9YGGgBnBTu7Ifj2dnQs5jwP1Mxpk1UP6VQgIJINwEAanpqNNTFz5iCvg3sxQsTquBBk9-8vxtDyx9QgQhhH3y_d7c5kx6PaWNkcTwcWXtU_dHRkvyRvKR2XhA8TOv7HykYHabffER529Vj678_7vn0T0H39BkRwzRkF19NykJ4SIVvn4-asWXtkooUHMkJjJ3HZ5h-pc3UItb2y6ZOyfaKlSuokuSOmFTIA6brRT3kxu4m7ay_yxHhDQYRZ57l2USeMing5d4vSJqlC4IIx8ax6wlh7Z8D5YrcoAwPiEDaNTUs9oqlabayZpehtXRgO6JeMyGG6o6AgqlV4XgiQJCm4GcU54WqjlB2fDwoWbos2H9TkqLXMORdbR5a8IRH6P60UcqYORiEm-WawG8T68ZLGdpVYWf3qM_i6hRwbY4tWUP8HAmElBiA5wmwjEcdB1iUO8mjkMX5gi0ljjBvK5v7ZRzeXHQQCPR9SaRtVNiiIuWjfOz3BTE0gQPxHFnNN5RaJY1U0QbxllzQcShmtKGjbZ5CglXjkSB2TAOkaWGkklub5RVJ3p01JJ2RgcusaZj-taBI2YljBTOSCWrDePbvTkF8sO5S3_PlMqZTujjw-BZS_4qr5scL8YziydVDyrFIJCagYeU8MbNzVkmwVQEBThN20NpK9v52yAD_ZZjLPKZf6VErG3k9_qfRI4NIe6H2JQF8-i1UM11BXrSnxjWKjk1X-xiOUXkZ73KKG6ZXxjli7WjB3CYtZnIvcfKJyQ2OtR-Wr8K0HrVmrUzJ1qsgkJPjlRvfLgUu5BKaFmIu2NbFGo26e_qm2r-_mweNwcNaXmZs-NXtxck6UD0y86b1d9vsrtAWoX8Lu2uCGCOPfh4mnDltImRgKHevhBbPXn1nPhWBkR33ST2FfMw4OuIJYKRzhfhJUItwpoRrdE-NDJp6EkxzAtMjcHddf3oe16ktxKQt0IMwgiYmWiBSgjajAagb8aAHjuOn1ornIPAG1B4nKdtzIB-xfMXRSea10zu4MzDF8X67zDn463vV8WDl68fMH9E9Lf1ej26eiR5nW4_K6s66GlFIAUOcHf5ulEhUA5VtR1YQiGyBUyudmEY36lRTbkcb4SsfqEETtAbYA2mvUFsKnZoPmdWyCFEduR8H3gT0o09OvbTv1JC2rHelEB_H1itdSANElL7OpHSdS4Z4uliKDPenUyz3BA1jcgYOw-GpXAdHnGQ6-YL2fVN2vogDpwPXXbVcuBr4cQLet24lTMTi0e44U9U2gNd5DscHl_I-5oWFFoNfjUXMkerjEPDFZbNpPRV59J7KwaoyLsZqhyYEgxw_funxi9xNiMfnT8LBu0tte2AO1fGLOqB-3aRaRjLSF5gT7lehWcIEf7t89jnU4FhAV07dNSFxu5z7EPnnHAaxeMVFtY263E_Y3p8lcFFe1YDMVAV8DQa5_uF6KGGKqvw25PWHW38mntU5AVNF1hjeILdeeCuiRyH43m83wMYkXp0DBbH1V-kHg047LLzOxY3SMKNOLCV0x9O_eCCiBpKae1zBJAeMRJbLgic-Mqb1kkdUq1EB1mhsW241rY88nL_FfOFsyoZeCp4Ewj4sszv5ymfbB1zbFzh11JB7E_FfPs91itH1biVTAyWtBKdFOgQI03Q88SvwL-1tB3evyoalWQ5USUJpYlkmwxJdhctIzjO-Bv0k71kYzkRI_ZS-beEvDstDDxikrXBMtsz-7GqkEQFPrZLP8-cGszij5VQx6dCvWDUgC28ucOFNZ2bIlg9OccwhyKzTxiyj62TdqzPBpNENzcH6zCUuZ-0IOI-b6VJjI8HnfBlryRb6XMpIkOE-AiJrUETY4X2HFMz5eb7LD2wYKN63K2wFEheEJF0GGir7R1dzv_AAAAAAAAAAAAAAAAAAABw0UGh4p"
+    },
+    "grants": [],
+    "pq_pins": {
+     "_pD1Xfa785jZxCNX07_uz868-XComvLE-JTUfJ3wUBA": "JRGL2vaxlLp67Jst7sjD7Y2f2AlRAHvJDPGxB3WBShEWn3xBm85enZq9x1VR5gPC6bOaT1DndsFZKf7G8Zq4J-VHPR1xb2gVcIfHoI0dEHd-Cd2-UmbzvXHqKAQMmzasaOo7E7erpk82dzMp69sEan4dfwqWlRJ_F7erBZwA5PIA3E5KTRRPJVvXSMERjaS30G9tX1gZSk3pM7EAt5UTmrWQSHMP5tG12NxFiWeP__CacTi2firm-d1h3e5X6Coe3sFdmj5DwEWdDWd21sjqumdsfCNfahe_4dTdUAZa_1imkTBf_2t83Ehi9TGd1CDiMvmckHB7qa0FXx01FwiJxshovNOJpIFwbfa2vMinfw_qZKvJuLnYScWDfI8MRo7Zg7UGRsspDr2mQ57B4oRrcm4PYyL6HEiKYme6oDBsRlTCeN-9YmuT_Q8_apNp096mo4jVvWlEY1SWeqeQsdma7sq2gxxvBU5rTqYfSYqu3PxSoquSUBtHyuETpOEIsxFDfP_A3neRWQgmhYLOUo-htkQvO2--6jYS22t-XNxTdaEg150dbkdye6HMQZbbpvkMR1EZ0hLN6_QtgyuJgK1PLvp2THLjXvv14nyU4txlrKkCJNeix4vxXrP55TWfX-KuhW98MMvjIEa2skm_w5vZ8Llyy98Bq1DHaxfzkd8QNpCfGngWMcrCnJDdivlmcc_-4eJxTki3sMAaBddsibLI9zUGqSQ2mJHgsXfLbZVlu3RiwdcnW9QtgIEGrvR-BIc72-CrKxR5cHW-Gzr1iVVLOktXYYz2DQwZCkZ10EmBg8Ap0QyKSGSsnc349gl3JqVcpVUExk0pXR4-OwokVEhcu3TAEwIWjdTTP4ilSNhiMqf97nZzi7zmnLwRxe-MQvDZW64e6uw3bKiKEPrGSsgvY2A3YlucpiKI947AzBjrjNi30J2m8ubnxTWQkyl5KJ4LDfNUFo25EedRDEm6Y4lQizhvV9ky1Nyk1TZ290FcnQ5Ex_D9t-WUzWE2ujcMraDT32v6GtnINlXAtiUJwPN4TTUyvxF-D_GU1h5OJX626z18zKjHOOA1KYUGvzqbgdDcwPlME8fUhauDhp7rgVUvWkZzvI5GzcqORU4tlJJ5D8XM4uz5YVAOTLCQocD0_pbmAmTFYmAuQMf1aUfTNEW2Wy40z9YmgZJwqMZfn92xCKLB5crmgE6Ug3LroH2in-lidXOOja6KpEdt_KSJPt6ax0D1BkPqP-sp9l0IfTSj0i0WBb2JKRQ99f992eTaJ_xMJhUi8xLx2cyz3u-x9AOMPK28gVOl-sUYpYbPYb9bRl7tG7snXW8ZYmHsNbrv4jSe6A0iaFlJGxKwLceVOcoCYGTahtXk7kEIHefy7BoAytTNudzqcA3Jb25BoMTvQdCafhR929pOt5lGuqHwJrREcXc_8s0qQBKqroz9PUhCOwduPIxDkPNbWFmTGZLwtSIUejvvac0L-egb0ixg5cmXvGT5vnxHJOE4Sqe0I_8CpU_MaFs1ZunT8GCI-CQJapxfAhGgLx7nXDkXS2TNNE0x3zFqetFNC4Y_r_ImSpuV_EBefFmaQVyEWWqLaZ26_dnZ2QjbU3ZqigdeKbP7NV2CFC5Ai1dQC13RjHNQmYw9jPb_FdiFlsSxx6MfqItxnR6E3xolqMH0uMY4N6ZnOzotrALmECK9jAzfQV9FsIwBZVEs8-X7UEtX4YAX2qnnCdx8G6vfYMBxWzEJSaR93KLSBOf3ulT6zJ-KDANO1ami-IRKQ6k61Ieghkk6L1pCMCfEfAXHFCSi3SrR9RWbfrDDsh5UUp3mPuuZKKK9jXY0ppZWIhRGq0OXsVxkveQ4-nRHgtLtYXLmdz7GvXxxikbVS3kcL1EclfccsK1G4GFmd9rF5WA6mSwx_DHEGOC4W0Fvyb2tl0lfjmQkX3NPR-Z19yS1kFbQdY6UU6qx0xqZ_0UiiXuIa_WUKj6D0ZMhkkALHQBOez1VtbndtwU7srYX5dPQtnjLTcsfYJv6TyuTb9W8L-ydEcRUHN0F0228FIYsOZPV30Nt0dZvvSVn8yKKMR568U8YKcUARrfrCGTaYekOjSvjawSrXC2AWb237d8dNMOD8WXSr_SuT2_4Q1dxTLJbsmbta4f6ozwwSTg9dqdo_yR93lxpv4UYrkeWNw-LlpD-ZuYfQE5HMGuQpKLdJAQIhpst-0rz3hJZPV7KyDFocc0LT4Uco18AgiL2QtNxncNSXns_6eMVQCUgq1VxEf0xqBSw3eFQ4z-8ZRhuk9s_4sTu4k2t6f241U5nmOIdYHVL9QIhtzf6MkIvX5SJASfPpZLeECRVNm1W3Zck1NKYp1lcQWb-QD9I7Y6Zng5_pDrd6OqgPjEN7FRfQFJY-cUNbHN_AlSicB9InnFHI9O_t7Ykup3FD348whN_tM4_TNb8LUkQ7mrGJGPtZ8sJLt_H1r9jehkg2tqHFlqHtKK_fenbT0u_BW3AR_5Nn9D2HTnhn_qBkM2EHFJSlmvEKxTM4K1huuMffsGoH1HNex1KF-5x3C6cwZLMxuz7jN1yYfGkoqAgT0X_aQGnVPMVvhdSqiYW5NjtKWlDc4b_ynA"
+    }
+   },
+   "acc": {
+    "state": {
+     "trip_spend": {
+      "sum": 0
+     }
+    },
+    "monitors": {}
+   }
+  }
+ },
+ {
+  "id": "adv1568",
+  "name": "session-root-hybrid-ed25519-ml-dsa-65-pin-mismatch",
+  "raw": "{\"ver\":2,\"action\":{\"verb\":\"air.book\",\"resource\":\"skyair.example/bookings\",\"params_digest\":\"-BkF8tsZZl_jCgbpiIyAIlRrJBl3PIDqfA1NxxRHg4c\",\"reversibility_class\":\"irreversible\"},\"grant_ref\":\"TKB_XTOf4_yHvyKw7_OOi0EsKECiy5JTIEkITBKn0rE\",\"cap_chain\":[{\"id\":\"TKB_XTOf4_yHvyKw7_OOi0EsKECiy5JTIEkITBKn0rE\",\"issuer\":\"4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw\",\"holder\":\"pYz5tUBahM7859yQSF1pQMyZqB26FApp2hKcGFr2P2o\",\"caveats\":[{\"agent_binding\":{},\"caveats\":[],\"goal_commit\":\"o_WCXmy-0c6nR8XKjA3uzoHEDecoJTUt2GdIxq4LtUI\",\"predicates\":[{\"resource\":\"*\",\"verb\":\"air.book\",\"where\":[{\"field\":\"env.acc.trip_spend.post\",\"op\":\"lte\",\"value\":40000}]}],\"risk_policy\":{\"bMax\":1,\"kappa\":1,\"lambda\":0.0005,\"rho\":0.5,\"theta1\":0.25,\"theta2\":0.6,\"weights\":{\"alpha\":0.25,\"beta\":0.2,\"delta\":0.2,\"epsilon\":0.1,\"gamma\":0.2,\"zeta\":0.05}},\"type\":\"envelope\"},{\"root\":\"Ly5rkOX2s1GPp77dm3ZE9jTZPi6gr0eXcFHJFjYjqlw\",\"seq\":0,\"session\":\"QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE\",\"type\":\"intent_session\"}],\"body_digest\":\"TKB_XTOf4_yHvyKw7_OOi0EsKECiy5JTIEkITBKn0rE\",\"sig\":\"a9y7IDsXG69o3moin2cDQRnkcOlIFRmmejS8mJEchkU8ydYkS0fiXGYOM6aWzuY92Z249BZrd4xTXjAM9vgkBw\"}],\"plan\":{\"root\":\"yeQ-bJLqXy5T4R3iKfycuhjonDRU6QPBQxIMK7Uyqzo\",\"inclusion_proof\":{\"index\":0,\"size\":1,\"path\":[]},\"node_id\":\"book\",\"conditions_digest\":\"YM87EgmmvAr4WYQDm1wkrB7pFoHs4esi8tOmv9_DUxY\"},\"attestation\":{\"quote_digest\":\"\",\"epoch\":0,\"model_id\":\"unattested\",\"measurement\":\"\",\"operator\":\"unattested\"},\"provenance\":{\"causal_hash\":\"\",\"taint_level\":0,\"trusted_refs\":[]},\"freshness\":{\"beacon_ref\":\"\",\"epoch\":0,\"accumulator_witness\":\"\"},\"counter\":1,\"risk_claim\":{\"r\":0,\"inputs\":{}},\"aud\":\"skyair.example\",\"iat\":1800000000000,\"exp\":1800000600000,\"intent\":{\"ref\":\"8ihRXE04SR3b2XhJI1Db9pfHzuXnmDY_e_IAk-828mI\",\"map_digest\":\"Fv6Ir9kOvEYPjvEKSF6UTel8dtaAkcOrlDBTIAI80gM\",\"goal_salt\":\"salt0\",\"fidelity_ppm\":1000000,\"residual_risk_ppm\":0},\"intent_session\":{\"session\":\"QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE\",\"root\":\"Ly5rkOX2s1GPp77dm3ZE9jTZPi6gr0eXcFHJFjYjqlw\",\"seq\":0,\"schema\":\"AsXp0amxFiFadUc1Qot-6gVqzWpcv7LbvUyt5wOjdPM\",\"acc\":[{\"id\":\"trip_spend\",\"post\":38900}]},\"sig\":\"HUmdAkyrtkTzj0uCQsoyKDvvqkpNlcpHA67AYdEg9zM99--oxvnF-evR3ddnHWjTeM6Bn6YGEdvg6_2dSx7SAA\"}",
+  "grant": "{\"id\":\"TKB_XTOf4_yHvyKw7_OOi0EsKECiy5JTIEkITBKn0rE\",\"issuer\":\"4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw\",\"holder\":\"pYz5tUBahM7859yQSF1pQMyZqB26FApp2hKcGFr2P2o\",\"caveats\":[{\"agent_binding\":{},\"caveats\":[],\"goal_commit\":\"o_WCXmy-0c6nR8XKjA3uzoHEDecoJTUt2GdIxq4LtUI\",\"predicates\":[{\"resource\":\"*\",\"verb\":\"air.book\",\"where\":[{\"field\":\"env.acc.trip_spend.post\",\"op\":\"lte\",\"value\":40000}]}],\"risk_policy\":{\"bMax\":1,\"kappa\":1,\"lambda\":0.0005,\"rho\":0.5,\"theta1\":0.25,\"theta2\":0.6,\"weights\":{\"alpha\":0.25,\"beta\":0.2,\"delta\":0.2,\"epsilon\":0.1,\"gamma\":0.2,\"zeta\":0.05}},\"type\":\"envelope\"},{\"root\":\"Ly5rkOX2s1GPp77dm3ZE9jTZPi6gr0eXcFHJFjYjqlw\",\"seq\":0,\"session\":\"QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE\",\"type\":\"intent_session\"}],\"body_digest\":\"TKB_XTOf4_yHvyKw7_OOi0EsKECiy5JTIEkITBKn0rE\",\"sig\":\"a9y7IDsXG69o3moin2cDQRnkcOlIFRmmejS8mJEchkU8ydYkS0fiXGYOM6aWzuY92Z249BZrd4xTXjAM9vgkBw\"}",
+  "now": 1800000000000,
+  "aud": "skyair.example",
+  "intent_v2": {
+   "params": {
+    "offer_id": "OF-1",
+    "total": 38900,
+    "add_ons": [
+     "none"
+    ],
+    "refundable": false
+   },
+   "schema": {
+    "docs": [
+     {
+      "v": 1,
+      "kind": "pca-action-schema",
+      "site": "https://skyair.example",
+      "aud": "skyair.example",
+      "version": "2026-10-01",
+      "units": {
+       "usd_cents": {
+        "kind": "money",
+        "currency": "USD",
+        "exponent": 2
+       }
+      },
+      "verbs": [
+       {
+        "verb": "air.book",
+        "kind": "write",
+        "params": {
+         "action.params.offer_id": {
+          "type": "string",
+          "semantic": "product.ref",
+          "sensitivity": "material"
+         },
+         "action.params.total": {
+          "type": "integer",
+          "unit": "usd_cents",
+          "min": 0,
+          "max": 5000000,
+          "semantic": "money.amount",
+          "sensitivity": "critical",
+          "accumulates_into": [
+           "spend.usd_cents"
+          ]
+         },
+         "action.params.add_ons": {
+          "type": "set",
+          "values": [
+           "none",
+           "tripshield",
+           "seat_plus"
+          ],
+          "default": [
+           "none"
+          ],
+          "principal_neutral_default": true,
+          "semantic": "product.addon",
+          "sensitivity": "material"
+         },
+         "action.params.refundable": {
+          "type": "boolean",
+          "semantic": "flag",
+          "sensitivity": "material"
+         },
+         "action.params.passengers": {
+          "type": "array",
+          "max_items": 9,
+          "max_len": 64,
+          "semantic": "person.identity",
+          "sensitivity": "critical",
+          "required": false
+         },
+         "action.params.note": {
+          "type": "string",
+          "semantic": "text.note",
+          "sensitivity": "free",
+          "required": false,
+          "max_len": 16
+         }
+        },
+        "reversibility_by": {
+         "param": "action.params.refundable",
+         "map": {
+          "true": "reversible",
+          "false": "irreversible"
+         }
+        }
+       },
+       {
+        "verb": "air.search",
+        "kind": "read",
+        "params": {
+         "action.params.from": {
+          "type": "string",
+          "values": [
+           "SFO",
+           "JFK"
+          ],
+          "semantic": "place.airport",
+          "sensitivity": "material"
+         },
+         "action.params.date": {
+          "type": "date",
+          "semantic": "schedule.date",
+          "sensitivity": "material"
+         },
+         "action.params.pax": {
+          "type": "integer",
+          "min": 1,
+          "max": 9,
+          "semantic": "quantity",
+          "sensitivity": "material"
+         }
+        },
+        "reversibility": "reversible"
+       }
+      ],
+      "sig": {
+       "alg": "ed25519",
+       "kid": "skyair-2026",
+       "value": "m4EZ7Y15YfzxVAlHJ7UNaU1JdVeBtJB3r36kVaUxgoGmwP1QKLDU89TP0zfxW3nJYi9NouaPWTbhlNtBDQG1DA"
+      }
+     }
+    ],
+    "keys": [
+     {
+      "kid": "skyair-2026",
+      "alg": "ed25519",
+      "pk": "ngFoNxTzXeqGmwUazsE4YDMjft0mQAyAxRWdPwlU4YE"
+     }
+    ]
+   },
+   "session": {
+    "root": {
+     "v": 1,
+     "kind": "pca-intent-session",
+     "session": "QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE",
+     "principals": [
+      {
+       "key": "4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw",
+       "alg": "hybrid-ed25519-ml-dsa-65",
+       "pq_pk": "JRGL2vaxlLp67Jst7sjD7Y2f2AlRAHvJDPGxB3WBShEWn3xBm85enZq9x1VR5gPC6bOaT1DndsFZKf7G8Zq4J-VHPR1xb2gVcIfHoI0dEHd-Cd2-UmbzvXHqKAQMmzasaOo7E7erpk82dzMp69sEan4dfwqWlRJ_F7erBZwA5PIA3E5KTRRPJVvXSMERjaS30G9tX1gZSk3pM7EAt5UTmrWQSHMP5tG12NxFiWeP__CacTi2firm-d1h3e5X6Coe3sFdmj5DwEWdDWd21sjqumdsfCNfahe_4dTdUAZa_1imkTBf_2t83Ehi9TGd1CDiMvmckHB7qa0FXx01FwiJxshovNOJpIFwbfa2vMinfw_qZKvJuLnYScWDfI8MRo7Zg7UGRsspDr2mQ57B4oRrcm4PYyL6HEiKYme6oDBsRlTCeN-9YmuT_Q8_apNp096mo4jVvWlEY1SWeqeQsdma7sq2gxxvBU5rTqYfSYqu3PxSoquSUBtHyuETpOEIsxFDfP_A3neRWQgmhYLOUo-htkQvO2--6jYS22t-XNxTdaEg150dbkdye6HMQZbbpvkMR1EZ0hLN6_QtgyuJgK1PLvp2THLjXvv14nyU4txlrKkCJNeix4vxXrP55TWfX-KuhW98MMvjIEa2skm_w5vZ8Llyy98Bq1DHaxfzkd8QNpCfGngWMcrCnJDdivlmcc_-4eJxTki3sMAaBddsibLI9zUGqSQ2mJHgsXfLbZVlu3RiwdcnW9QtgIEGrvR-BIc72-CrKxR5cHW-Gzr1iVVLOktXYYz2DQwZCkZ10EmBg8Ap0QyKSGSsnc349gl3JqVcpVUExk0pXR4-OwokVEhcu3TAEwIWjdTTP4ilSNhiMqf97nZzi7zmnLwRxe-MQvDZW64e6uw3bKiKEPrGSsgvY2A3YlucpiKI947AzBjrjNi30J2m8ubnxTWQkyl5KJ4LDfNUFo25EedRDEm6Y4lQizhvV9ky1Nyk1TZ290FcnQ5Ex_D9t-WUzWE2ujcMraDT32v6GtnINlXAtiUJwPN4TTUyvxF-D_GU1h5OJX626z18zKjHOOA1KYUGvzqbgdDcwPlME8fUhauDhp7rgVUvWkZzvI5GzcqORU4tlJJ5D8XM4uz5YVAOTLCQocD0_pbmAmTFYmAuQMf1aUfTNEW2Wy40z9YmgZJwqMZfn92xCKLB5crmgE6Ug3LroH2in-lidXOOja6KpEdt_KSJPt6ax0D1BkPqP-sp9l0IfTSj0i0WBb2JKRQ99f992eTaJ_xMJhUi8xLx2cyz3u-x9AOMPK28gVOl-sUYpYbPYb9bRl7tG7snXW8ZYmHsNbrv4jSe6A0iaFlJGxKwLceVOcoCYGTahtXk7kEIHefy7BoAytTNudzqcA3Jb25BoMTvQdCafhR929pOt5lGuqHwJrREcXc_8s0qQBKqroz9PUhCOwduPIxDkPNbWFmTGZLwtSIUejvvac0L-egb0ixg5cmXvGT5vnxHJOE4Sqe0I_8CpU_MaFs1ZunT8GCI-CQJapxfAhGgLx7nXDkXS2TNNE0x3zFqetFNC4Y_r_ImSpuV_EBefFmaQVyEWWqLaZ26_dnZ2QjbU3ZqigdeKbP7NV2CFC5Ai1dQC13RjHNQmYw9jPb_FdiFlsSxx6MfqItxnR6E3xolqMH0uMY4N6ZnOzotrALmECK9jAzfQV9FsIwBZVEs8-X7UEtX4YAX2qnnCdx8G6vfYMBxWzEJSaR93KLSBOf3ulT6zJ-KDANO1ami-IRKQ6k61Ieghkk6L1pCMCfEfAXHFCSi3SrR9RWbfrDDsh5UUp3mPuuZKKK9jXY0ppZWIhRGq0OXsVxkveQ4-nRHgtLtYXLmdz7GvXxxikbVS3kcL1EclfccsK1G4GFmd9rF5WA6mSwx_DHEGOC4W0Fvyb2tl0lfjmQkX3NPR-Z19yS1kFbQdY6UU6qx0xqZ_0UiiXuIa_WUKj6D0ZMhkkALHQBOez1VtbndtwU7srYX5dPQtnjLTcsfYJv6TyuTb9W8L-ydEcRUHN0F0228FIYsOZPV30Nt0dZvvSVn8yKKMR568U8YKcUARrfrCGTaYekOjSvjawSrXC2AWb237d8dNMOD8WXSr_SuT2_4Q1dxTLJbsmbta4f6ozwwSTg9dqdo_yR93lxpv4UYrkeWNw-LlpD-ZuYfQE5HMGuQpKLdJAQIhpst-0rz3hJZPV7KyDFocc0LT4Uco18AgiL2QtNxncNSXns_6eMVQCUgq1VxEf0xqBSw3eFQ4z-8ZRhuk9s_4sTu4k2t6f241U5nmOIdYHVL9QIhtzf6MkIvX5SJASfPpZLeECRVNm1W3Zck1NKYp1lcQWb-QD9I7Y6Zng5_pDrd6OqgPjEN7FRfQFJY-cUNbHN_AlSicB9InnFHI9O_t7Ykup3FD348whN_tM4_TNb8LUkQ7mrGJGPtZ8sJLt_H1r9jehkg2tqHFlqHtKK_fenbT0u_BW3AR_5Nn9D2HTnhn_qBkM2EHFJSlmvEKxTM4K1huuMffsGoH1HNex1KF-5x3C6cwZLMxuz7jN1yYfGkoqAgT0X_aQGnVPMVvhdSqiYW5NjtKWlDc4b_ynA"
+      }
+     ],
+     "intent_ref": "8ihRXE04SR3b2XhJI1Db9pfHzuXnmDY_e_IAk-828mI",
+     "schema": {
+      "aud": "skyair.example",
+      "digest": "AsXp0amxFiFadUc1Qot-6gVqzWpcv7LbvUyt5wOjdPM"
+     },
+     "layers": {
+      "task": {
+       "map_digest": "Fv6Ir9kOvEYPjvEKSF6UTel8dtaAkcOrlDBTIAI80gM"
+      }
+     },
+     "accumulators": [
+      {
+       "id": "trip_spend",
+       "agg": "sum",
+       "unit": "usd_cents",
+       "sel": {
+        "accumulates_into": "spend.usd_cents"
+       },
+       "win": {
+        "kind": "task"
+       },
+       "key": null,
+       "domain_max": 500000,
+       "holder": {
+        "kind": "site_local"
+       }
+      },
+      {
+       "id": "questions",
+       "agg": "count",
+       "sel": {
+        "event": "intent_required"
+       },
+       "win": {
+        "kind": "task"
+       },
+       "key": null,
+       "cap": 6,
+       "holder": {
+        "kind": "wallet"
+       }
+      }
+     ],
+     "monitors": [],
+     "question_uri": "https://atlas.example/q",
+     "expires_at": 1800086400000,
+     "signer": "4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw",
+     "sig": "yEQa4sx9BuA4Vcwj7XyBVclL5Sszury_w2TMB87vDDY3r-waMycraM4LFiU_b3RQcWLOonqqPrfVbTJ9vhRNCw",
+     "alg": "hybrid-ed25519-ml-dsa-65",
+     "pq_pk": "JRGL2vaxlLp67Jst7sjD7Y2f2AlRAHvJDPGxB3WBShEWn3xBm85enZq9x1VR5gPC6bOaT1DndsFZKf7G8Zq4J-VHPR1xb2gVcIfHoI0dEHd-Cd2-UmbzvXHqKAQMmzasaOo7E7erpk82dzMp69sEan4dfwqWlRJ_F7erBZwA5PIA3E5KTRRPJVvXSMERjaS30G9tX1gZSk3pM7EAt5UTmrWQSHMP5tG12NxFiWeP__CacTi2firm-d1h3e5X6Coe3sFdmj5DwEWdDWd21sjqumdsfCNfahe_4dTdUAZa_1imkTBf_2t83Ehi9TGd1CDiMvmckHB7qa0FXx01FwiJxshovNOJpIFwbfa2vMinfw_qZKvJuLnYScWDfI8MRo7Zg7UGRsspDr2mQ57B4oRrcm4PYyL6HEiKYme6oDBsRlTCeN-9YmuT_Q8_apNp096mo4jVvWlEY1SWeqeQsdma7sq2gxxvBU5rTqYfSYqu3PxSoquSUBtHyuETpOEIsxFDfP_A3neRWQgmhYLOUo-htkQvO2--6jYS22t-XNxTdaEg150dbkdye6HMQZbbpvkMR1EZ0hLN6_QtgyuJgK1PLvp2THLjXvv14nyU4txlrKkCJNeix4vxXrP55TWfX-KuhW98MMvjIEa2skm_w5vZ8Llyy98Bq1DHaxfzkd8QNpCfGngWMcrCnJDdivlmcc_-4eJxTki3sMAaBddsibLI9zUGqSQ2mJHgsXfLbZVlu3RiwdcnW9QtgIEGrvR-BIc72-CrKxR5cHW-Gzr1iVVLOktXYYz2DQwZCkZ10EmBg8Ap0QyKSGSsnc349gl3JqVcpVUExk0pXR4-OwokVEhcu3TAEwIWjdTTP4ilSNhiMqf97nZzi7zmnLwRxe-MQvDZW64e6uw3bKiKEPrGSsgvY2A3YlucpiKI947AzBjrjNi30J2m8ubnxTWQkyl5KJ4LDfNUFo25EedRDEm6Y4lQizhvV9ky1Nyk1TZ290FcnQ5Ex_D9t-WUzWE2ujcMraDT32v6GtnINlXAtiUJwPN4TTUyvxF-D_GU1h5OJX626z18zKjHOOA1KYUGvzqbgdDcwPlME8fUhauDhp7rgVUvWkZzvI5GzcqORU4tlJJ5D8XM4uz5YVAOTLCQocD0_pbmAmTFYmAuQMf1aUfTNEW2Wy40z9YmgZJwqMZfn92xCKLB5crmgE6Ug3LroH2in-lidXOOja6KpEdt_KSJPt6ax0D1BkPqP-sp9l0IfTSj0i0WBb2JKRQ99f992eTaJ_xMJhUi8xLx2cyz3u-x9AOMPK28gVOl-sUYpYbPYb9bRl7tG7snXW8ZYmHsNbrv4jSe6A0iaFlJGxKwLceVOcoCYGTahtXk7kEIHefy7BoAytTNudzqcA3Jb25BoMTvQdCafhR929pOt5lGuqHwJrREcXc_8s0qQBKqroz9PUhCOwduPIxDkPNbWFmTGZLwtSIUejvvac0L-egb0ixg5cmXvGT5vnxHJOE4Sqe0I_8CpU_MaFs1ZunT8GCI-CQJapxfAhGgLx7nXDkXS2TNNE0x3zFqetFNC4Y_r_ImSpuV_EBefFmaQVyEWWqLaZ26_dnZ2QjbU3ZqigdeKbP7NV2CFC5Ai1dQC13RjHNQmYw9jPb_FdiFlsSxx6MfqItxnR6E3xolqMH0uMY4N6ZnOzotrALmECK9jAzfQV9FsIwBZVEs8-X7UEtX4YAX2qnnCdx8G6vfYMBxWzEJSaR93KLSBOf3ulT6zJ-KDANO1ami-IRKQ6k61Ieghkk6L1pCMCfEfAXHFCSi3SrR9RWbfrDDsh5UUp3mPuuZKKK9jXY0ppZWIhRGq0OXsVxkveQ4-nRHgtLtYXLmdz7GvXxxikbVS3kcL1EclfccsK1G4GFmd9rF5WA6mSwx_DHEGOC4W0Fvyb2tl0lfjmQkX3NPR-Z19yS1kFbQdY6UU6qx0xqZ_0UiiXuIa_WUKj6D0ZMhkkALHQBOez1VtbndtwU7srYX5dPQtnjLTcsfYJv6TyuTb9W8L-ydEcRUHN0F0228FIYsOZPV30Nt0dZvvSVn8yKKMR568U8YKcUARrfrCGTaYekOjSvjawSrXC2AWb237d8dNMOD8WXSr_SuT2_4Q1dxTLJbsmbta4f6ozwwSTg9dqdo_yR93lxpv4UYrkeWNw-LlpD-ZuYfQE5HMGuQpKLdJAQIhpst-0rz3hJZPV7KyDFocc0LT4Uco18AgiL2QtNxncNSXns_6eMVQCUgq1VxEf0xqBSw3eFQ4z-8ZRhuk9s_4sTu4k2t6f241U5nmOIdYHVL9QIhtzf6MkIvX5SJASfPpZLeECRVNm1W3Zck1NKYp1lcQWb-QD9I7Y6Zng5_pDrd6OqgPjEN7FRfQFJY-cUNbHN_AlSicB9InnFHI9O_t7Ykup3FD348whN_tM4_TNb8LUkQ7mrGJGPtZ8sJLt_H1r9jehkg2tqHFlqHtKK_fenbT0u_BW3AR_5Nn9D2HTnhn_qBkM2EHFJSlmvEKxTM4K1huuMffsGoH1HNex1KF-5x3C6cwZLMxuz7jN1yYfGkoqAgT0X_aQGnVPMVvhdSqiYW5NjtKWlDc4b_ynA",
+     "pq_sig": "lY-r8O9sUbX466zpSKq6AaQV5BPnm8PoGFEcXCpVSmA8IjlSr-CdZ8y3L_JjXg_G2XCfprP2sJvw_3WuLMVy0eWesmYBLG2JDxVMMq8eR9M4v8otwVPfxdX7Azj2-sWHDfBQjk8gyjdxHet6sbun496SIReBRP3A0l6y1pcMHDL42e3C4c7GMB0Tv06gTVbglskkfqzY2FscGDt8uiAyGFsOId4eH0DRdmEfKTumGWPAcOUk4odATlRQCMZv-B9tSVKd4OhleDiX99zQyfKTm0GjbvG1pRl1IFQsoEw4Xho8fxx8rtU-y1ggKJYAzYN6rSrdxXGaGl7V9C7sdO-ISwhk22VVwZ3P8KvFVulHlqPkka1Wt88MMIpu10FQwE9aNKiapqSzwqQSgefr4RN-AxqVfyAeCamQ4CHIAvzKdHaqbIyN00eHpKYao1C564QgwDyiDEEJHb8PsxpoIx6Z9wYIkugXGO9mrDco72lyWSQXOqaP3otZTikHUCKviC7XswuVWgdMSd6agudFLe7hsE0LijZ_hV5WAIp074NC7VIhHCDis1wqERaHIYHNuIVPoWMUctyKwxOSHMSGXyS3h7YPv0oxumVC7IZJENXGPnS9zJzlrMu82KEzzRP750IXXKwFAhfAJt1FEjmnd5EEB4voxzZOQE1NO1PC0zI1fq5nxhXFCP9vVIKoNbHze_zXTYlneR_uuBiDZpNbofgAvpqAukupuWHmDBCSSjauY0fr1kNrH_FlKCBcNwa3u6jo9vHthJBHiMPkftlwLfPCnxHjVQxk11W4SoduE99SKJRUPdrkpyuL62IVa0NNZmuUIUQnMe-07ibHAz8wF2Bbe_GRiWb-B0r326KAGMBoY1200Q-y77sGMNxOwmYdOueL7BuBrq9n1nN-GHzE1g4KcPmVdqJNQVV7xzepWU2YGv-2RNgN-3rX5qLi7mUQIlCcnZE4dFccG9WczLWafQhMYnitTUkXHP3rXcBTUB2u-Krovm7i8aDCDZ-7_yiQsRGZQzGZdtDSccUdCqoefPDxrfQnYKRgCHlQMcupkouAGnHrwI-zNtUvtb-INAW_JzabU_MHoDqaQhYgTM-mu_nqdeLSpF4YfOg_C0Ha97dr-3kUUFflcGIhhDfBW2XVABbUI8uZmvaOHn6Kw0S120aXf4T5VQIK8ePjWzDRTx1YUqFOGLOBiBIjZ2qyiRw52BsyCXcHSFjOtI5s0HfLp7fzGI0Vq2sjDeET06mUYbWZE1sucdK9RfNTvPDl1T9uKoUq_QtIOJJhopaNTcS5oRXmqEGQb895vKTMW-RJZz0r-MAIbSgfDnbHTdTJFq1t48hIVIZ71aMdvsn-mXjrBmiw3fLzjkMvktGk6vo1UU21XODsQF34CedYAXEqTzpDhpD5eNVAO1wuFkrQoKMO3jcD8NGjbCjsYk8h5ZA5WlsKWxqAqRELwKpHxrG4MJICW1vtBWWze9kvE5ICYxvBymG8hh92TAqqXpN-FrlGzrYYQe-g96iDDIShgV9q8KKATaMxpU9TBGpG-PCFdid3rGE4tYo5JjMTFCyp9kSzA2neYOaWHDl1hZLg4HZtXQFo8t255JdI9bjQhlK77yH8BA8tqo4J6V1WW17MxMNoBbgzQPPufuvO_t7rYxmSfo6BsiQnMuLsVl3ZfHLXH7-FuEWHDlvAFKxSAmRPHHlP5KdJpXXCP0Zlo13cb5jX0YRjvId8VbLigOFAbKUYAQpdS9gUvkRO4cL3dLXAeH3O4VEVY9x4zToU1FGeYmlhzIVTXSPVPPNbSONXirbPH-HisIqn3S5wz20DzOU2uJ8ZhaMIKW5amEkc7sFUnFIt9oMVhY6UFpAgcFWZBXO5ek_n6Rcizn833VEWqzmbvI79CA6H1IUAomWCpXwVtDjxj5nnNMOBCT5Rbq987RaTsertD2PaJj442nvr1M_etGZlPDT5LNEgiHjPdU4pj127L0tDLbflzKarXu18sEYS-p9V2v_RNzBByu0RwsyXH0HfCLD3FTjTE2t7QJz_724r7WtYR1MUJqmme0S8p9jnauUGLjjm_p5ZM8TNUIieTz_TM8egm1PBecERW6C0fa2NvpgjsTlvUpJgj1mGQN6KbFZ2nBifvPU4x0X4QXslMPY-QmQFSSIOBXAk76aeZsqbejPLFsuQpYO4u03-snutPDIgu5EQ-AHkxR62ZK0DqwDoFXKL7a5wBDN2l-QKoIbI5deGq5YsrnnWqZyxGShmYe6YscYgkR7I3dm4hxHq-KPJq-be56XGamV9TRqFB9YSLfuVuDPUHvxlPdTZtOujWyYHjSvn8k0xcYG0FVcBdiKsJNuj5rj-S6Ljcfxf9xlq_T_vOlkxbvPenTQ6Ohkd-5KUi9pCT3PjehtRGmRZiRa6Xe5ZrTvx7HeFJehYU6GgdZ8Bft14uJhYItRCRKj9V5PYfQOJlopk4-gWesIZpYmG9fGj4ahPh0yqFRCCM55wm9YGGgBnBTu7Ifj2dnQs5jwP1Mxpk1UP6VQgIJINwEAanpqNNTFz5iCvg3sxQsTquBBk9-8vxtDyx9QgQhhH3y_d7c5kx6PaWNkcTwcWXtU_dHRkvyRvKR2XhA8TOv7HykYHabffER529Vj678_7vn0T0H39BkRwzRkF19NykJ4SIVvn4-asWXtkooUHMkJjJ3HZ5h-pc3UItb2y6ZOyfaKlSuokuSOmFTIA6brRT3kxu4m7ay_yxHhDQYRZ57l2USeMing5d4vSJqlC4IIx8ax6wlh7Z8D5YrcoAwPiEDaNTUs9oqlabayZpehtXRgO6JeMyGG6o6AgqlV4XgiQJCm4GcU54WqjlB2fDwoWbos2H9TkqLXMORdbR5a8IRH6P60UcqYORiEm-WawG8T68ZLGdpVYWf3qM_i6hRwbY4tWUP8HAmElBiA5wmwjEcdB1iUO8mjkMX5gi0ljjBvK5v7ZRzeXHQQCPR9SaRtVNiiIuWjfOz3BTE0gQPxHFnNN5RaJY1U0QbxllzQcShmtKGjbZ5CglXjkSB2TAOkaWGkklub5RVJ3p01JJ2RgcusaZj-taBI2YljBTOSCWrDePbvTkF8sO5S3_PlMqZTujjw-BZS_4qr5scL8YziydVDyrFIJCagYeU8MbNzVkmwVQEBThN20NpK9v52yAD_ZZjLPKZf6VErG3k9_qfRI4NIe6H2JQF8-i1UM11BXrSnxjWKjk1X-xiOUXkZ73KKG6ZXxjli7WjB3CYtZnIvcfKJyQ2OtR-Wr8K0HrVmrUzJ1qsgkJPjlRvfLgUu5BKaFmIu2NbFGo26e_qm2r-_mweNwcNaXmZs-NXtxck6UD0y86b1d9vsrtAWoX8Lu2uCGCOPfh4mnDltImRgKHevhBbPXn1nPhWBkR33ST2FfMw4OuIJYKRzhfhJUItwpoRrdE-NDJp6EkxzAtMjcHddf3oe16ktxKQt0IMwgiYmWiBSgjajAagb8aAHjuOn1ornIPAG1B4nKdtzIB-xfMXRSea10zu4MzDF8X67zDn463vV8WDl68fMH9E9Lf1ej26eiR5nW4_K6s66GlFIAUOcHf5ulEhUA5VtR1YQiGyBUyudmEY36lRTbkcb4SsfqEETtAbYA2mvUFsKnZoPmdWyCFEduR8H3gT0o09OvbTv1JC2rHelEB_H1itdSANElL7OpHSdS4Z4uliKDPenUyz3BA1jcgYOw-GpXAdHnGQ6-YL2fVN2vogDpwPXXbVcuBr4cQLet24lTMTi0e44U9U2gNd5DscHl_I-5oWFFoNfjUXMkerjEPDFZbNpPRV59J7KwaoyLsZqhyYEgxw_funxi9xNiMfnT8LBu0tte2AO1fGLOqB-3aRaRjLSF5gT7lehWcIEf7t89jnU4FhAV07dNSFxu5z7EPnnHAaxeMVFtY263E_Y3p8lcFFe1YDMVAV8DQa5_uF6KGGKqvw25PWHW38mntU5AVNF1hjeILdeeCuiRyH43m83wMYkXp0DBbH1V-kHg047LLzOxY3SMKNOLCV0x9O_eCCiBpKae1zBJAeMRJbLgic-Mqb1kkdUq1EB1mhsW241rY88nL_FfOFsyoZeCp4Ewj4sszv5ymfbB1zbFzh11JB7E_FfPs91itH1biVTAyWtBKdFOgQI03Q88SvwL-1tB3evyoalWQ5USUJpYlkmwxJdhctIzjO-Bv0k71kYzkRI_ZS-beEvDstDDxikrXBMtsz-7GqkEQFPrZLP8-cGszij5VQx6dCvWDUgC28ucOFNZ2bIlg9OccwhyKzTxiyj62TdqzPBpNENzcH6zCUuZ-0IOI-b6VJjI8HnfBlryRb6XMpIkOE-AiJrUETY4X2HFMz5eb7LD2wYKN63K2wFEheEJF0GGir7R1dzv_AAAAAAAAAAAAAAAAAAABw0UGh4p"
+    },
+    "grants": [],
+    "pq_pins": {
+     "4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw": "n-c8VIIZqPqbVePXZyDz33gteutPdcE391Dt7ix9zZU-hIHDjzkouOHPVgHCAj6e29qds-7K7OT75i3AObM71Tts1EiAzSdqfgNH8D11s767Aj1rGJqx8a6t28Ultkhsxvb4l0b6_to370hxvb6OYYiQwF3_hYWWStLJ1D8I3K0AQumcH7XeeIVnoEtXJWM1XIBM7Jbx2ayCBeCr9AnscZgEg8uqgjWjjUE-zkUz9zXA9_U0qGfdpDwjvBijEH5qzqxklAV78B9O0KuOY45X2RgVV-WLn_BWg_dF1Mp_6GsPpV1j7LzKFVy8Y0_FQ5bvyANGFwc28wjoPpOt2yvQFFszI0HLidEbR17XLmSIzfZvN8Hbb-hnReCvpWw5bcUgWamJqUP17lrIhi4zCkH-ryfKPXNGWZMhBI8YGit6geu20m4vJkZ4EbzVSIwOhiX8qrB4iNh6NJNgim2_snMRmuLYPxjh3rlD1L4GfCg0Na2yQo952K2JPczEWU6G2jnLOK9L3NEWkDiiAL5qKBJMUXjv_vzuJJ3F-AuZOL0i7TApbcB3zffQexBCIPkBBypEuf7fPe8cgpKykzN2agN2PMjNwl2x8r6c7McpI9xa9o1DPgct1xPLcVIMMnqS5s9mx9RTibZtb0NZmAIC3pO8O8aZS12vNl5C0Q1WD7totK_d4cZ6ji_KIRV8RjeGaPCbFsqlD5n0uT2InwxwWtTPkEJ7Knbr1S5neTMToBQ3Q7pbBfgOVfzDBlbJKk3RFXCLmKfQi3RAoAXrKcf-Gz3rm6FDDjU1XjXr9TGhohWQcvrooI6PcZ7qc3TveXGzaQt4rhdZl3spk3pTdnxPFlGQvsSbrLpl1Ms_zYkusiOrwzzUExNH3d-goVKmF0eORlmxqrk_hivg7LdI5PzzzRF__Wx3Y5L4kMdJv77efluUIfDhvC2y2FairTEhlbAniLDWvzAxPrqS4r_qpR56N7nLBKCI9ZaSxH-TLddEHua9gZ2P9c6RtENf3DELutZrGJh96Q4z8K3mV4sSOWGpaSYO-94wLcjjopcgp8hpwiU7F5tKxvr6Cnvg6BdyxXXgL0sFKOHtjAaZDWFrwINti_388i7d6SGtnGabLB_pJC2VCvMmmUFiSXizOMnUPfSPut4nT_E0sMnPgTdlDViVAo2hsqqJqXGYLS9D0kK63TUj-nZQJE6krQok-cudap6XfCxVDya0ue0wDgOa4-rsr31QRrYGlaHKK5OBJhSkSR8d4haN1HEVYvy1BQu3q7e0Cf5iXz5q9u_7KKPsreDTuVnkSRquR6-UhM1ozWvAY1agGNW6CBGMGv2MHJssBGI97m-N6i_saHcCKHMrA5f2NiQDFMdsbE1DNu_l4AaDZiUSn7aFu_H3o0YSgz6ADAXzG__osSohhAmVcHnNm4tKy2iZ-a9xl5_em6pCrqSaqTPUj-_4Z95DKWErwqBQ9c3Pt5NAWz0g05LYPVnLrt41daoIxCI7BNtdS7j6bRvWwsmDWdhUybYg9--ZRnmsHAQs24en1l1t-j0F62Oog4f32a3vRS3sI5PSxgylqkP4YhohUICI7P6sbUNaBR6Lnmt7tUeGnABB3Iz_arFVwoDID83daTvEadcs0izwganspO-Zp6wr7ZCYPXxiGTM7NUGDYuAbpl1B7Kxx310KCoIGXmV805QVc4TgJZHiNwdVO8Pnvt0DxouTvbXPSiXxEI6y98PVYaSTwoB5QzjGac3rShrfifT_w_AtuUuT6yZGA6-ez_UCVErg3tLRUubeYol4vpR-lppHKcl7_zwhNHRHU1l_OVN8YJESS6HVUz-xO-6wT--G1pQPBU_3jvYlqS7JAfl4wx4daHQRSPGRDQj_x9ihIOEO8W3-eOZuYNyfCkQgYdqiJ3fUrmn2BiyiVBa9JSyBKCr3KLul_D451uUF3wpBOmJ0R0VM97c-KznS6KyzeVBo62g9UB-ok5iGpa_TiwMEkFZxp5hCAS5GBzKKBieEuzFBTJdfEve5eUHLkeexgPztMmzxO1bferWsPDyAb82ZrcSWQbgZOCNQBCCkzMjy8MCM8kBAPeHX3GozQY5lMxYmMQLeNT2ML0vi4gINJ7B8v1Pw53Co5V_OCSdLK6ACj20HnO_AV0U1dH2nnqQ1NuHawDH7tzog29lHgTvipI9X0bsJ4oCVK-xfJFxZKXuBS7mBj-HtVgt9qkvuc8IrxjIZXZHvyM_apzuMiflAc8VrZc5UptFxGgQd5wPHN4KpkbNgw7t_rLR5nZQKtGkx5p8l7VPhytjcWyTpgv_LP3G19p7iSrkxGNkKKHhEo2mdoBLRLm7tK2D6zei-IvzrjYnHHHS6g86oQK_0SvhM2HiPOyb5By6JG6UuuYQjvHSvwyrjMLWUxmRfxP1vevClseKiDHEGdxDTZTEbv4ik-Ec3a5NGGB8bCDiHiQ6WE3TXU7wReOgklMtHcNAKuklJ77QQ6R9GRv0V_QRNt1jhB-S09YxzIlaeW05zZ6inREbkp0eJ4k3cnLkYBXgH8NQpAVnVdn9zAIz0CFTn9ZegEEpywYvaz1-huS6b2qaUETx9DFFD7gyVD2fTGYpwlaDGbgU"
+    }
+   },
+   "acc": {
+    "state": {
+     "trip_spend": {
+      "sum": 0
+     }
+    },
+    "monitors": {}
+   }
+  }
+ },
+ {
+  "id": "adv1569",
+  "name": "session-root-ml-dsa-65-principal-entry-mismatch",
+  "raw": "{\"ver\":2,\"action\":{\"verb\":\"air.book\",\"resource\":\"skyair.example/bookings\",\"params_digest\":\"-BkF8tsZZl_jCgbpiIyAIlRrJBl3PIDqfA1NxxRHg4c\",\"reversibility_class\":\"irreversible\"},\"grant_ref\":\"AAexlhAXEuAz1KNNjA0MLBdf0GfIF_wyZHjYIXgJNL4\",\"cap_chain\":[{\"id\":\"AAexlhAXEuAz1KNNjA0MLBdf0GfIF_wyZHjYIXgJNL4\",\"issuer\":\"4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw\",\"holder\":\"pYz5tUBahM7859yQSF1pQMyZqB26FApp2hKcGFr2P2o\",\"caveats\":[{\"agent_binding\":{},\"caveats\":[],\"goal_commit\":\"o_WCXmy-0c6nR8XKjA3uzoHEDecoJTUt2GdIxq4LtUI\",\"predicates\":[{\"resource\":\"*\",\"verb\":\"air.book\",\"where\":[{\"field\":\"env.acc.trip_spend.post\",\"op\":\"lte\",\"value\":40000}]}],\"risk_policy\":{\"bMax\":1,\"kappa\":1,\"lambda\":0.0005,\"rho\":0.5,\"theta1\":0.25,\"theta2\":0.6,\"weights\":{\"alpha\":0.25,\"beta\":0.2,\"delta\":0.2,\"epsilon\":0.1,\"gamma\":0.2,\"zeta\":0.05}},\"type\":\"envelope\"},{\"root\":\"I2d7_ScY7Sq-YYSlrz1QEatS2903Gw5eKWkjOgVuBPg\",\"seq\":0,\"session\":\"QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE\",\"type\":\"intent_session\"}],\"body_digest\":\"AAexlhAXEuAz1KNNjA0MLBdf0GfIF_wyZHjYIXgJNL4\",\"sig\":\"Cy3MIs_jEhorQd3I9VXL_9_rTCBQkreJumOjJIOkEeFyHj7feA0gPVL2L66dIXmOjNWw1Nqqm92g-5ViGUWhBQ\"}],\"plan\":{\"root\":\"yeQ-bJLqXy5T4R3iKfycuhjonDRU6QPBQxIMK7Uyqzo\",\"inclusion_proof\":{\"index\":0,\"size\":1,\"path\":[]},\"node_id\":\"book\",\"conditions_digest\":\"YM87EgmmvAr4WYQDm1wkrB7pFoHs4esi8tOmv9_DUxY\"},\"attestation\":{\"quote_digest\":\"\",\"epoch\":0,\"model_id\":\"unattested\",\"measurement\":\"\",\"operator\":\"unattested\"},\"provenance\":{\"causal_hash\":\"\",\"taint_level\":0,\"trusted_refs\":[]},\"freshness\":{\"beacon_ref\":\"\",\"epoch\":0,\"accumulator_witness\":\"\"},\"counter\":1,\"risk_claim\":{\"r\":0,\"inputs\":{}},\"aud\":\"skyair.example\",\"iat\":1800000000000,\"exp\":1800000600000,\"intent\":{\"ref\":\"8ihRXE04SR3b2XhJI1Db9pfHzuXnmDY_e_IAk-828mI\",\"map_digest\":\"Fv6Ir9kOvEYPjvEKSF6UTel8dtaAkcOrlDBTIAI80gM\",\"goal_salt\":\"salt0\",\"fidelity_ppm\":1000000,\"residual_risk_ppm\":0},\"intent_session\":{\"session\":\"QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE\",\"root\":\"I2d7_ScY7Sq-YYSlrz1QEatS2903Gw5eKWkjOgVuBPg\",\"seq\":0,\"schema\":\"AsXp0amxFiFadUc1Qot-6gVqzWpcv7LbvUyt5wOjdPM\",\"acc\":[{\"id\":\"trip_spend\",\"post\":38900}]},\"sig\":\"5qtRPwz4YZha5fZP_XrXUnbg35R4GsdbOoFsRRTBwJl-zfEvjLlDvlkepXdSLS3jfAE4LT-XH_lGQs8fBh2oCQ\"}",
+  "grant": "{\"id\":\"AAexlhAXEuAz1KNNjA0MLBdf0GfIF_wyZHjYIXgJNL4\",\"issuer\":\"4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw\",\"holder\":\"pYz5tUBahM7859yQSF1pQMyZqB26FApp2hKcGFr2P2o\",\"caveats\":[{\"agent_binding\":{},\"caveats\":[],\"goal_commit\":\"o_WCXmy-0c6nR8XKjA3uzoHEDecoJTUt2GdIxq4LtUI\",\"predicates\":[{\"resource\":\"*\",\"verb\":\"air.book\",\"where\":[{\"field\":\"env.acc.trip_spend.post\",\"op\":\"lte\",\"value\":40000}]}],\"risk_policy\":{\"bMax\":1,\"kappa\":1,\"lambda\":0.0005,\"rho\":0.5,\"theta1\":0.25,\"theta2\":0.6,\"weights\":{\"alpha\":0.25,\"beta\":0.2,\"delta\":0.2,\"epsilon\":0.1,\"gamma\":0.2,\"zeta\":0.05}},\"type\":\"envelope\"},{\"root\":\"I2d7_ScY7Sq-YYSlrz1QEatS2903Gw5eKWkjOgVuBPg\",\"seq\":0,\"session\":\"QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE\",\"type\":\"intent_session\"}],\"body_digest\":\"AAexlhAXEuAz1KNNjA0MLBdf0GfIF_wyZHjYIXgJNL4\",\"sig\":\"Cy3MIs_jEhorQd3I9VXL_9_rTCBQkreJumOjJIOkEeFyHj7feA0gPVL2L66dIXmOjNWw1Nqqm92g-5ViGUWhBQ\"}",
+  "now": 1800000000000,
+  "aud": "skyair.example",
+  "intent_v2": {
+   "params": {
+    "offer_id": "OF-1",
+    "total": 38900,
+    "add_ons": [
+     "none"
+    ],
+    "refundable": false
+   },
+   "schema": {
+    "docs": [
+     {
+      "v": 1,
+      "kind": "pca-action-schema",
+      "site": "https://skyair.example",
+      "aud": "skyair.example",
+      "version": "2026-10-01",
+      "units": {
+       "usd_cents": {
+        "kind": "money",
+        "currency": "USD",
+        "exponent": 2
+       }
+      },
+      "verbs": [
+       {
+        "verb": "air.book",
+        "kind": "write",
+        "params": {
+         "action.params.offer_id": {
+          "type": "string",
+          "semantic": "product.ref",
+          "sensitivity": "material"
+         },
+         "action.params.total": {
+          "type": "integer",
+          "unit": "usd_cents",
+          "min": 0,
+          "max": 5000000,
+          "semantic": "money.amount",
+          "sensitivity": "critical",
+          "accumulates_into": [
+           "spend.usd_cents"
+          ]
+         },
+         "action.params.add_ons": {
+          "type": "set",
+          "values": [
+           "none",
+           "tripshield",
+           "seat_plus"
+          ],
+          "default": [
+           "none"
+          ],
+          "principal_neutral_default": true,
+          "semantic": "product.addon",
+          "sensitivity": "material"
+         },
+         "action.params.refundable": {
+          "type": "boolean",
+          "semantic": "flag",
+          "sensitivity": "material"
+         },
+         "action.params.passengers": {
+          "type": "array",
+          "max_items": 9,
+          "max_len": 64,
+          "semantic": "person.identity",
+          "sensitivity": "critical",
+          "required": false
+         },
+         "action.params.note": {
+          "type": "string",
+          "semantic": "text.note",
+          "sensitivity": "free",
+          "required": false,
+          "max_len": 16
+         }
+        },
+        "reversibility_by": {
+         "param": "action.params.refundable",
+         "map": {
+          "true": "reversible",
+          "false": "irreversible"
+         }
+        }
+       },
+       {
+        "verb": "air.search",
+        "kind": "read",
+        "params": {
+         "action.params.from": {
+          "type": "string",
+          "values": [
+           "SFO",
+           "JFK"
+          ],
+          "semantic": "place.airport",
+          "sensitivity": "material"
+         },
+         "action.params.date": {
+          "type": "date",
+          "semantic": "schedule.date",
+          "sensitivity": "material"
+         },
+         "action.params.pax": {
+          "type": "integer",
+          "min": 1,
+          "max": 9,
+          "semantic": "quantity",
+          "sensitivity": "material"
+         }
+        },
+        "reversibility": "reversible"
+       }
+      ],
+      "sig": {
+       "alg": "ed25519",
+       "kid": "skyair-2026",
+       "value": "m4EZ7Y15YfzxVAlHJ7UNaU1JdVeBtJB3r36kVaUxgoGmwP1QKLDU89TP0zfxW3nJYi9NouaPWTbhlNtBDQG1DA"
+      }
+     }
+    ],
+    "keys": [
+     {
+      "kid": "skyair-2026",
+      "alg": "ed25519",
+      "pk": "ngFoNxTzXeqGmwUazsE4YDMjft0mQAyAxRWdPwlU4YE"
+     }
+    ]
+   },
+   "session": {
+    "root": {
+     "v": 1,
+     "kind": "pca-intent-session",
+     "session": "QPZ3H61ePrPBf6GwpeQ3L5QdAFkLKtivwdzXjNCB0BE",
+     "principals": [
+      {
+       "key": "4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw",
+       "alg": "ml-dsa-65",
+       "pq_pk": "n-c8VIIZqPqbVePXZyDz33gteutPdcE391Dt7ix9zZU-hIHDjzkouOHPVgHCAj6e29qds-7K7OT75i3AObM71Tts1EiAzSdqfgNH8D11s767Aj1rGJqx8a6t28Ultkhsxvb4l0b6_to370hxvb6OYYiQwF3_hYWWStLJ1D8I3K0AQumcH7XeeIVnoEtXJWM1XIBM7Jbx2ayCBeCr9AnscZgEg8uqgjWjjUE-zkUz9zXA9_U0qGfdpDwjvBijEH5qzqxklAV78B9O0KuOY45X2RgVV-WLn_BWg_dF1Mp_6GsPpV1j7LzKFVy8Y0_FQ5bvyANGFwc28wjoPpOt2yvQFFszI0HLidEbR17XLmSIzfZvN8Hbb-hnReCvpWw5bcUgWamJqUP17lrIhi4zCkH-ryfKPXNGWZMhBI8YGit6geu20m4vJkZ4EbzVSIwOhiX8qrB4iNh6NJNgim2_snMRmuLYPxjh3rlD1L4GfCg0Na2yQo952K2JPczEWU6G2jnLOK9L3NEWkDiiAL5qKBJMUXjv_vzuJJ3F-AuZOL0i7TApbcB3zffQexBCIPkBBypEuf7fPe8cgpKykzN2agN2PMjNwl2x8r6c7McpI9xa9o1DPgct1xPLcVIMMnqS5s9mx9RTibZtb0NZmAIC3pO8O8aZS12vNl5C0Q1WD7totK_d4cZ6ji_KIRV8RjeGaPCbFsqlD5n0uT2InwxwWtTPkEJ7Knbr1S5neTMToBQ3Q7pbBfgOVfzDBlbJKk3RFXCLmKfQi3RAoAXrKcf-Gz3rm6FDDjU1XjXr9TGhohWQcvrooI6PcZ7qc3TveXGzaQt4rhdZl3spk3pTdnxPFlGQvsSbrLpl1Ms_zYkusiOrwzzUExNH3d-goVKmF0eORlmxqrk_hivg7LdI5PzzzRF__Wx3Y5L4kMdJv77efluUIfDhvC2y2FairTEhlbAniLDWvzAxPrqS4r_qpR56N7nLBKCI9ZaSxH-TLddEHua9gZ2P9c6RtENf3DELutZrGJh96Q4z8K3mV4sSOWGpaSYO-94wLcjjopcgp8hpwiU7F5tKxvr6Cnvg6BdyxXXgL0sFKOHtjAaZDWFrwINti_388i7d6SGtnGabLB_pJC2VCvMmmUFiSXizOMnUPfSPut4nT_E0sMnPgTdlDViVAo2hsqqJqXGYLS9D0kK63TUj-nZQJE6krQok-cudap6XfCxVDya0ue0wDgOa4-rsr31QRrYGlaHKK5OBJhSkSR8d4haN1HEVYvy1BQu3q7e0Cf5iXz5q9u_7KKPsreDTuVnkSRquR6-UhM1ozWvAY1agGNW6CBGMGv2MHJssBGI97m-N6i_saHcCKHMrA5f2NiQDFMdsbE1DNu_l4AaDZiUSn7aFu_H3o0YSgz6ADAXzG__osSohhAmVcHnNm4tKy2iZ-a9xl5_em6pCrqSaqTPUj-_4Z95DKWErwqBQ9c3Pt5NAWz0g05LYPVnLrt41daoIxCI7BNtdS7j6bRvWwsmDWdhUybYg9--ZRnmsHAQs24en1l1t-j0F62Oog4f32a3vRS3sI5PSxgylqkP4YhohUICI7P6sbUNaBR6Lnmt7tUeGnABB3Iz_arFVwoDID83daTvEadcs0izwganspO-Zp6wr7ZCYPXxiGTM7NUGDYuAbpl1B7Kxx310KCoIGXmV805QVc4TgJZHiNwdVO8Pnvt0DxouTvbXPSiXxEI6y98PVYaSTwoB5QzjGac3rShrfifT_w_AtuUuT6yZGA6-ez_UCVErg3tLRUubeYol4vpR-lppHKcl7_zwhNHRHU1l_OVN8YJESS6HVUz-xO-6wT--G1pQPBU_3jvYlqS7JAfl4wx4daHQRSPGRDQj_x9ihIOEO8W3-eOZuYNyfCkQgYdqiJ3fUrmn2BiyiVBa9JSyBKCr3KLul_D451uUF3wpBOmJ0R0VM97c-KznS6KyzeVBo62g9UB-ok5iGpa_TiwMEkFZxp5hCAS5GBzKKBieEuzFBTJdfEve5eUHLkeexgPztMmzxO1bferWsPDyAb82ZrcSWQbgZOCNQBCCkzMjy8MCM8kBAPeHX3GozQY5lMxYmMQLeNT2ML0vi4gINJ7B8v1Pw53Co5V_OCSdLK6ACj20HnO_AV0U1dH2nnqQ1NuHawDH7tzog29lHgTvipI9X0bsJ4oCVK-xfJFxZKXuBS7mBj-HtVgt9qkvuc8IrxjIZXZHvyM_apzuMiflAc8VrZc5UptFxGgQd5wPHN4KpkbNgw7t_rLR5nZQKtGkx5p8l7VPhytjcWyTpgv_LP3G19p7iSrkxGNkKKHhEo2mdoBLRLm7tK2D6zei-IvzrjYnHHHS6g86oQK_0SvhM2HiPOyb5By6JG6UuuYQjvHSvwyrjMLWUxmRfxP1vevClseKiDHEGdxDTZTEbv4ik-Ec3a5NGGB8bCDiHiQ6WE3TXU7wReOgklMtHcNAKuklJ77QQ6R9GRv0V_QRNt1jhB-S09YxzIlaeW05zZ6inREbkp0eJ4k3cnLkYBXgH8NQpAVnVdn9zAIz0CFTn9ZegEEpywYvaz1-huS6b2qaUETx9DFFD7gyVD2fTGYpwlaDGbgU"
+      }
+     ],
+     "intent_ref": "8ihRXE04SR3b2XhJI1Db9pfHzuXnmDY_e_IAk-828mI",
+     "schema": {
+      "aud": "skyair.example",
+      "digest": "AsXp0amxFiFadUc1Qot-6gVqzWpcv7LbvUyt5wOjdPM"
+     },
+     "layers": {
+      "task": {
+       "map_digest": "Fv6Ir9kOvEYPjvEKSF6UTel8dtaAkcOrlDBTIAI80gM"
+      }
+     },
+     "accumulators": [
+      {
+       "id": "trip_spend",
+       "agg": "sum",
+       "unit": "usd_cents",
+       "sel": {
+        "accumulates_into": "spend.usd_cents"
+       },
+       "win": {
+        "kind": "task"
+       },
+       "key": null,
+       "domain_max": 500000,
+       "holder": {
+        "kind": "site_local"
+       }
+      },
+      {
+       "id": "questions",
+       "agg": "count",
+       "sel": {
+        "event": "intent_required"
+       },
+       "win": {
+        "kind": "task"
+       },
+       "key": null,
+       "cap": 6,
+       "holder": {
+        "kind": "wallet"
+       }
+      }
+     ],
+     "monitors": [],
+     "question_uri": "https://atlas.example/q",
+     "expires_at": 1800086400000,
+     "signer": "4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw",
+     "sig": "0Iws9L-ZwPeMmITYcxhXQ9M_VYzTiSEgWAjTpjyRUu8C3w80gZTYxJEwL4s21ysleTXxjTFj9frB3ihHKJaBcUOtv5OmXn-QIChHZr_0x58Vqh-jleXh9UKVWvyDdhw4thOTfgou9i8UtWnISXzIsSZHAad2UN88MGOHSQjDrWcHeB8twPaJVsLRRWAW4fNK4E51G5orvIRqgAFZXtDggBWxjm32w2Tnaw7fvS67c5hLoSxl3_Trf1mXu6zwXWmqiJQ3JcL-Ug1Eoq5FwavYKqmUGXWEPxLp_U9Z6faT2T4wIPxuvJm7vyfDZjCi-GYoEcrEMvmaTGt4JET0ltSFDHaNDKA3zvQSc2sBVcWoiQOVHty_Bv40x9tbhi-1tZZNZfi--mYsoEf99wUsWRMml4Ie32D0R2X8GL2vVkHIvjxGaNfVTA_4tcja7ioRvcN2OEUwXDEC1EkmGN1f7xO617Dn6EgR8TC02LTQGxeNQYfImJHJy5MNQM1ut04StOsmUNHRrLh80WJ1ccGOyCu4WNfS2p0QQMg0fDWiI8OaW4hcNVkeTFCtDSQqWxx4d7ITsjgWbuIKsSTuRv0ohzJyUQYAkzPCQpWV_DzXclXBPK0tlafCm3Zqx60hSa_8vcsumOBVLq8Dc1p_6WyNOuue7FelYNuabh2SZjon30804HE6jHzgeI-UVv1oE5Xel2EHeDaTt7yjI6EdmB8gR_b-EZb6lz2fgqzxI6X3tD9QxJwbjDj3Bk0x_g7MKl0HNcey9eSaqTWZWJxfHD9loQlrcR6WzaHopH4z-duJR9ZrZviD_6nIFfJel4cIgSOhB43Qa8Z5fixTgpYOsj079G3F4ZWMJ4ILPTORdA38HQWjtAr3RptYfrTMSGsor8BgnQNi_bXz83XufeOnOhtiaxpKM1ySo2Q-L1nC2fiwnt5d4pA58fEDwV_5dg9C1Ddg_vLjTYToUTLC9tCaKIVWP2inlh__3oR7iK6bFwjZjBw2ioCkku0qtqgyZfUScY_Gf1vK1WWXsyCrrZOHk9xFgple-4RTJNwsrZOC42w96F4ZwphLigS8_ghNPA4aTMLMWqPm3KBnkFwlm10eAkfBoTOTTOCA-5OpNCahX8w4RPsA5DE7MEqO3ALswM5_I8lZYruKTNhch8Ogx-8kT_WONzQVVld3dVP_iFuOPJ1lRt0_6132x6IOyBWAnHBbNSfwFUKJG1iKAhB-c9zbecz4gJWZTYUwRk2GepwnktIFqaMzdLFmZHBX_SmZ8gR7PARluKsRBjSCvoRvQy30xwkgNGxi_fnrlV9DMeYJrLnFWR21lxlFGTpr0JQgeoQDGYJZzz5aXF-TZeRWUoamxPkTfWhfPhtqWqjLTjk-6ANSSxOGsCZYo1HBvTPQPcNcnjUk-tgZuEq-s5hLY1ndPohh6GBEmza7eW6N3aVQnqeInvRslwjtrvUuYE9GCigSw8zr-UU7_ZQGJ3xGL78MEvspdr50Yk_DeQlCf7wnjC3l9zBpemnUlW08mhXD3oTkKSAGO-dXZjUrVBUDJZ5T1LNxEcanjWmE2wooycjPUsCkVvE-nIgNq0IyeU7gs373_hUAdhj9Mf2bIGtiyvuV5_g0DChAHa4ZXkmqi4a8zic5fHRH__UooKy345zkCmtEtUQR9VfzGC0v5UA4i6EZJNOjVjhmEo8UfrRxCKvouy7vyN4dkWX0WKbeDQbaRBpKyj7ptgoTdGMGdqRZTkedb-AFAUKLLs8EYeyA5k8y-R99I0LtEVoVJ5V_-6zITYuJoSNBPKZU1MkJUwBVHNEdbTonK9yu6tHX3BJIkarX6DKfJOsUmNm7d0dKTCyhFAyOtAdZURXjiSrHHVWjxYVisqzDInrdtk-H2T2EJdPG7gTC6jdyOHuSlcOInhle7g3eUo00Tyx7aPpavkaoumH6Y95PF3OlvSZa46aCLWsxxYGy1eSXnPaM-K7cc2cfEMs8yuhJBminu2wIMTAIt-mkiEyi7SUovT_sE0ITAEvSxAZV97i-_V1DrWo76bD3cJZT4AKWmoomIv-eViscEo1TD-0nXoI4DeRVlc3mhC1G2TuRaPsAca-2s9sVxIqvDcHls8qEYmV84uHR3FzrxCJ3pngnEpBhiF1trZ3tKzYs-esisKj-2AZLw09Eu-6iYIVt6Vg6-Jy0UR_UJU11CfBsPRk2YUfmfdSVh71-PC8Uq3jN_6LViCQM2LlFjxQA4ZnERj-rDDsu_8T31cSR3r-a1MzWgBDAcjm2NzKbXeBAGILy5iEAwt7BWgqet8gEBQsXfVPE-B0AowSqHb6ZhQl5RFDHj_W4u-BTETAxWDaRKRRtKrdK4eQaLDfCsp4fPWmEWW-IKwo0X5PBVBDA9DR_IzkHwAdLlWh_k6FNVVpQNX_4bBmI4AhpVezLNkhYGqY_WFewA_QQMH6HHfIGPCsPUwGDEXto9OCychRRih-QiM711an_VI4uDjY1jU3jwLErg3xEM9Cb2lR8mxqM9zH5mg8pW011jdCNfvwxaJcg_s1cdNcB-9pbzX7F8ifhJqR2Ywz77L1MKPeySSUCxgVTXnKJEh61ZyLqdiHLdpK-glG8BRGb4CWInjT-erXUGIIHQR1jDavek_jWf8eO50dW1tz28RnhE4oKuMrlSXOG2mkPpA6JS6CaBYV-dtSF3_DqXxOq_O18A-jqu7s2TofVwiXeWIXzNVNFgVJ9Y9SPuEMTIiqlW-hkdcGQ5HTazdlRnjGaBti0wxmsoxynWJviid3u_PvziCiMgt7Oa7HlJaJ7Zx06-DxQbKWiOCRERXdtD3iERBfWzB4G3x2rOS44lLkc4tzOtZZuxsS1RhCG7gpyxDXDPt-yGfVCFvVVM1HrsmQKwoxL5RffHGDAnvxfJO58LYFbmrGVD26Ni-L2ZO171ddaKgs8UTd_fYFSHSasQSMlAt6x8g1li1l4Fqlvyab4TcIzuPZn8dtOXN-9vidKJ5_yveW96EB7i1ocTavouveA6X5NYzrJt8vXFBuEQsQ6N-Kb8YVthL6TfEm_Aw8meYm8soKYbylsOnA0XKi_FkSfqnLgzy0WoLF7WOsFxIvY2ckEW1FdTYC34mTbyfyjUOAAApbmqXcrlGUfezIAVnYwyoih5GzEoQmsV5XRFT3bCsfq8gaq-Bk5chmrQ4qblW162IrDpJmBBccySxq-N0_TSi5HUVq2h-0AU04IHPSSPcuGvnx-4CRRdOHERLBeYeTNiHxUdYiiwWRqoulKVfqQuWNZCcp3sKIvPTaQybAp0d5iAQLRii6aDrkZac-ed3yaMBgvJe7MRHU9j6q5xjGK8-zvZDxkG_tDLEUGaY7vk49DVqiODWP5RxYLtYc5vjuhY6zx-H4rMm2SvVQQ84bFPlomnHPoJr6AeKvzZuJ6XM1IMXqMOWxiqCLMKRDgVxPJ-PCzmh01lz0AIolUWaCIMDl0lZybT_DkCPI-LYrXZ9hFEQH0ZiUGC8_i4kwKY0lyf8zotvLx-gzzDQX4dZs5UJm8UcwM1AbXrskE15wyUlm7KRUjmhnOgF-K-xKcAvD9vv1E9X4n3IneU-mpqIUDRtTwTpoB5Vs77FBkzhYqN03zGsJPSYHHtdFq4yvePIlfj1IAgsnuwUHK14p2OS_owt3VJXcf6cLHAHwyk_oEZoJyY-JRvY2PgjShw8dhKw2MfXSIat4lm7YL8p4myt6DgJrLOTTrrPDUVs11JxEXYlLH-48S7nb1jrpIX5Dm1mAjDz_KAUuXR1EfAnHAyS9bVrCBaYx7TvrNP0shQbybiRg25YCNS5cF92SOmOzQE_S0xwTjTLDe9nMuTQAICjlivxDeqwi0fmhjKeEOKVa66AznhWOPzULT7j8FR_dDtFoKt9JQEQElAWxDhPSWx1MIQtYk-zRcWXVpr-5K-aFhrRJAT5G6RjGeEBww86qz4tfw4S73EQwa__RkRjkPeZUfVyYUuARaTRKL_U0Hk2NYY2LEGIid5KuhaA4zaUqQE9R5eVM_cAwUDlkGf3FGEtmUmOnw-tqW4nbtzTkOPi2c0Bn5yed6qq1DcqT0K8r7grDXfR1DUIHpVB2UZqp2i9Aqc9aifzkuZrcRW-xRwx7O5RReqbKJuWzAPlSjUAEp1wOFySeOoGw2PAqEgGPp33AsRYH0DuSx1caRTl4IcakTodBmTr0t1KUF1ER66ep_GdrkdFoZi3T9pDwhnmjvkZhOfCrt0dmHigG8AFG6jNp7iyq_lWYUmC7FabE-LzYuq8HmDyKBjvOT5AagJpBrdUdE00ETnwD_YDCrEckuzN2gWumjWCwBEstb_lspl-bsUnhQ7cDM3-Lm-f6GBRQlQV90jxhHaqa6y9jaBA0WO191fuQUJUFGUVWBhp7HAAAAAAAAAAAAAAAAAAAABgcOFh4o",
+     "alg": "ml-dsa-65",
+     "pq_pk": "JRGL2vaxlLp67Jst7sjD7Y2f2AlRAHvJDPGxB3WBShEWn3xBm85enZq9x1VR5gPC6bOaT1DndsFZKf7G8Zq4J-VHPR1xb2gVcIfHoI0dEHd-Cd2-UmbzvXHqKAQMmzasaOo7E7erpk82dzMp69sEan4dfwqWlRJ_F7erBZwA5PIA3E5KTRRPJVvXSMERjaS30G9tX1gZSk3pM7EAt5UTmrWQSHMP5tG12NxFiWeP__CacTi2firm-d1h3e5X6Coe3sFdmj5DwEWdDWd21sjqumdsfCNfahe_4dTdUAZa_1imkTBf_2t83Ehi9TGd1CDiMvmckHB7qa0FXx01FwiJxshovNOJpIFwbfa2vMinfw_qZKvJuLnYScWDfI8MRo7Zg7UGRsspDr2mQ57B4oRrcm4PYyL6HEiKYme6oDBsRlTCeN-9YmuT_Q8_apNp096mo4jVvWlEY1SWeqeQsdma7sq2gxxvBU5rTqYfSYqu3PxSoquSUBtHyuETpOEIsxFDfP_A3neRWQgmhYLOUo-htkQvO2--6jYS22t-XNxTdaEg150dbkdye6HMQZbbpvkMR1EZ0hLN6_QtgyuJgK1PLvp2THLjXvv14nyU4txlrKkCJNeix4vxXrP55TWfX-KuhW98MMvjIEa2skm_w5vZ8Llyy98Bq1DHaxfzkd8QNpCfGngWMcrCnJDdivlmcc_-4eJxTki3sMAaBddsibLI9zUGqSQ2mJHgsXfLbZVlu3RiwdcnW9QtgIEGrvR-BIc72-CrKxR5cHW-Gzr1iVVLOktXYYz2DQwZCkZ10EmBg8Ap0QyKSGSsnc349gl3JqVcpVUExk0pXR4-OwokVEhcu3TAEwIWjdTTP4ilSNhiMqf97nZzi7zmnLwRxe-MQvDZW64e6uw3bKiKEPrGSsgvY2A3YlucpiKI947AzBjrjNi30J2m8ubnxTWQkyl5KJ4LDfNUFo25EedRDEm6Y4lQizhvV9ky1Nyk1TZ290FcnQ5Ex_D9t-WUzWE2ujcMraDT32v6GtnINlXAtiUJwPN4TTUyvxF-D_GU1h5OJX626z18zKjHOOA1KYUGvzqbgdDcwPlME8fUhauDhp7rgVUvWkZzvI5GzcqORU4tlJJ5D8XM4uz5YVAOTLCQocD0_pbmAmTFYmAuQMf1aUfTNEW2Wy40z9YmgZJwqMZfn92xCKLB5crmgE6Ug3LroH2in-lidXOOja6KpEdt_KSJPt6ax0D1BkPqP-sp9l0IfTSj0i0WBb2JKRQ99f992eTaJ_xMJhUi8xLx2cyz3u-x9AOMPK28gVOl-sUYpYbPYb9bRl7tG7snXW8ZYmHsNbrv4jSe6A0iaFlJGxKwLceVOcoCYGTahtXk7kEIHefy7BoAytTNudzqcA3Jb25BoMTvQdCafhR929pOt5lGuqHwJrREcXc_8s0qQBKqroz9PUhCOwduPIxDkPNbWFmTGZLwtSIUejvvac0L-egb0ixg5cmXvGT5vnxHJOE4Sqe0I_8CpU_MaFs1ZunT8GCI-CQJapxfAhGgLx7nXDkXS2TNNE0x3zFqetFNC4Y_r_ImSpuV_EBefFmaQVyEWWqLaZ26_dnZ2QjbU3ZqigdeKbP7NV2CFC5Ai1dQC13RjHNQmYw9jPb_FdiFlsSxx6MfqItxnR6E3xolqMH0uMY4N6ZnOzotrALmECK9jAzfQV9FsIwBZVEs8-X7UEtX4YAX2qnnCdx8G6vfYMBxWzEJSaR93KLSBOf3ulT6zJ-KDANO1ami-IRKQ6k61Ieghkk6L1pCMCfEfAXHFCSi3SrR9RWbfrDDsh5UUp3mPuuZKKK9jXY0ppZWIhRGq0OXsVxkveQ4-nRHgtLtYXLmdz7GvXxxikbVS3kcL1EclfccsK1G4GFmd9rF5WA6mSwx_DHEGOC4W0Fvyb2tl0lfjmQkX3NPR-Z19yS1kFbQdY6UU6qx0xqZ_0UiiXuIa_WUKj6D0ZMhkkALHQBOez1VtbndtwU7srYX5dPQtnjLTcsfYJv6TyuTb9W8L-ydEcRUHN0F0228FIYsOZPV30Nt0dZvvSVn8yKKMR568U8YKcUARrfrCGTaYekOjSvjawSrXC2AWb237d8dNMOD8WXSr_SuT2_4Q1dxTLJbsmbta4f6ozwwSTg9dqdo_yR93lxpv4UYrkeWNw-LlpD-ZuYfQE5HMGuQpKLdJAQIhpst-0rz3hJZPV7KyDFocc0LT4Uco18AgiL2QtNxncNSXns_6eMVQCUgq1VxEf0xqBSw3eFQ4z-8ZRhuk9s_4sTu4k2t6f241U5nmOIdYHVL9QIhtzf6MkIvX5SJASfPpZLeECRVNm1W3Zck1NKYp1lcQWb-QD9I7Y6Zng5_pDrd6OqgPjEN7FRfQFJY-cUNbHN_AlSicB9InnFHI9O_t7Ykup3FD348whN_tM4_TNb8LUkQ7mrGJGPtZ8sJLt_H1r9jehkg2tqHFlqHtKK_fenbT0u_BW3AR_5Nn9D2HTnhn_qBkM2EHFJSlmvEKxTM4K1huuMffsGoH1HNex1KF-5x3C6cwZLMxuz7jN1yYfGkoqAgT0X_aQGnVPMVvhdSqiYW5NjtKWlDc4b_ynA"
+    },
+    "grants": [],
+    "pq_pins": {
+     "4IUIKqgqaoY4Z5K2J-V0wsAvCoDR6cvzJnxV1vlTUtw": "JRGL2vaxlLp67Jst7sjD7Y2f2AlRAHvJDPGxB3WBShEWn3xBm85enZq9x1VR5gPC6bOaT1DndsFZKf7G8Zq4J-VHPR1xb2gVcIfHoI0dEHd-Cd2-UmbzvXHqKAQMmzasaOo7E7erpk82dzMp69sEan4dfwqWlRJ_F7erBZwA5PIA3E5KTRRPJVvXSMERjaS30G9tX1gZSk3pM7EAt5UTmrWQSHMP5tG12NxFiWeP__CacTi2firm-d1h3e5X6Coe3sFdmj5DwEWdDWd21sjqumdsfCNfahe_4dTdUAZa_1imkTBf_2t83Ehi9TGd1CDiMvmckHB7qa0FXx01FwiJxshovNOJpIFwbfa2vMinfw_qZKvJuLnYScWDfI8MRo7Zg7UGRsspDr2mQ57B4oRrcm4PYyL6HEiKYme6oDBsRlTCeN-9YmuT_Q8_apNp096mo4jVvWlEY1SWeqeQsdma7sq2gxxvBU5rTqYfSYqu3PxSoquSUBtHyuETpOEIsxFDfP_A3neRWQgmhYLOUo-htkQvO2--6jYS22t-XNxTdaEg150dbkdye6HMQZbbpvkMR1EZ0hLN6_QtgyuJgK1PLvp2THLjXvv14nyU4txlrKkCJNeix4vxXrP55TWfX-KuhW98MMvjIEa2skm_w5vZ8Llyy98Bq1DHaxfzkd8QNpCfGngWMcrCnJDdivlmcc_-4eJxTki3sMAaBddsibLI9zUGqSQ2mJHgsXfLbZVlu3RiwdcnW9QtgIEGrvR-BIc72-CrKxR5cHW-Gzr1iVVLOktXYYz2DQwZCkZ10EmBg8Ap0QyKSGSsnc349gl3JqVcpVUExk0pXR4-OwokVEhcu3TAEwIWjdTTP4ilSNhiMqf97nZzi7zmnLwRxe-MQvDZW64e6uw3bKiKEPrGSsgvY2A3YlucpiKI947AzBjrjNi30J2m8ubnxTWQkyl5KJ4LDfNUFo25EedRDEm6Y4lQizhvV9ky1Nyk1TZ290FcnQ5Ex_D9t-WUzWE2ujcMraDT32v6GtnINlXAtiUJwPN4TTUyvxF-D_GU1h5OJX626z18zKjHOOA1KYUGvzqbgdDcwPlME8fUhauDhp7rgVUvWkZzvI5GzcqORU4tlJJ5D8XM4uz5YVAOTLCQocD0_pbmAmTFYmAuQMf1aUfTNEW2Wy40z9YmgZJwqMZfn92xCKLB5crmgE6Ug3LroH2in-lidXOOja6KpEdt_KSJPt6ax0D1BkPqP-sp9l0IfTSj0i0WBb2JKRQ99f992eTaJ_xMJhUi8xLx2cyz3u-x9AOMPK28gVOl-sUYpYbPYb9bRl7tG7snXW8ZYmHsNbrv4jSe6A0iaFlJGxKwLceVOcoCYGTahtXk7kEIHefy7BoAytTNudzqcA3Jb25BoMTvQdCafhR929pOt5lGuqHwJrREcXc_8s0qQBKqroz9PUhCOwduPIxDkPNbWFmTGZLwtSIUejvvac0L-egb0ixg5cmXvGT5vnxHJOE4Sqe0I_8CpU_MaFs1ZunT8GCI-CQJapxfAhGgLx7nXDkXS2TNNE0x3zFqetFNC4Y_r_ImSpuV_EBefFmaQVyEWWqLaZ26_dnZ2QjbU3ZqigdeKbP7NV2CFC5Ai1dQC13RjHNQmYw9jPb_FdiFlsSxx6MfqItxnR6E3xolqMH0uMY4N6ZnOzotrALmECK9jAzfQV9FsIwBZVEs8-X7UEtX4YAX2qnnCdx8G6vfYMBxWzEJSaR93KLSBOf3ulT6zJ-KDANO1ami-IRKQ6k61Ieghkk6L1pCMCfEfAXHFCSi3SrR9RWbfrDDsh5UUp3mPuuZKKK9jXY0ppZWIhRGq0OXsVxkveQ4-nRHgtLtYXLmdz7GvXxxikbVS3kcL1EclfccsK1G4GFmd9rF5WA6mSwx_DHEGOC4W0Fvyb2tl0lfjmQkX3NPR-Z19yS1kFbQdY6UU6qx0xqZ_0UiiXuIa_WUKj6D0ZMhkkALHQBOez1VtbndtwU7srYX5dPQtnjLTcsfYJv6TyuTb9W8L-ydEcRUHN0F0228FIYsOZPV30Nt0dZvvSVn8yKKMR568U8YKcUARrfrCGTaYekOjSvjawSrXC2AWb237d8dNMOD8WXSr_SuT2_4Q1dxTLJbsmbta4f6ozwwSTg9dqdo_yR93lxpv4UYrkeWNw-LlpD-ZuYfQE5HMGuQpKLdJAQIhpst-0rz3hJZPV7KyDFocc0LT4Uco18AgiL2QtNxncNSXns_6eMVQCUgq1VxEf0xqBSw3eFQ4z-8ZRhuk9s_4sTu4k2t6f241U5nmOIdYHVL9QIhtzf6MkIvX5SJASfPpZLeECRVNm1W3Zck1NKYp1lcQWb-QD9I7Y6Zng5_pDrd6OqgPjEN7FRfQFJY-cUNbHN_AlSicB9InnFHI9O_t7Ykup3FD348whN_tM4_TNb8LUkQ7mrGJGPtZ8sJLt_H1r9jehkg2tqHFlqHtKK_fenbT0u_BW3AR_5Nn9D2HTnhn_qBkM2EHFJSlmvEKxTM4K1huuMffsGoH1HNex1KF-5x3C6cwZLMxuz7jN1yYfGkoqAgT0X_aQGnVPMVvhdSqiYW5NjtKWlDc4b_ynA"
+    }
+   },
+   "acc": {
+    "state": {
+     "trip_spend": {
+      "sum": 0
+     }
+    },
+    "monitors": {}
+   }
+  }
+ }
+]

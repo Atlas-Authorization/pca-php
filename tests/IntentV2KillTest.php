@@ -29,7 +29,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 final class IntentV2KillTest extends TestCase
 {
     private const MAX_SAFE = 9007199254740991;
-    private const CORE = ['wire', 'version', 'audience', 'validity', 'chain', 'grant_ref_bound', 'plan_inclusion', 'leaf_signature', 'counter'];
+    private const CORE = ['wire', 'version', 'audience', 'validity', 'chain', 'grant_ref_bound', 'plan_inclusion', 'leaf_signature', 'counter_format'];
     private const SALT = 'salt0';
     private const UNIT = 'spend.usd_cents';
 
@@ -274,7 +274,7 @@ final class IntentV2KillTest extends TestCase
 
     private static function verify(Obj $p, Obj $grant, ?Obj $ctx, ?int $now = null): array
     {
-        return Pca::verifyPcactnCore($p, $grant, $now ?? self::ctxNow(), self::aud(), null, null, $ctx);
+        return Pca::verifyPcactnCore($p, $grant, $now ?? self::ctxNow(), self::aud(), null, null, $ctx, insecureSkipPlanRootCheck: true);
     }
 
     private static function v2(Obj $p, Obj $grant, mixed $ctx, ?int $now = null): array
@@ -1612,7 +1612,7 @@ final class IntentV2KillTest extends TestCase
     {
         $f = new HttpFactory();
         return new PcaMiddleware(self::aud(), fn(string $ref) => $ref === $grant->get('id') ? $grant : null, fn(): int => self::ctxNow(),
-            $f, $f, 'pca', null, $intentV2);
+            $f, $f, 'pca', null, $intentV2, signatureOnly: true);
     }
 
     private static function request(Obj $p): ServerRequestInterface
