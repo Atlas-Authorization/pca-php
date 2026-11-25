@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Atlas\Pca\Tests;
 
+use Atlas\Pca\Fndsa;
 use Atlas\Pca\LessFfi;
 use Atlas\Pca\Obj;
 use Atlas\Pca\OpensslPq;
@@ -24,6 +25,17 @@ use PHPUnit\Framework\TestCase;
  */
 final class R042NativeSeamKillTest extends TestCase
 {
+    /** testSupportedSuitesIsAList assumes no FN-DSA backend: isolate it from (and never leak) a registered one. */
+    protected function setUp(): void
+    {
+        Fndsa::resetFalconBackend();
+    }
+
+    protected function tearDown(): void
+    {
+        Fndsa::resetFalconBackend();
+    }
+
     private const CDEF_FULL = 'void* EVP_PKEY_new_raw_public_key_ex(void* libctx, const char* keytype, const char* propq, const unsigned char* key, size_t keylen);
         void* EVP_MD_CTX_new(void);
         int EVP_DigestVerifyInit_ex(void* ctx, void** pctx, const char* mdname, void* libctx, const char* props, void* pkey, void* params);
@@ -279,7 +291,7 @@ final class R042NativeSeamKillTest extends TestCase
             }
         };
         foreach ([$inv, [$inv, 'resolve'], null, new Obj()] as $i => $v2) {
-            $mw = new PcaMiddleware('aud', fn() => null, null, $f, $f, 'pca', null, $v2);
+            $mw = new PcaMiddleware('aud', fn() => null, null, $f, $f, 'pca', null, $v2, signatureOnly: true);
             $held = (new \ReflectionProperty(PcaMiddleware::class, 'intentV2'))->getValue($mw);
             if ($v2 === null || $v2 instanceof Obj) {
                 $this->assertSame($v2, $held, "case $i");

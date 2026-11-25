@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Atlas\Pca;
 
+require_once __DIR__ . '/NativeDir.php';
+
 /**
  * LESS (less-252-45, the `less-cat1` / `hybrid-ed25519-less-cat1` suites; a NIST additional-signature round-2 candidate, not a
  * standard) through FFI to `libatlas_less`: the patched LESS reference C of the repository's sdks/pca-less-c built as a shared
@@ -30,6 +32,10 @@ final class LessFfi
     {
         $env = getenv('ATLAS_PCA_LIBLESS');
         $paths = is_string($env) ? array_values(array_filter(explode(PATH_SEPARATOR, $env), fn($p) => $p !== '')) : [];
+        $packaged = NativeDir::lib('atlas_less');
+        if ($packaged !== null) {
+            $paths[] = $packaged; // after an explicit override, before the in-tree build
+        }
         foreach (['libatlas_less.so', 'libatlas_less.dylib', 'atlas_less.dll'] as $name) {
             $paths[] = __DIR__ . '/../../pca-less-c/build/' . $name;
         }
@@ -82,6 +88,86 @@ final class LessFfi
     public static function available(): bool
     {
         return self::ffi() !== null;
+    }
+
+    public const SECRET_KEY_BYTES = 32;
+    public const SEED_BYTES = 32;
+
+    private static ?\FFI $signFfi = null;
+    private static bool $signTried = false;
+
+    /** The keygen / sign half of the library (loaded on its own so a verify-only build keeps verifying). */
+    private static function signLib(): ?\FFI
+    {
+        if (self::$signTried) {
+            return self::$signFfi;
+        }
+        self::$signTried = true;
+        if (!extension_loaded('FFI') || self::ffi() === null) {
+            return null;
+        }
+        $cdef = <<<'CDEF'
+            size_t atlas_less_cat1_secret_key_bytes(void);
+            int atlas_less_cat1_keygen(char* pk, size_t pk_cap, char* sk, size_t sk_cap, const char* seed, size_t seed_len);
+            int atlas_less_cat1_sign(const char* sk, size_t sk_len, const char* msg, size_t msg_len, const char* seed, size_t seed_len,
+                                     char* sig, size_t sig_cap, size_t* sig_len);
+            CDEF;
+        foreach (self::candidates() as $path) {
+            if (!is_file($path)) {
+                continue;
+            }
+            try {
+                $f = \FFI::cdef($cdef, $path);
+                if ($f->atlas_less_cat1_secret_key_bytes() === self::SECRET_KEY_BYTES) {
+                    self::$signFfi = $f;
+                    return $f;
+                }
+            } catch (\Throwable) {
+                // try the next candidate
+            }
+        }
+        return null;
+    }
+
+    /** Availability and the reason it is not (lessBackendStatus of the reference). Never throws. @return array{available:bool,reason?:string} */
+    public static function status(): array
+    {
+        return self::available() ? ['available' => true]
+            : ['available' => false, 'reason' => extension_loaded('FFI') ? 'libatlas_less was not found (set ATLAS_PCA_LIBLESS)' : 'the FFI extension is not loaded'];
+    }
+
+    /**
+     * Deterministic keygen from a 32-byte seed.
+     * @return array{publicKey:string,secretKey:string}
+     * @throws \RuntimeException when the library is unavailable or refuses
+     */
+    public static function keygen(string $seed): array
+    {
+        if (strlen($seed) !== self::SEED_BYTES) {
+            throw new \InvalidArgumentException('lessCat1Keygen: seed must be ' . self::SEED_BYTES . ' bytes');
+        }
+        $f = self::signLib() ?? throw new \RuntimeException('lessCat1Keygen: LESS suites are unsupported (' . (self::status()['reason'] ?? 'no keygen in the library') . ')');
+        $pk = $f->new('char[' . self::PUBLIC_KEY_BYTES . ']');
+        $sk = $f->new('char[' . self::SECRET_KEY_BYTES . ']');
+        if ($f->atlas_less_cat1_keygen($pk, self::PUBLIC_KEY_BYTES, $sk, self::SECRET_KEY_BYTES, $seed, strlen($seed)) !== 1) {
+            throw new \RuntimeException('lessCat1Keygen: the library refused the seed');
+        }
+        return ['publicKey' => \FFI::string($pk, self::PUBLIC_KEY_BYTES), 'secretKey' => \FFI::string($sk, self::SECRET_KEY_BYTES)];
+    }
+
+    /** Detached signature (1153..1329 bytes) with an explicit 32-byte RNG seed. @throws \RuntimeException when unavailable or refused */
+    public static function sign(string $secretKey, string $msg, string $seed): string
+    {
+        if (strlen($seed) !== self::SEED_BYTES) {
+            throw new \InvalidArgumentException('lessCat1Sign: seed must be ' . self::SEED_BYTES . ' bytes');
+        }
+        $f = self::signLib() ?? throw new \RuntimeException('lessCat1Sign: LESS suites are unsupported (' . (self::status()['reason'] ?? 'no sign in the library') . ')');
+        $sig = $f->new('char[' . self::SIGNATURE_MAX_BYTES . ']');
+        $len = $f->new('size_t');
+        if ($f->atlas_less_cat1_sign($secretKey, strlen($secretKey), $msg, strlen($msg), $seed, strlen($seed), $sig, self::SIGNATURE_MAX_BYTES, \FFI::addr($len)) !== 1) {
+            throw new \RuntimeException('lessCat1Sign: the library refused the key');
+        }
+        return \FFI::string($sig, (int)$len->cdata);
     }
 
     /** `$n` is a signature length the parameter set produces. */

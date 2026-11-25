@@ -1,0 +1,1 @@
+{"id":"fn-polarity-clean","kind":"fn","fn":"polarity","input":[{"k":"cmp","op":"eq","l":{"k":"param","path":"amount","ty":{"k":"s"}},"r":{"k":"lit","v":{"k":"s","s":"x"}}}],"expect":[]}

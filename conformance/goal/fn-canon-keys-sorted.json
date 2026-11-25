@@ -1,0 +1,1 @@
+{"id":"fn-canon-keys-sorted","kind":"fn","fn":"canon","input":{"b":1,"a":[true,null,"x"]},"expect":{"canon":"{\"a\":[true,null,\"x\"],\"b\":1}","digest":"l_2M59Jf_OmCWqLKicT_Sw72BvHPJsnAz0fqw8qpdOM"}}
