@@ -1,0 +1,54 @@
+name: FHE (BFV on Microsoft SEAL)
+
+# Atlas\Pca\FheSeal: the homomorphic risk gate through ext-ffi over Microsoft SEAL's own C export API (libsealc, built here from the pinned SEAL
+# tag). Wire compatibility with the TypeScript reference (node-seal 5.1.7 = SEAL 4.1.2) is shown by replaying a corpus generated here by the
+# reference: the native evaluator must reproduce the reference's evaluated ciphertexts byte for byte (re-saved uncompressed).
+on:
+  push:
+    branches: [main, 'ci/**']
+    tags: ['*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SEAL_TAG: v4.1.2
+
+jobs:
+  fhe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: sodium, json, mbstring, intl, gd, zip, ffi, openssl, gmp
+          ini-values: ffi.enable=true
+          coverage: none
+          tools: composer
+      - name: Source layout (full shared corpus from the flagship)
+        shell: bash
+        run: .github/scripts/fetch-flagship-corpus.sh --mono php-pca
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: node-seal reference corpus
+        run: .github/scripts/fhe-seal-corpus.sh "$RUNNER_TEMP/fhe-seal.json.gz"
+      - name: libsealc at the pinned SEAL tag
+        run: echo "ATLAS_PCA_LIBSEALC=$(.github/scripts/build-libsealc.sh "$SEAL_TAG" "$RUNNER_TEMP/seal")/libsealc.so" >> "$GITHUB_ENV"
+      - name: composer install
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          for n in 1 2 3 4; do composer install --no-interaction --no-progress --prefer-dist && break; [ "$n" = 4 ] && exit 1; echo "composer attempt $n failed (network); retrying"; sleep $((n * 15)); done
+      - name: BFV replay and round trip
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        env:
+          PCA_FHE_SEAL_REQUIRED: '1'
+          PCA_FHE_SEAL_CORPUS: ${{ runner.temp }}/fhe-seal.json.gz
+        run: vendor/bin/phpunit --filter FheSealTest

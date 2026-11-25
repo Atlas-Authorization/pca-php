@@ -213,16 +213,16 @@ final class MutationKillR2Test extends TestCase
             $p = self::deepCopy($v->get('pcactn'));
             $p->set('pq_pk', self::edge()['pq_pk']);
             $ctx = $v->get('context');
-            $r = Pca::verifyPcactnCore($p, $v->get('grant'), $ctx->get('now')->int(), $ctx->get('aud'), ['ed25519']);
+            $r = Pca::verifyPcactnCore($p, $v->get('grant'), $ctx->get('now')->int(), $ctx->get('aud'), ['ed25519'], insecureSkipPlanRootCheck: true);
             $this->assertFalse($r['allow']);
             if (!Pca::suiteAvailable('ml-dsa-65')) {
                 // without ML-DSA the wire stage refuses the suite first (fail closed); the ordering below needs a real verifier
                 $this->assertSame('wire: unsupported_suite: ml-dsa-65', $r['reason']);
-                $this->assertFalse(Pca::verifyPcactnCore($p, $v->get('grant'), $ctx->get('now')->int(), $ctx->get('aud'))['allow']);
+                $this->assertFalse(Pca::verifyPcactnCore($p, $v->get('grant'), $ctx->get('now')->int(), $ctx->get('aud'), insecureSkipPlanRootCheck: true)['allow']);
                 return;
             }
             $this->assertSame("leaf_signature: leaf: signature suite 'ml-dsa-65' is not allowed by this verifier's suite policy", $r['reason']);
-            $r = Pca::verifyPcactnCore($p, $v->get('grant'), $ctx->get('now')->int(), $ctx->get('aud'));
+            $r = Pca::verifyPcactnCore($p, $v->get('grant'), $ctx->get('now')->int(), $ctx->get('aud'), insecureSkipPlanRootCheck: true);
             $this->assertSame("leaf_signature: leaf: pq_pk does not match the signer's committed holder_pq (F-2)", $r['reason']);
             return;
         }
@@ -333,7 +333,7 @@ final class MutationKillR2Test extends TestCase
     {
         [$json, $grant, $aud, $now] = self::vector();
         $ref = Json::parseLax($json)->get('grant_ref');
-        return new PcaMiddleware($aud, fn(string $r) => $r === $ref ? $grant : null, $clock ?? fn() => $now, $rf, $sf);
+        return new PcaMiddleware($aud, fn(string $r) => $r === $ref ? $grant : null, $clock ?? fn() => $now, $rf, $sf, signatureOnly: true);
     }
 
     private static function okHandler(): RequestHandlerInterface
@@ -351,7 +351,7 @@ final class MutationKillR2Test extends TestCase
 
     public function testDefaultClockIsEpochMilliseconds(): void
     {
-        $m = new PcaMiddleware('aud', fn() => null, null, new HttpFactory(), new HttpFactory());
+        $m = new PcaMiddleware('aud', fn() => null, null, new HttpFactory(), new HttpFactory(), signatureOnly: true);
         $clock = (new \ReflectionProperty(PcaMiddleware::class, 'clock'))->getValue($m);
         $this->assertEqualsWithDelta((int)(microtime(true) * 1000), $clock(), 5000);
     }

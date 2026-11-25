@@ -1,0 +1,189 @@
+name: Release (prebuilt native libraries)
+
+# Packagist builds a version from its git tag and never accepts a tag that changes afterwards, so the binaries must be in the tagged tree
+# the first time the tag exists. Pushing `build-vX.Y.Z` (not a version to Packagist, so it is ignored there) starts this workflow: each
+# platform builds the opt-in modules' libraries, one release-only commit on top of that source commit adds them under
+# native/<os>-<arch>/, the result is installed with composer on a clean runner of every platform and checked, and only then the new
+# tag vX.Y.Z is created on that commit (refused if it already exists; no tag is ever moved). One package, no companion packages,
+# no download at install time. Loaders (Atlas\Pca\NativeDir) use an explicit env override first, then native/<os>-<arch>/, then the system.
+#
+# Platform matrix (a module a platform lacks falls back to the env var / system library exactly as before):
+#   pairing (blst + GT shim), lwe-ot, fndsa, Groth16 (libpcazk), the URL parser (libada), FHE (Microsoft SEAL libsealc), LESS, sandbox host: all five platforms. FHE, LESS and the
+#   sandbox host on Windows rely on the shared build scripts' Windows contract (sealc.dll, atlas_less.dll, pca-wasmtime-host.exe).
+#   OpenSSL 3.5 libcrypto (ML-KEM/ML-DSA/SLH-DSA): linux and macOS only; PHP on Windows ships its own OpenSSL.
+on:
+  push:
+    tags: ['build-v*']
+
+permissions:
+  contents: read
+
+env:
+  SEAL_TAG: v4.1.2
+  OPENSSL_VERSION: '3.5.9'
+  OPENSSL_SHA256: 603f5602e2eef00d77fbd429d34dcd5822bb301757a1bc9cdb24c670f1eb859a
+  SEAL_COMMIT: 119dc32e135cb89c1062076a69310d4413ebc824
+  BLST_TAG: v0.3.16
+
+jobs:
+  build:
+    name: build ${{ matrix.dir }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - { dir: linux-x64, os: ubuntu-latest, posix: 1 }
+          - { dir: linux-arm64, os: ubuntu-24.04-arm, posix: 1 }
+          - { dir: darwin-x64, os: macos-15-intel, posix: 1 }
+          - { dir: darwin-arm64, os: macos-latest, posix: 1 }
+          - { dir: windows-x64, os: windows-latest, posix: 0 }
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Source layout (the flagship's crates and LESS source)
+        run: .github/scripts/fetch-flagship-corpus.sh --mono php-pca
+      - uses: dtolnay/rust-toolchain@stable
+      - name: blst + GT shim
+        run: |
+          git clone --quiet --depth 1 --branch "$BLST_TAG" https://github.com/supranational/blst "$RUNNER_TEMP/blst"
+          if [ "${{ matrix.posix }}" = 1 ]; then name=libblst; else name=blst; export CC=gcc; fi
+          .github/scripts/build-libpcagt.sh "$RUNNER_TEMP/blst" native/pca_gt.c "$RUNNER_TEMP/out/${{ matrix.dir }}" "$name"
+      - name: lwe-ot, fndsa, Groth16 and the sandbox host
+        run: |
+          out="$RUNNER_TEMP/out/${{ matrix.dir }}"
+          .github/scripts/build-liblweot.sh "$out" "$RUNNER_TEMP/mono/packages/pca-mpc-lwe-ot-wasm/crate"
+          .github/scripts/build-libfndsa.sh "$out" "$RUNNER_TEMP/mono/packages/pca-fndsa-wasm/crate"
+          .github/scripts/build-libpcazk.sh "$out" "$RUNNER_TEMP/mono/packages/pca-zk/crate"
+          .github/scripts/build-wasmtime-host.sh "$out" "$RUNNER_TEMP/mono/packages/pca-sandbox/wasmtime-host"
+          exe="$out/pca-wasmtime-host"; [ -f "$exe.exe" ] && exe="$exe.exe"
+          { sha256sum "$exe" 2>/dev/null || shasum -a 256 "$exe"; } | cut -d' ' -f1 > "$exe.sha256"
+          rm -f "$out"/*.h # headers are not needed at run time
+      - name: URL parser (libada / ada.dll, the pinned single-file Ada release, SHA-256 verified)
+        env:
+          ADA_TAG: v4.0.0
+          ADA_SHA256: 1c722f8f5355d6bf2bf3601870684edc875aa8f56b4d4735440d96263dd0207c
+        run: |
+          out="$RUNNER_TEMP/out/${{ matrix.dir }}"; w="$RUNNER_TEMP/ada"; mkdir -p "$w"
+          for f in ada.cpp ada.h ada_c.h; do curl -fsSL --retry 4 -o "$w/$f" "https://github.com/ada-url/ada/releases/download/$ADA_TAG/$f"; done
+          echo "$ADA_SHA256  $w/ada.cpp" | { sha256sum -c - 2>/dev/null || shasum -a 256 -c -; }
+          case "$RUNNER_OS" in
+            macOS) c++ -std=c++20 -O2 -fPIC -dynamiclib -I"$w" "$w/ada.cpp" -o "$out/libada.dylib" ;;
+            Windows) g++ -std=c++20 -O2 -shared -static-libstdc++ -static-libgcc -I"$w" "$w/ada.cpp" -o "$out/ada.dll" ;;
+            *) c++ -std=c++20 -O2 -fPIC -shared -static-libstdc++ -static-libgcc -I"$w" "$w/ada.cpp" -o "$out/libada.so" ;;
+          esac
+      - name: LESS (libatlas_less / atlas_less.dll)
+        run: bash "$RUNNER_TEMP/pca-flagship/sdks/pca-less-c/build.sh" "$RUNNER_TEMP/less" && cp "$RUNNER_TEMP"/less/*atlas_less.* "$RUNNER_TEMP/out/${{ matrix.dir }}/"
+      - name: FHE (libsealc / sealc.dll)
+        run: |
+          d="$(.github/scripts/build-libsealc.sh "$SEAL_TAG" "$RUNNER_TEMP/seal")"
+          test "$(git -C "$RUNNER_TEMP/seal/seal-src" rev-parse HEAD)" = "$SEAL_COMMIT"
+          src="$(ls "$d"/sealc.dll "$d"/libsealc*.so* "$d"/libsealc*.dylib 2>/dev/null | head -1)"
+          case "$src" in *.dll) dest=sealc.dll ;; *.dylib) dest=libsealc.dylib ;; *) dest=libsealc.so ;; esac
+          cp -L "$src" "$RUNNER_TEMP/out/${{ matrix.dir }}/$dest"
+      - name: OpenSSL 3.5 libcrypto
+        if: ${{ matrix.posix == 1 }}
+        run: |
+          mkdir "$RUNNER_TEMP/openssl" && cd "$RUNNER_TEMP/openssl"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 5O "https://github.com/openssl/openssl/releases/download/openssl-$OPENSSL_VERSION/openssl-$OPENSSL_VERSION.tar.gz"
+          echo "$OPENSSL_SHA256  openssl-$OPENSSL_VERSION.tar.gz" > sum && { sha256sum -c sum 2>/dev/null || shasum -a 256 -c sum; }
+          tar xzf "openssl-$OPENSSL_VERSION.tar.gz" && cd "openssl-$OPENSSL_VERSION"
+          ./Configure shared no-apps no-tests no-docs no-module --libdir=lib >/dev/null
+          make -j"$(getconf _NPROCESSORS_ONLN)" build_libs >/dev/null
+          lib="$(ls libcrypto.so.3 libcrypto.3.dylib 2>/dev/null | head -1)"
+          case "$lib" in *.dylib) ext=dylib ;; *) ext=so ;; esac
+          cp -L "$lib" "$RUNNER_TEMP/out/${{ matrix.dir }}/libcrypto.$ext"
+      - run: ls -l "$RUNNER_TEMP/out/${{ matrix.dir }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.dir }}
+          path: ${{ runner.temp }}/out
+          if-no-files-found: error
+
+  package:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: native-*
+          path: ${{ runner.temp }}/natives
+          merge-multiple: true
+      - name: Release commit and the dist zip composer would build from it
+        run: |
+          .github/scripts/stage-native.sh "$RUNNER_TEMP/natives"
+          mkdir "$RUNNER_TEMP/dist"
+          git archive --format=zip -o "$RUNNER_TEMP/dist/atlas-pca.zip" HEAD
+          cp .github/scripts/smoke-native.php "$RUNNER_TEMP/dist/"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: ${{ runner.temp }}/dist
+          if-no-files-found: error
+
+  smoke:
+    name: install on ${{ matrix.dir }}
+    needs: package
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - { dir: linux-x64, os: ubuntu-latest, modules: 'pairing,fhe,lwe-ot,fndsa,zk,ada,less,openssl,sandbox' }
+          - { dir: linux-arm64, os: ubuntu-24.04-arm, modules: 'pairing,fhe,lwe-ot,fndsa,zk,ada,less,openssl,sandbox' }
+          - { dir: darwin-x64, os: macos-15-intel, modules: 'pairing,fhe,lwe-ot,fndsa,zk,ada,less,openssl,sandbox' }
+          - { dir: darwin-arm64, os: macos-latest, modules: 'pairing,fhe,lwe-ot,fndsa,zk,ada,less,openssl,sandbox' }
+          - { dir: windows-x64, os: windows-latest, modules: 'pairing,fhe,lwe-ot,fndsa,zk,ada,less,sandbox' }
+    defaults:
+      run:
+        shell: bash
+    steps:
+      # no repository checkout: the only source on this runner is the package composer installs
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: sodium, json, mbstring, intl, gd, zip, ffi, openssl, gmp
+          ini-values: ffi.enable=true
+          coverage: none
+          tools: composer
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: ${{ runner.temp }}/dist
+      - name: composer require from the dist zip
+        run: |
+          zip="$RUNNER_TEMP/dist/atlas-pca.zip"; [ "${{ runner.os }}" = Windows ] && zip="$(cygpath -m "$zip")"
+          mkdir "$RUNNER_TEMP/app" && cd "$RUNNER_TEMP/app"
+          composer init --no-interaction --name=smoke/app >/dev/null
+          composer config repositories.pca "{\"type\":\"package\",\"package\":{\"name\":\"atlas-auth/atlas-pca\",\"version\":\"1.0.0\",\"dist\":{\"type\":\"zip\",\"url\":\"$zip\"},\"require\":{\"php\":\">=8.1\",\"phpseclib/phpseclib\":\"^3.0\"},\"autoload\":{\"psr-4\":{\"Atlas\\\\Pca\\\\\":\"src/\"}}}}"
+          composer require atlas-auth/atlas-pca:1.0.0 --no-interaction --no-progress
+      - name: load every packaged library through the SDK and make one call
+        run: |
+          cd "$RUNNER_TEMP/app"
+          cp "$RUNNER_TEMP/dist/smoke-native.php" .
+          env -u ATLAS_PCA_LIBSEALC -u ATLAS_PCA_LIBLWEOT -u ATLAS_PCA_LIBFNDSA -u ATLAS_PCA_LIBLESS -u ATLAS_PCA_LIBCRYPTO -u PCA_BLST_LIB \
+            php -d ffi.enable=true smoke-native.php '${{ matrix.modules }}'
+
+  publish:
+    needs: smoke
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: native-*
+          path: ${{ runner.temp }}/natives
+          merge-multiple: true
+      - name: Create the version tag on the release commit (never moves an existing tag)
+        run: |
+          version="${GITHUB_REF_NAME#build-}"
+          if git ls-remote --exit-code --tags origin "refs/tags/$version" >/dev/null 2>&1; then echo "::error::$version already exists; a published tag is never moved"; exit 1; fi
+          sha="$(.github/scripts/stage-native.sh "$RUNNER_TEMP/natives")"
+          git tag "$version" "$sha"
+          git push origin "refs/tags/$version"

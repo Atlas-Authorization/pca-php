@@ -34,7 +34,8 @@ final class MldsaDiscoveryTest extends TestCase
     private function good35(): string
     {
         $p = getenv('PCA_GOOD_LIBCRYPTO') ?: getenv('ATLAS_PCA_LIBCRYPTO');
-        if (!is_string($p) || $p === '' || !is_file($p)) {
+        // the CI step points the override at the host's libcrypto, which on ubuntu-24.04 is OpenSSL 3.0 (no ML-DSA)
+        if (!is_string($p) || $p === '' || !is_file($p) || self::isPre35($p)) {
             if (getenv('PCA_REQUIRE_MLDSA') === '1') {
                 $this->fail('PCA_REQUIRE_MLDSA=1 but no OpenSSL >= 3.5 libcrypto (ATLAS_PCA_LIBCRYPTO)');
             }

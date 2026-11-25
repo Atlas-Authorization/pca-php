@@ -126,7 +126,7 @@ final class PqThresholdCorpusTest extends TestCase
                     $this->assertFalse(Pca::verifyThresholdShare($in), $nm);
                     break;
                 case 'pcactn_json':
-                    $v = Pca::verifyJson($in->get('text'), $in->get('grant'), $in->get('now')->int(), $in->get('aud'));
+                    $v = Pca::verifyJson($in->get('text'), $in->get('grant'), $in->get('now')->int(), $in->get('aud'), insecureSkipPlanRootCheck: true);
                     $this->assertFalse($v['allow'], $nm);
                     break;
                 default:

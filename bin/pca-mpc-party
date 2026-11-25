@@ -1,0 +1,15 @@
+#!/usr/bin/env php
+<?php
+declare(strict_types=1);
+
+// stdout carries exactly the result line; diagnostics go to stderr
+ini_set('display_errors', 'stderr');
+
+// One MPC node as its own process: `pca-mpc-party <config.json>` or `pca-mpc-party keygen <dir> [cn]`.
+foreach ([__DIR__ . '/../vendor/autoload.php', __DIR__ . '/../../../autoload.php'] as $autoload) {
+    if (is_file($autoload)) {
+        require $autoload;
+        break;
+    }
+}
+exit(Atlas\Pca\MpcNetPartyMain::main($argv));

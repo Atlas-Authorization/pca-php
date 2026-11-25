@@ -365,8 +365,8 @@ trait IntentV2Session
         return null;
     }
 
-    /** The state set Q of a monitor. @return list<string> */
-    public static function monitorStates(mixed $m): array
+    /** The state set Q of a monitor; null for a kind the reference's switch does not know (undefined). @return list<string>|null */
+    public static function monitorStates(mixed $m): ?array
     {
         $kind = self::m($m, 'kind');
         // strict, like the reference: a non-string `kind` must not loosely match a case (true == 'requires_prior')
@@ -387,7 +387,7 @@ trait IntentV2Session
                 $out[] = 'missed';
                 return $out;
             default:
-                return [];
+                return null;
         }
     }
 

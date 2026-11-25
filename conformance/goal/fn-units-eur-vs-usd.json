@@ -1,0 +1,1 @@
+{"id":"fn-units-eur-vs-usd","kind":"fn","fn":"units","input":{"schema":{"amount":{"currency":"EUR","exponent":2}},"terms":{"amount":{"currency":"USD","exponent":2}}},"expect":["amount"]}

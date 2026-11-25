@@ -1,0 +1,1 @@
+{"id":"fn-canon-escapes","kind":"fn","fn":"canon","input":{"s":"q\"b\\n\n\t\u0001é😀"},"expect":{"canon":"{\"s\":\"q\\\"b\\\\n\\n\\t\\u0001é😀\"}","digest":"o74GsR77pOaHETYyv6JKSdbx2hKv-HmfSBS1ne5ecwA"}}
