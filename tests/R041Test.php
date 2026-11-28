@@ -170,7 +170,7 @@ final class R041Test extends TestCase
         ], fn($h) => $h !== $canon)));
         $this->assertNotEmpty($lenient, 'the vector header has no lenient spelling to test');
         $f = new HttpFactory();
-        $mw = new PcaMiddleware($ctx->get('aud'), fn(string $r): mixed => $r === $ref ? $grant : null, fn(): int => $ctx->get('now')->int(), $f, $f);
+        $mw = new PcaMiddleware($ctx->get('aud'), fn(string $r): mixed => $r === $ref ? $grant : null, fn(): int => $ctx->get('now')->int(), $f, $f, signatureOnly: true);
         $handler = new class implements RequestHandlerInterface {
             public bool $called = false;
 

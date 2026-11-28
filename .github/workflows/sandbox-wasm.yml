@@ -1,0 +1,41 @@
+name: Sandbox WebAssembly hosts
+
+# Atlas\Pca\\SandboxWasmHost: the pinned-subprocess core-module and component hosts (proc_open, no shell, empty environment). Runs against the real reference host (pca-wasmtime-host, built here from the flagship's crate and pinned by its SHA-256):
+# CI=true makes the real-host tests FAIL when PCA_WASMTIME_HOST_BIN / PCA_WASMTIME_HOST_SHA256 are missing, so a green run never skips them.
+on:
+  push:
+    branches: [main, 'ci/**']
+    tags: ['*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sandbox-wasm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Source layout (shared corpus and the reference host crate from the flagship)
+        shell: bash
+        run: .github/scripts/fetch-flagship-corpus.sh --mono php-pca
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: sodium, json, mbstring, intl, gd, zip, openssl, gmp
+          coverage: none
+          tools: composer
+      - name: pca-wasmtime-host (cargo build --release; exports PCA_WASMTIME_HOST_BIN and PCA_WASMTIME_HOST_SHA256)
+        run: .github/scripts/build-wasmtime-host.sh "$RUNNER_TEMP/wasmtime-host" "$RUNNER_TEMP/mono/packages/pca-sandbox/wasmtime-host"
+      - name: composer install
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: |
+          for n in 1 2 3 4; do composer install --no-interaction --no-progress --prefer-dist && break; [ "$n" = 4 ] && exit 1; echo "composer attempt $n failed (network); retrying"; sleep $((n * 15)); done
+      - name: Sandbox host tests
+        working-directory: ${{ env.PCA_MONO_SDK }}
+        run: vendor/bin/phpunit --filter SandboxWasmHostTest

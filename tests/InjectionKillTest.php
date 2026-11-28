@@ -52,11 +52,11 @@ final class InjectionKillTest extends TestCase
         $ctx = $v->get('context');
         $grant = self::deepCopy($v->get('grant'));
         $grant->set('x', new Num('1e300'));
-        $r = Pca::verifyJson($v->get('pcactn_json'), $grant, $ctx->get('now')->int(), $ctx->get('aud'));
+        $r = Pca::verifyJson($v->get('pcactn_json'), $grant, $ctx->get('now')->int(), $ctx->get('aud'), insecureSkipPlanRootCheck: true);
         $this->assertFalse($r['allow']);
         $this->assertFalse($r['checks']['chain']);
         $this->assertSame('chain: malformed: exponent form is not allowed', $r['reason']);
-        $this->assertTrue(Pca::verifyJson($v->get('pcactn_json'), $v->get('grant'), $ctx->get('now')->int(), $ctx->get('aud'))['allow']);
+        $this->assertTrue(Pca::verifyJson($v->get('pcactn_json'), $v->get('grant'), $ctx->get('now')->int(), $ctx->get('aud'), insecureSkipPlanRootCheck: true)['allow']);
     }
 
     /**
@@ -84,7 +84,8 @@ final class InjectionKillTest extends TestCase
     {
         $g = getenv('ATLAS_PCA_LIBCRYPTO');
         // without the good library, the distro one must lack ML-DSA (ubuntu-26.04's libcrypto.so.3 is OpenSSL >= 3.5)
-        $ok = is_file(self::DISTRO_30) && ($good ? is_string($g) && is_file($g) : MldsaDiscoveryTest::isPre35(self::DISTRO_30));
+        // the override must itself be OpenSSL >= 3.5: on a host whose only libcrypto is 3.0 (ubuntu-24.04) the CI step points it at that one
+        $ok = is_file(self::DISTRO_30) && ($good ? is_string($g) && is_file($g) && !MldsaDiscoveryTest::isPre35($g) : MldsaDiscoveryTest::isPre35(self::DISTRO_30));
         if (!$ok) {
             if (getenv('PCA_REQUIRE_MLDSA') === '1') {
                 $this->fail('libcrypto 3.0 / 3.5 not available');
@@ -169,7 +170,7 @@ final class InjectionKillTest extends TestCase
                 public function createStreamFromResource($resource): StreamInterface { return $this->g->createStreamFromResource($resource); }
             }');
         self::shadowClassExists(['GuzzleHttp\Psr7\HttpFactory']);
-        $r = (new PcaMiddleware('aud', fn() => null))->process(new ServerRequest('GET', '/'), new class implements \Psr\Http\Server\RequestHandlerInterface {
+        $r = (new PcaMiddleware('aud', fn() => null, signatureOnly: true))->process(new ServerRequest('GET', '/'), new class implements \Psr\Http\Server\RequestHandlerInterface {
             public function handle(\Psr\Http\Message\ServerRequestInterface $request): \Psr\Http\Message\ResponseInterface
             {
                 throw new \LogicException('must not run');

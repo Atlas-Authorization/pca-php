@@ -1,0 +1,1 @@
+{"id":"fn-claim-honest-low-replay-deny","kind":"fn","fn":"claim","input":{"base":"deny","min_ppm":900000,"claimed_ppm":950000,"replayed_ppm":100000},"expect":"deny"}

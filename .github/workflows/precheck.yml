@@ -1,0 +1,61 @@
+name: Precheck
+
+# Compile-only gate, php -l on every file under two interpreter versions.
+# Runs only on pre/** pushes (and by hand): it builds and typechecks everything, tests included, and runs no test.
+# Push pre/<version> first and the full ci/** run only when this is green.
+on:
+  push:
+    branches: ['pre/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  precheck:
+    name: lint every PHP file
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: sodium, json, mbstring, intl, gd, zip, ffi, openssl, gmp, pdo_sqlite, sqlite3
+          ini-values: ffi.enable=1
+          coverage: none
+          tools: composer
+      # oldest supported version first: syntax newer than 8.1 fails here
+      - name: php -l on every file (8.1)
+        id: c0
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          find . -name '*.php' -not -path './vendor/*' -not -path './.git/*' -print0 | xargs -0 -n1 -P4 php -l > "$RUNNER_TEMP/lint.log" || { grep -v '^No syntax errors' "$RUNNER_TEMP/lint.log"; exit 1; }
+          echo "$(grep -c '^No syntax errors' "$RUNNER_TEMP/lint.log") files linted"
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: sodium, json, mbstring, intl, gd, zip, ffi, openssl, gmp, pdo_sqlite, sqlite3
+          ini-values: ffi.enable=1
+          coverage: none
+          tools: composer
+      - name: php -l on every file (8.4)
+        id: c1
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          find . -name '*.php' -not -path './vendor/*' -not -path './.git/*' -print0 | xargs -0 -n1 -P4 php -l > "$RUNNER_TEMP/lint.log" || { grep -v '^No syntax errors' "$RUNNER_TEMP/lint.log"; exit 1; }
+          echo "$(grep -c '^No syntax errors' "$RUNNER_TEMP/lint.log") files linted"
+      # every check above runs even when an earlier one failed; this step makes the job red when any did
+      - name: Summary
+        if: ${{ always() && (steps.c0.outcome == 'failure' || steps.c1.outcome == 'failure') }}
+        run: |
+          echo "::error::one or more compile checks failed; each failing step above has the details"
+          exit 1

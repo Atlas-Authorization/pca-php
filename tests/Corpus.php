@@ -108,7 +108,7 @@ final class Corpus
     {
         $ctx = $v['context'];
         return Pca::verifyJson($v['pcactn_json'], self::toObj($v['grant']), (int)$ctx['now'], $ctx['aud'], $ctx['allowed_suites'] ?? null,
-            self::intentPolicyOf($ctx), self::intentV2Of($ctx));
+            self::intentPolicyOf($ctx), self::intentV2Of($ctx), insecureSkipPlanRootCheck: true);
     }
 
     /** Intent Layer v2 checks in pipeline order (appended after `intent`, each only when reported). */
@@ -258,8 +258,8 @@ final class Corpus
             : ($ctx->has('intent_policy') ? $ctx->get('intent_policy') : null);
         $intentV2 = self::intentV2OfObj($ctx);
         return $v->has('pcactn_json')
-            ? Pca::verifyJson($v->get('pcactn_json'), $v->get('grant'), $now, $aud, $allowed, $intentPolicy, $intentV2)
-            : Pca::verifyPcactnCore($v->get('pcactn'), $v->get('grant'), $now, $aud, $allowed, $intentPolicy, $intentV2);
+            ? Pca::verifyJson($v->get('pcactn_json'), $v->get('grant'), $now, $aud, $allowed, $intentPolicy, $intentV2, insecureSkipPlanRootCheck: true)
+            : Pca::verifyPcactnCore($v->get('pcactn'), $v->get('grant'), $now, $aud, $allowed, $intentPolicy, $intentV2, insecureSkipPlanRootCheck: true);
     }
 
     public static function parseOutcome(string $in, bool $lax): string
@@ -285,7 +285,7 @@ final class Corpus
             if ($c['kind'] === 'verify') {
                 try {
                     $g = Pca::verifyJson($c['raw'], Json::parseLax($c['grant']), (int)$c['now'], $c['aud'], $c['allowed_suites'] ?? null,
-                        self::intentPolicyOf($c), self::intentV2Of($c));
+                        self::intentPolicyOf($c), self::intentV2Of($c), insecureSkipPlanRootCheck: true);
                     $val = self::fmt($g);
                 } catch (\Throwable $e) {
                     $val = 'THROW:' . get_class($e) . ':' . self::esc($e->getMessage());

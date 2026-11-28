@@ -1,0 +1,1 @@
+{"id":"fn-claim-lying-claim-escalate","kind":"fn","fn":"claim","input":{"base":"escalate","min_ppm":900000,"claimed_ppm":1000000,"replayed_ppm":null},"expect":"escalate"}
